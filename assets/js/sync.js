@@ -1,32 +1,45 @@
-let GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxomn7b3HhL_Fjm2gXFxvRvo0cz4CI4ym2ETb2oL37kp1qgxJYzo0hbSmsEv4SYw9Cog/exec";
+const API_URL = "https://script.google.com/macros/s/YOUR_GOOGLE_APPS_SCRIPT_URL/exec";
 
-/**
- * Sync user preferences to Google Sheets
- */
+// Sync user preferences to Google Sheets
 async function syncPreferencesToGoogleSheet(preferences) {
-  return await sendDataToGoogleSheets({ type: "preferences", payload: preferences });
-}
-
-/**
- * Sync workout data
- */
-async function syncWorkoutToGoogleSheet(workout) {
-  return await sendDataToGoogleSheets({ type: "workout", payload: workout });
-}
-
-/**
- * Generic POST to Google Apps Script
- */
-async function sendDataToGoogleSheets(data) {
   try {
-    const response = await fetch(GAS_WEB_APP_URL, {
+    const response = await fetch(API_URL + "?action=savePreferences", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(preferences)
     });
-    return await response.json();
+
+    if (!response.ok) throw new Error("Failed to sync preferences");
+    return true;
   } catch (error) {
-    console.error("Sync failed:", error);
-    return { success: false, error: error.message };
+    console.warn("Preferences sync failed. Retrying later.");
+    // Optionally: Add retry queue logic
+    return false;
   }
 }
+
+// Sync workout to Google Sheets
+async function syncWorkoutToGoogleSheet(workout) {
+  try {
+    const response = await fetch(API_URL + "?action=saveWorkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(workout)
+    });
+
+    if (!response.ok) throw new Error("Failed to sync workout");
+    return true;
+  } catch (error) {
+    console.warn("Workout sync failed. Will retry later.");
+    return false;
+  }
+}
+
+// Retry sync when online
+window.addEventListener("online", async () => {
+  console.log("✅ Back online. Retrying sync...");
+  const workouts = await getAllWorkoutsFromDB();
+  for (let workout of workouts) {
+    await syncWorkoutToGoogleSheet(workout);
+  }
+});
