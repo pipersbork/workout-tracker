@@ -1,0 +1,152 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: #121212;
+  color: #ffffff;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Headings */
+h2, h3, h4 {
+  text-align: center;
+  margin: 10px 0;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin-top: 15px;
+}
+
+/* Onboarding Section */
+#onboarding {
+  padding: 20px;
+}
+
+#onboarding button {
+  display: inline-block;
+  background: #1f1f1f;
+  color: #ffffff;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+#onboarding button.selected,
+#onboarding button:hover {
+  background: #6200ea;
+  border-color: #6200ea;
+}
+
+/* App Content */
+#app-content {
+  padding: 15px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+#workout-plan, #history-container {
+  margin-top: 15px;
+  padding: 15px;
+  background: #1f1f1f;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+#workout-plan ul, #history-container ul {
+  list-style-type: none;
+}
+
+#workout-plan li, #history-container li {
+  padding: 5px 0;
+  border-bottom: 1px solid #333;
+}
+
+#generateWorkout, #saveWorkout {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  background: #03dac5;
+  color: #000;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+#generateWorkout:hover, #saveWorkout:hover {
+  background: #018786;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  background-color: #1f1f1f;
+  padding: 10px 0;
+  border-top: 2px solid #333;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1rem;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.bottom-nav-item.active {
+  background: #6200ea;
+}
+
+.bottom-nav-item:hover {
+  background: #333;
+}
+
+/* History Section */
+#history-container pre {
+  background: #292929;
+  color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  button {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+}
