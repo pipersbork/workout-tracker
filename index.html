@@ -1,516 +1,842 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Tracker - Dark Theme</title>
-  <style>
-    /* Dark Black & Orange Theme */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; connect-src 'self' https://gmail.googleapis.com https://www.googleapis.com; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+    <title>Workout Tracker - Gmail PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    :root {
-      /* Core Colors */
-      --pure-black: #000000;
-      --dark-black: #0a0a0a;
-      --surface-black: #141414;
-      --card-black: #1a1a1a;
-      
-      /* Orange Variations */
-      --orange-primary: #ff6b35;
-      --orange-hover: #ff8255;
-      --orange-active: #e55a2b;
-      --orange-glow: rgba(255, 107, 53, 0.3);
-      
-      /* Text Colors */
-      --text-primary: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.7);
-      --text-muted: rgba(255, 255, 255, 0.4);
-      
-      /* Status Colors */
-      --success: #4caf50;
-      --error: #f44336;
-      --warning: #ff9800;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2d1b2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--pure-black);
-      color: var(--text-primary);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
 
-    /* Updated CSS for existing app */
-    .updated-style {
-      background-color: var(--dark-black);
-      color: var(--text-primary);
-    }
+        /* Header Styles */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+        }
 
-    /* All Buttons - Orange Theme */
-    button, .btn {
-      background: var(--orange-primary);
-      color: var(--pure-black);
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px var(--orange-glow);
-    }
+        .gmail-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(45deg, #ea4335, #fbbc05);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    button:hover, .btn:hover {
-      background: var(--orange-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--orange-glow);
-    }
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
 
-    button:active, .btn:active {
-      background: var(--orange-active);
-      transform: translateY(0);
-      box-shadow: 0 2px 8px var(--orange-glow);
-    }
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
 
-    /* Secondary/Ghost Buttons */
-    button.secondary {
-      background: transparent;
-      color: var(--orange-primary);
-      border: 2px solid var(--orange-primary);
-      box-shadow: none;
-    }
+        /* Auth Section */
+        .auth-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
 
-    button.secondary:hover {
-      background: var(--orange-primary);
-      color: var(--pure-black);
-    }
+        .gmail-info {
+            background: linear-gradient(135deg, rgba(234, 67, 53, 0.1), rgba(251, 188, 5, 0.1));
+            border: 1px solid rgba(234, 67, 53, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
 
-    /* Card Components - Pure Black */
-    .card {
-      background: var(--card-black);
-      border: 1px solid rgba(255, 107, 53, 0.2);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-    }
+        .gmail-info h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ea4335;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
 
-    .card:hover {
-      border-color: var(--orange-primary);
-      box-shadow: 0 0 20px var(--orange-glow);
-    }
+        .gmail-info ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
 
-    /* Enhanced Onboarding Screen */
-    .onboarding-screen {
-      background: var(--pure-black);
-      min-height: 100vh;
-      padding: 2rem;
-    }
+        .gmail-info li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.4;
+        }
 
-    .onboarding-screen h2 {
-      color: var(--orange-primary);
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
+        .gmail-info li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4CAF50;
+            font-weight: bold;
+        }
 
-    .onboarding-screen h3 {
-      color: var(--text-secondary);
-      font-size: 1.2rem;
-      margin: 2rem 0 1rem;
-      padding-left: 1rem;
-      border-left: 3px solid var(--orange-primary);
-    }
+        /* Current Block Display */
+        .current-block {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(220, 53, 69, 0.1));
+            border: 2px solid #dc3545;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
 
-    .selection-grid {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
+        .block-title {
+            color: #dc3545;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
 
-    .select-button {
-      background: var(--surface-black);
-      color: var(--text-secondary);
-      border: 2px solid transparent;
-      padding: 1rem 1.5rem;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: none;
-    }
+        .block-subtitle {
+            color: #aaa;
+            font-size: 16px;
+            font-weight: 500;
+        }
 
-    .select-button:hover {
-      background: var(--card-black);
-      border-color: var(--orange-primary);
-      color: var(--text-primary);
-      transform: translateY(0);
-      box-shadow: 0 0 15px var(--orange-glow);
-    }
+        /* User Info */
+        .user-info {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+            border-radius: 16px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .select-button.selected {
-      background: var(--orange-primary);
-      color: var(--pure-black);
-      border-color: var(--orange-primary);
-      box-shadow: 0 0 20px var(--orange-glow);
-    }
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #4CAF50;
+        }
 
-    /* Exercise Card - Dark Theme */
-    .exercise-card {
-      background: var(--surface-black);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
+        .user-details {
+            flex: 1;
+        }
 
-    .exercise-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--orange-primary);
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
-    }
+        .user-name {
+            font-weight: 600;
+            color: #fff;
+        }
 
-    .exercise-card.active::before {
-      transform: scaleY(1);
-    }
+        .user-email {
+            font-size: 12px;
+            color: #aaa;
+        }
 
-    .exercise-card:hover {
-      border-color: var(--orange-primary);
-      box-shadow: 0 0 30px var(--orange-glow);
-    }
+        /* Workout Type Selection */
+        .workout-types {
+            margin-bottom: 30px;
+        }
 
-    /* Input Fields - Dark Theme */
-    input {
-      background: var(--pure-black);
-      color: var(--text-primary);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      padding: 0.75rem;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
+        .section-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-align: center;
+        }
 
-    input:focus {
-      outline: none;
-      border-color: var(--orange-primary);
-      box-shadow: 0 0 10px var(--orange-glow);
-    }
+        .section-subtitle {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
 
-    /* Bottom Navigation - Pure Black */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--pure-black);
-      border-top: 1px solid rgba(255, 107, 53, 0.3);
-      display: flex;
-      justify-content: space-around;
-      padding: 0.5rem 0;
-    }
+        .type-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
 
-    .bottom-nav-item {
-      background: transparent;
-      color: var(--text-secondary);
-      border: none;
-      padding: 0.75rem 2rem;
-      font-size: 1rem;
-      position: relative;
-      transition: all 0.3s ease;
-      box-shadow: none;
-    }
+        .type-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .bottom-nav-item::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 3px;
-      background: var(--orange-primary);
-      transition: width 0.3s ease;
-    }
+        .type-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
 
-    .bottom-nav-item:hover {
-      color: var(--orange-primary);
-      background: transparent;
-      transform: none;
-      box-shadow: none;
-    }
+        .type-card:hover::before {
+            left: 100%;
+        }
 
-    .bottom-nav-item.active {
-      color: var(--orange-primary);
-      background: transparent;
-    }
+        .type-card:hover {
+            border-color: rgba(220, 53, 69, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.2);
+        }
 
-    .bottom-nav-item.active::after {
-      width: 80%;
-    }
+        .type-card.selected {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(220, 53, 69, 0.1));
+        }
 
-    /* Stats Display - Orange Accents */
-    .stat-card {
-      background: var(--surface-black);
-      border: 1px solid rgba(255, 107, 53, 0.2);
-      padding: 1.5rem;
-      border-radius: 12px;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
+        .type-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
 
-    .stat-card:hover {
-      border-color: var(--orange-primary);
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px var(--orange-glow);
-    }
+        .type-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
 
-    .stat-value {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--orange-primary);
-      text-shadow: 0 0 20px var(--orange-glow);
-    }
+        .type-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
 
-    .stat-label {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-    }
+        .type-frequency {
+            font-size: 11px;
+            color: #dc3545;
+            font-weight: 600;
+        }
 
-    /* Progress Ring - Orange */
-    .progress-ring-progress {
-      stroke: var(--orange-primary);
-      filter: drop-shadow(0 0 10px var(--orange-glow));
-    }
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    /* Floating Action Button - Orange */
-    .fab {
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--orange-primary);
-      color: var(--pure-black);
-      border: none;
-      font-size: 24px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 6px 20px var(--orange-glow);
-      transition: all 0.3s ease;
-    }
+        .btn-primary {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            margin-bottom: 20px;
+        }
 
-    .fab:hover {
-      transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 8px 30px var(--orange-glow);
-    }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        }
 
-    /* Achievement Toast - Orange Glow */
-    .achievement-toast {
-      background: var(--surface-black);
-      border: 2px solid var(--orange-primary);
-      color: var(--text-primary);
-      box-shadow: 0 0 30px var(--orange-glow);
-    }
+        .btn-gmail {
+            background: linear-gradient(135deg, #ea4335, #fbbc05);
+            color: white;
+        }
 
-    .achievement-icon {
-      color: var(--orange-primary);
-      text-shadow: 0 0 10px var(--orange-glow);
-    }
+        .btn-gmail:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(234, 67, 53, 0.3);
+        }
 
-    /* Rest Timer - Dark Theme */
-    .rest-timer {
-      background: var(--pure-black);
-      border: 2px solid var(--orange-primary);
-      box-shadow: 0 0 50px var(--orange-glow);
-    }
+        .btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-    .timer-display {
-      color: var(--orange-primary);
-      text-shadow: 0 0 20px var(--orange-glow);
-    }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            font-size: 12px;
+            margin: 0 4px;
+        }
 
-    /* Google Sign In Button - Custom Orange */
-    #googleSignInBtn {
-      background: var(--orange-primary);
-      color: var(--pure-black);
-      width: 100%;
-      padding: 1rem;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-top: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px var(--orange-glow);
-    }
+        /* Main Content */
+        .main-content {
+            display: none;
+        }
 
-    #googleSignInBtn::before {
-      content: '🔒';
-      font-size: 1.3rem;
-    }
+        /* Workout Display */
+        .workout-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            display: none;
+        }
 
-    /* Workout Plan Display */
-    #workout-plan {
-      background: var(--surface-black);
-      border: 1px solid rgba(255, 107, 53, 0.2);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
+        .workout-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
 
-    #workout-plan h3 {
-      color: var(--orange-primary);
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255, 107, 53, 0.3);
-    }
+        .workout-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #dc3545;
+        }
 
-    #workout-plan ul {
-      list-style: none;
-    }
+        .workout-meta {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
 
-    #workout-plan li {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-    }
+        .progression-tip {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+            border-left: 4px solid #4CAF50;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
 
-    #workout-plan li:hover {
-      color: var(--text-primary);
-      padding-left: 1rem;
-      border-left: 3px solid var(--orange-primary);
-    }
+        .tip-label {
+            font-size: 12px;
+            color: #4CAF50;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
 
-    /* Loading Animation - Orange */
-    @keyframes pulse-orange {
-      0% {
-        box-shadow: 0 0 0 0 var(--orange-glow);
-      }
-      70% {
-        box-shadow: 0 0 0 20px rgba(255, 107, 53, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0);
-      }
-    }
+        .exercise {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #dc3545;
+        }
 
-    .loading {
-      animation: pulse-orange 2s infinite;
-    }
+        .exercise-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
+        .exercise-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
 
-    ::-webkit-scrollbar-track {
-      background: var(--pure-black);
-    }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    ::-webkit-scrollbar-thumb {
-      background: var(--orange-primary);
-      border-radius: 4px;
-    }
+        .detail-label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--orange-hover);
-    }
-  </style>
+        .detail-value {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* History Section */
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #4CAF50;
+            position: relative;
+        }
+
+        .gmail-label {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: linear-gradient(45deg, #ea4335, #fbbc05);
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-date {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #4CAF50;
+        }
+
+        .history-details {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .history-exercises {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #dc3545;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Loading and Status */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #dc3545;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+        }
+
+        .sync-status.syncing {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            display: block;
+        }
+
+        .sync-status.synced {
+            background: linear-gradient(45deg, #4CAF50, #388e3c);
+            display: block;
+        }
+
+        .sync-status.error {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            display: block;
+        }
+
+        /* Message Styles */
+        .message {
+            margin: 16px 0;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #ff6b6b;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                padding: 16px;
+            }
+            
+            .type-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(220, 53, 69, 0.5);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(220, 53, 69, 0.7);
+        }
+    </style>
 </head>
 <body>
-  <!-- Example Enhanced Onboarding -->
-  <div class="onboarding-screen">
-    <h2>💪 Workout Tracker</h2>
-    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
-      Let's customize your fitness journey
-    </p>
+    <div class="sync-status" id="syncStatus">📧 Syncing with Gmail...</div>
 
-    <h3>Select Your Goal</h3>
-    <div class="selection-grid">
-      <button class="select-button" data-goal="hypertrophy">
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💥</div>
-        Hypertrophy
-      </button>
-      <button class="select-button selected" data-goal="strength">
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
-        Strength
-      </button>
-    </div>
-
-    <h3>Experience Level</h3>
-    <div class="selection-grid">
-      <button class="select-button">Beginner</button>
-      <button class="select-button selected">Intermediate</button>
-      <button class="select-button">Advanced</button>
-    </div>
-
-    <button id="googleSignInBtn">
-      Continue with Google
-    </button>
-  </div>
-
-  <!-- Example Exercise Card -->
-  <div style="padding: 1rem;">
-    <div class="exercise-card active">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="color: var(--text-primary); margin: 0;">Bench Press</h3>
-        <span style="background: var(--orange-primary); color: var(--pure-black); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
-          3 x 8-12
-        </span>
-      </div>
-      
-      <div style="display: grid; gap: 0.75rem;">
-        <div style="display: grid; grid-template-columns: 40px 1fr 1fr 60px; gap: 0.5rem; align-items: center;">
-          <span style="color: var(--text-secondary); text-align: center;">1</span>
-          <input type="number" placeholder="Weight (kg)" style="text-align: center;">
-          <input type="number" placeholder="Reps" style="text-align: center;">
-          <button style="padding: 0.5rem; border-radius: 8px;">✓</button>
+    <div class="container">
+        <div class="header">
+            <div class="gmail-badge">Gmail PWA</div>
+            <div class="logo">💪 Workout Tracker</div>
+            <div class="subtitle">Science-based training stored in your Gmail</div>
+            
+            <div id="userInfo" class="user-info">
+                <img id="userPhoto" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM0Q0FGNTAI+CjxwYXRoIGQ9Ik0yMCAxMkM3LjEgMTIgNiAxNy4yIDYgMThWMjJDNiAyNy4yIDcuMSAzMCAyMCAzMEMzMi45IDMwIDM0IDI3LjIgMzQgMjJWMThDMzQgMTcuMiAzMi45IDEyIDIwIDEyWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="User">
+                <div class="user-details">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-email" id="userEmail"></div>
+                </div>
+                <button id="signOutBtn" class="btn-secondary">Sign Out</button>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Example Stats -->
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem;">
-    <div class="stat-card">
-      <div class="stat-value">12</div>
-      <div class="stat-label">Workouts</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">85%</div>
-      <div class="stat-label">Consistency</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">3</div>
-      <div class="stat-label">PRs This Week</div>
-    </div>
-  </div>
+        <div id="authSection" class="auth-section">
+            <h2 style="margin-bottom: 20px; font-weight: 800;">Connect Your Gmail</h2>
+            
+            <div class="gmail-info">
+                <h3>📧 Gmail Integration Benefits</h3>
+                <ul>
+                    <li><strong>Secure Storage:</strong> Workouts saved as emails in your account</li>
+                    <li><strong>Cross-Device Sync:</strong> Access anywhere with Gmail</li>
+                    <li><strong>Searchable History:</strong> Use Gmail's powerful search</li>
+                    <li><strong>Automatic Backup:</strong> Protected by Google's infrastructure</li>
+                    <li><strong>Full Ownership:</strong> Your data stays in your Gmail</li>
+                    <li><strong>Privacy First:</strong> Only you can see your workout emails</li>
+                </ul>
+            </div>
 
-  <!-- Floating Action Button -->
-  <button class="fab">+</button>
+            <button id="gmailSignInBtn" class="btn btn-gmail">📧 Connect Gmail Account</button>
+            
+            <div class="stats-grid" id="gmailStats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalEmails">0</div>
+                    <div class="stat-label">Workouts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDays">0</div>
+                    <div class="stat-label">Active Days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="currentWeek">1</div>
+                    <div class="stat-label">Current Week</div>
+                </div>
+            </div>
+        </div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <button class="bottom-nav-item active">Workout</button>
-    <button class="bottom-nav-item">History</button>
-    <button class="bottom-nav-item">Progress</button>
-  </nav>
-</body>
-</html>
+        <div id="currentBlock" class="current-block" style="display: none;">
+            <div class="block-title" id="blockTitle">Hypertrophy Block #1</div>
+            <div class="block-subtitle" id="blockSubtitle">Week 3 of 6 • Intensification Phase</div>
+        </div>
+
+        <div id="mainContent" class="main-content">
+            <div class="workout-types">
+                <div class="section-title">Workout Type</div>
+                <div class="section-subtitle">What type of workout plan do you want to create?</div>
+                
+                <div class="type-grid">
+                    <div class="type-card" data-type="ppl">
+                        <div class="type-icon">💪</div>
+                        <div class="type-name">Push/Pull/Legs</div>
+                        <div class="type-description">Classic 3-day split</div>
+                        <div class="type-frequency">6 days/week</div>
+                    </div>
+                    
+                    <div class="type-card" data-type="upper-lower">
+                        <div class="type-icon">⚡</div>
+                        <div class="type-name">Upper/Lower</div>
+                        <div class="type-description">Split by body half</div>
+                        <div class="type-frequency">4 days/week</div>
+                    </div>
+                    
+                    <div class="type-card" data-type="full-body">
+                        <div class="type-icon">🔥</div>
+                        <div class="type-name">Full Body</div>
+                        <div class="type-description">All muscles each session</div>
+                        <div class="type-frequency">3 days/week</div>
+                    </div>
+                    
+                    <div class="type-card" data-type="custom">
+                        <div class="type-icon">⚙️</div>
+                        <div class="type-name">Custom Split</div>
+                        <div class="type-description">Build your own</div>
+                        <div class="type-frequency">Flexible</div>
+                    </div>
+                </div>
+                
+                <button id="generateWorkout" class="btn btn-primary">Create Science-Based Workout</button>
+            </div>
+            
+            <div id="workoutDisplay" class="workout-display">
+                <div class="workout-header">
+                    <div class="workout-title" id="workoutTitle"></div>
+                    <div class="workout-meta" id="workoutMeta"></div>
+                </div>
+                
+                <div id="progressionTip" class="progression-tip">
+                    <div class="tip-label">💡 Progression Strategy</div>
+                    <div id="tipContent"></div>
+                </div>
+                
+                <div id="exerciseList"></div>
+                
+                <button id="saveWorkout" class="btn btn-primary" style="display: none;">📧 Save to Gmail</button>
+            </div>
+            
+            <div class="history-section">
+                <div class="section-title">Training History</div>
+                <div class="section-subtitle">Your workouts from Gmail</div>
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button id="refreshHistory" class="btn-secondary">🔄 Refresh</button>
+                    <button id="searchWorkouts" class="btn-secondary">🔍 Search</button>
+                </div>
+                
+                <div id="historyList">
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading"></div>
+                        <p style="margin-top: 16px; color: #aaa;">Loading your training history...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gmail API Configuration
+        const CONFIG = {
+            CLIENT_ID: "your-gmail-client-id.apps.googleusercontent.com",
+            SCOPES: "https://www.googleapis.com/auth/gmail.modify",
+            DISCOVERY_DOC: "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest",
+            LABEL_NAME: "WorkoutTracker",
+            EMAIL_SUBJECT_PREFIX: "[WorkoutTracker]"
+        };
+
+        // Application State
+        let state = {
+            isAuthenticated: false,
+            accessToken: null,
+            userProfile: null,
+            labelId: null,
+            currentWorkout: null,
+            workoutHistory: [],
+            selectedWorkoutType: null,
+            currentBlock: {
+                type: 'hypertrophy',
+                number: 1,
+                week: 3,
+                phase: 'intensification'
+            }
+        };
+
+        // Workout Type Data
+        const WORKOUT_TYPES = {
+            ppl: {
+                name: "Push/Pull/Legs",
+                description: "Classic 3-day split focusing on movement patterns",
+                frequency: "6 days/week",
+                icon: "💪",
+                splits: ["Push", "Pull", "Legs"]
+            },
+            "upper-lower": {
+                name: "Upper/Lower",
+                description: "Split training by body half for balanced development",
+                frequency: "4 days/week", 
+                icon: "⚡",
+                splits: ["Upper", "Lower"]
+            },
+            "full-body": {
+                name: "Full Body",
+                description: "Complete muscle stimulation each session",
+                frequency: "3 days/week",
+                icon: "🔥", 
+                splits: ["Full Body"]
+            },
+            custom: {
+                name: "Custom Split",
+                description: "Personalized training approach",
+                frequency: "Flexible",
+                icon: "⚙️",
+                splits: ["Custom"]
+            }
+        };
+
+        // Exercise Database
+        const EXERCISE_DATABASE = {
+            push: {
+                chest: ["Barbell Bench Press", "Incline Dumbbell Press", "Dips", "Cable Flyes"],
+                shoulders: ["Overhead Press", "Lateral Raises", "Rear Delt Flyes", "Arnold Press"],
+                triceps: ["Close-Grip Bench Press", "Tricep Dips", "Overhead Extension", "Cable Pushdowns"]
+            },
+            pull: {
+                back: ["Pull-ups", "Barbell Rows", "Lat Pulldowns", "T-Bar Rows", "Cable Rows"],
+                biceps: ["Barbell Curls", "Hammer Curls", "Cable Curls", "Preacher Curls"],
+                rear_delts: ["Face Pulls", "Reverse Flyes", "Bent-Over Lateral Raises"]
+            },
+            legs: {
+                quads: ["Back Squats", "Front Squats", "Leg Press", "Bulgarian Split Squats"],
+                hamstrings: ["Romanian Deadlifts", "Leg Curls", "Good Mornings", "Stiff Leg Deadlifts"],
+                glutes: ["Hip Thrusts", "Glute Bridges", "Romanian Deadlifts", "Bulgarian Split Squats"],
+                calves: ["Calf Raises", "Seated Calf Raises", "Walking Lunges"]
+            },
+            upper: {
+                chest: ["Bench Press", "Incline Press", "Dips", "Flyes"],
+                back: ["Pull-ups", "Rows", "Lat Pulldowns", "Deadlifts"],
+                shoulders: ["Overhead Press", "Lateral Raises", "Rear Delts"],
+                arms: ["Curls", "Tricep Extensions", "Close-Grip Press"]
+            },
+            lower: {
+                quads: ["Squats", "Leg Press", "Lunges", "Split Squats"],
+                hamstrings: ["Romanian Deadlifts", "Leg Curls", "Good Mornings"],
+                glutes: ["Hip Thrusts", "Glute Bridges", "Deadlifts"],
+                calves: ["Calf Raises", "Seated Calf Raises"]
+            }
+        };
+
+        // Gmail Manager Class
+        class GmailManager {
+            constructor() {
+                this.gapi = null;
+                this.tokenClient = null;
+            }
+
+            async init() {
+                try {
+                    this.tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CONFIG.CLIENT_ID,
+                        scope: CONFIG.SCOPES,
+                        callback: (response) => this.handleAuthResponse(response)
+                    });
+
+                    await new Promise(resolve => gapi.load('client', resolve));
+                    await gapi.client.init({
+                        discoveryDocs: [CONFIG.DISCOVERY_DOC]
+                    });
+
+                    this.gapi = gapi.client.gmail;
+                    console.log('Gmail API initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize Gmail API:', error);
+                    this.showError('Failed to initialize Gmail integration. Please refresh the page.');
+                }
+            }
+
+            handleAuthResponse(response) {
+                if (response.error) {
+                    this.showError('Gmail authentication failed: ' + response.error);
+                    return;
+                }
+
+                state.accessToken = response.access_token;
+                state.isAuthenticated = true;
+                gapi.client.setToken({ access_token: state.accessToken });
+                
+                this.loadUserProfile();
+                this.setupWorkoutLabel();
+            }
+
+            async loadUserProfile() {
+                try {
+                    const response = await this.gapi.users.getProfile({ userId: 'me' });
+                    state.userProfile = {
+                        email: response.result.emailAddress,
+                        name: response.result
