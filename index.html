@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#121212">
+  <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-512.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => console.log('✅ Service Worker Registered'))
+        .catch(err => console.error('SW registration failed:', err));
+    }
+  </script>
+</head>
+<body class="dark-mode">
+  <div id="onboarding" class="onboarding-screen active">
+    <h2>Welcome to Workout Tracker</h2>
+    <p>Select your preferences:</p>
+    <h3>Goal:</h3>
+    <div>
+      <button class="select-goal" data-goal="hypertrophy">Hypertrophy</button>
+      <button class="select-goal" data-goal="strength">Strength</button>
+    </div>
+
+    <h3>Experience:</h3>
+    <div>
+      <button class="select-experience" data-exp="beginner">Beginner</button>
+      <button class="select-experience" data-exp="intermediate">Intermediate</button>
+      <button class="select-experience" data-exp="advanced">Advanced</button>
+    </div>
+
+    <h3>Equipment:</h3>
+    <div>
+      <button class="select-equipment" data-equip="home">Home</button>
+      <button class="select-equipment" data-equip="gym">Gym</button>
+    </div>
+
+    <h3>Days per week:</h3>
+    <div>
+      <button class="select-frequency" data-days="2">2</button>
+      <button class="select-frequency" data-days="3">3</button>
+      <button class="select-frequency" data-days="4">4</button>
+      <button class="select-frequency" data-days="5">5</button>
+      <button class="select-frequency" data-days="6">6</button>
+    </div>
+
+    <h3>Include Cardio?</h3>
+    <div>
+      <button class="select-cardio-toggle" data-cardio="yes">Yes</button>
+      <button class="select-cardio-toggle" data-cardio="no">No</button>
+    </div>
+
+    <div id="cardio-options" style="display:none;">
+      <h4>Cardio Type:</h4>
+      <button class="select-cardio-type" data-type="running">Running</button>
+      <button class="select-cardio-type" data-type="cycling">Cycling</button>
+      <button class="select-cardio-type" data-type="rowing">Rowing</button>
+      <h4>Sessions per week:</h4>
+      <button class="select-cardio-frequency" data-cardiofreq="1">1</button>
+      <button class="select-cardio-frequency" data-cardiofreq="2">2</button>
+      <button class="select-cardio-frequency" data-cardiofreq="3">3</button>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button id="googleSignInBtn">Sign in with Google</button>
+    </div>
+  </div>
+
+  <div id="app-content" style="display:none;">
+    <div id="workout-content">
+      <h2>Your Workout Plan</h2>
+      <button id="generateWorkout">Generate Plan</button>
+      <div id="workout-plan"></div>
+      <button id="saveWorkout">Save Workout</button>
+    </div>
+    <div id="history-content" style="display:none;">
+      <h2>Workout History</h2>
+      <div id="history-container"></div>
+    </div>
+  </div>
+
+  <div id="bottom-nav" class="bottom-nav" style="display:none;">
+    <button id="tab-workout" class="bottom-nav-item active">Workout</button>
+    <button id="tab-history" class="bottom-nav-item">History</button>
+  </div>
+
+  <script src="./assets/js/db.js"></script>
+  <script src="./assets/js/sync.js"></script>
+  <script src="./assets/js/auth.js"></script>
+  <script src="./assets/js/onboarding.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script src="./assets/js/navigation.js"></script>
+</body>
+</html>
