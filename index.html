@@ -15,82 +15,103 @@
   <style>
     body { font-family: Arial, sans-serif; background: #fff; color: #333; text-align: center; padding: 20px; }
     h2 { color: #ff6600; }
-    h3 { margin-top: 20px; }
     .btn { display: inline-block; padding: 12px 24px; margin: 8px; background: #000; color: #fff; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; }
     .btn:hover { background: #333; }
-    #signin-btn { margin-top: 30px; }
-    .status { margin-top: 15px; font-size: 14px; color: green; }
+    .hidden { display: none; }
+    .exercise-entry { text-align: left; margin: 10px auto; padding: 15px; border: 1px solid #ccc; border-radius: 8px; width: 90%; }
+    input { width: 50px; padding: 4px; margin-left: 8px; }
+    .status { margin-top: 10px; color: green; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h2>Select your preferences:</h2>
+  <!-- Screen 1: Preferences -->
+  <div id="preferences-screen">
+    <h2>Select your preferences:</h2>
+    <h3>Goal:</h3>
+    <div>
+      <button class="btn" onclick="setPreference('goal','Hypertrophy')">Hypertrophy</button>
+      <button class="btn" onclick="setPreference('goal','Strength')">Strength</button>
+    </div>
 
-  <!-- Preferences -->
-  <h3>Goal:</h3>
-  <div>
-    <button class="btn" onclick="setPreference('goal','Hypertrophy')">Hypertrophy</button>
-    <button class="btn" onclick="setPreference('goal','Strength')">Strength</button>
+    <h3>Experience:</h3>
+    <div>
+      <button class="btn" onclick="setPreference('experience','Beginner')">Beginner</button>
+      <button class="btn" onclick="setPreference('experience','Intermediate')">Intermediate</button>
+      <button class="btn" onclick="setPreference('experience','Advanced')">Advanced</button>
+    </div>
+
+    <h3>Equipment:</h3>
+    <div>
+      <button class="btn" onclick="setPreference('equipment','Home')">Home</button>
+      <button class="btn" onclick="setPreference('equipment','Gym')">Gym</button>
+    </div>
+
+    <h3>Days per week:</h3>
+    <div>
+      <button class="btn" onclick="setPreference('days',2)">2</button>
+      <button class="btn" onclick="setPreference('days',3)">3</button>
+      <button class="btn" onclick="setPreference('days',4)">4</button>
+      <button class="btn" onclick="setPreference('days',5)">5</button>
+      <button class="btn" onclick="setPreference('days',6)">6</button>
+    </div>
+
+    <h3>Include Cardio?</h3>
+    <div>
+      <button class="btn" onclick="setPreference('cardio',true)">Yes</button>
+      <button class="btn" onclick="setPreference('cardio',false)">No</button>
+    </div>
+
+    <!-- Google Sign-In -->
+    <div id="signin-btn" class="g_id_signin"
+      data-type="standard"
+      data-size="large"
+      data-theme="outline"
+      data-client_id="YOUR_GOOGLE_CLIENT_ID"
+      data-callback="handleCredentialResponse">
+    </div>
+
+    <p class="status" id="statusMsg"></p>
   </div>
 
-  <h3>Experience:</h3>
-  <div>
-    <button class="btn" onclick="setPreference('experience','Beginner')">Beginner</button>
-    <button class="btn" onclick="setPreference('experience','Intermediate')">Intermediate</button>
-    <button class="btn" onclick="setPreference('experience','Advanced')">Advanced</button>
+  <!-- Screen 2: Workout Plan -->
+  <div id="plan-screen" class="hidden">
+    <h2>Your Custom Workout Plan</h2>
+    <div id="workoutPlan"></div>
+    <button class="btn" onclick="showLogging()">Start Logging</button>
   </div>
 
-  <h3>Equipment:</h3>
-  <div>
-    <button class="btn" onclick="setPreference('equipment','Home')">Home</button>
-    <button class="btn" onclick="setPreference('equipment','Gym')">Gym</button>
+  <!-- Screen 3: Logging -->
+  <div id="logging-screen" class="hidden">
+    <h2>Log Your Workout</h2>
+    <div id="loggingForm"></div>
+    <button class="btn" onclick="saveWorkout()">Save Workout</button>
+    <p class="status" id="logStatus"></p>
   </div>
-
-  <h3>Days per week:</h3>
-  <div>
-    <button class="btn" onclick="setPreference('days',2)">2</button>
-    <button class="btn" onclick="setPreference('days',3)">3</button>
-    <button class="btn" onclick="setPreference('days',4)">4</button>
-    <button class="btn" onclick="setPreference('days',5)">5</button>
-    <button class="btn" onclick="setPreference('days',6)">6</button>
-  </div>
-
-  <h3>Include Cardio?</h3>
-  <div>
-    <button class="btn" onclick="setPreference('cardio',true)">Yes</button>
-    <button class="btn" onclick="setPreference('cardio',false)">No</button>
-  </div>
-
-  <!-- Google Sign-In -->
-  <div id="signin-btn" class="g_id_signin"
-    data-type="standard"
-    data-size="large"
-    data-theme="outline"
-    data-text="sign_in_with"
-    data-shape="rectangular"
-    data-logo_alignment="left"
-    data-client_id="YOUR_GOOGLE_CLIENT_ID"
-    data-callback="handleCredentialResponse">
-  </div>
-
-  <p class="status" id="statusMsg"></p>
 
   <script>
-    // Store preferences locally
     let userPreferences = JSON.parse(localStorage.getItem('preferences')) || {};
+    let exercisesToday = [];
+
+    // IndexedDB setup
+    let db;
+    const request = indexedDB.open('WorkoutDB', 1);
+    request.onupgradeneeded = e => {
+      db = e.target.result;
+      db.createObjectStore('workouts', { keyPath: 'id', autoIncrement: true });
+    };
+    request.onsuccess = e => { db = e.target.result; };
+    request.onerror = e => console.error('IndexedDB error:', e);
 
     function setPreference(key, value) {
       userPreferences[key] = value;
       localStorage.setItem('preferences', JSON.stringify(userPreferences));
       document.getElementById('statusMsg').innerText = "Saved: " + key + " = " + value;
-      console.log('Preferences:', userPreferences);
     }
 
-    // Handle Google Sign-In
     function handleCredentialResponse(response) {
       const idToken = response.credential;
       document.getElementById('statusMsg').innerText = "Signing in...";
-
-      // Send token + preferences to Apps Script
+      
       fetch('YOUR_APPS_SCRIPT_WEB_APP_URL', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,22 +120,104 @@
       .then(res => res.json())
       .then(data => {
         if (data.status === "success") {
-          document.getElementById('statusMsg').innerText = "✅ Preferences synced successfully!";
+          generateWorkoutPlan();
+          document.getElementById('preferences-screen').classList.add('hidden');
+          document.getElementById('plan-screen').classList.remove('hidden');
         } else {
-          document.getElementById('statusMsg').innerText = "⚠️ Sync failed: " + JSON.stringify(data);
+          document.getElementById('statusMsg').innerText = "Sync failed.";
         }
       })
       .catch(err => {
-        console.error('Error syncing:', err);
-        document.getElementById('statusMsg').innerText = "⚠️ Error syncing (offline mode)";
+        console.error('Sync error:', err);
+        generateWorkoutPlan();
+        document.getElementById('preferences-screen').classList.add('hidden');
+        document.getElementById('plan-screen').classList.remove('hidden');
       });
     }
 
-    // Register Service Worker for offline support
+    function generateWorkoutPlan() {
+      const container = document.getElementById('workoutPlan');
+      container.innerHTML = '';
+      const { goal, equipment, days } = userPreferences;
+      const repRange = goal === 'Strength' ? '3–6 reps' : '8–12 reps';
+      exercisesToday = (equipment === 'Gym') 
+        ? ['Bench Press', 'Squat', 'Deadlift', 'Pull-Ups', 'Overhead Press']
+        : ['Push-Ups', 'Bodyweight Squats', 'Dumbbell Rows', 'Plank', 'Lunges'];
+
+      container.innerHTML = `<p><strong>${days}-Day Program:</strong> ${repRange} per set</p>`;
+      exercisesToday.forEach(ex => {
+        let div = document.createElement('div');
+        div.classList.add('exercise-entry');
+        div.textContent = ex;
+        container.appendChild(div);
+      });
+    }
+
+    function showLogging() {
+      document.getElementById('plan-screen').classList.add('hidden');
+      document.getElementById('logging-screen').classList.remove('hidden');
+      const form = document.getElementById('loggingForm');
+      form.innerHTML = '';
+      exercisesToday.forEach(ex => {
+        form.innerHTML += `
+          <div class="exercise-entry">
+            <strong>${ex}</strong>
+            <br>Set 1: <input type="number" placeholder="Reps" id="${ex}-r1"> x <input type="number" placeholder="Weight" id="${ex}-w1">
+            <br>Set 2: <input type="number" placeholder="Reps" id="${ex}-r2"> x <input type="number" placeholder="Weight" id="${ex}-w2">
+          </div>`;
+      });
+    }
+
+    function saveWorkout() {
+      const workout = { date: new Date().toISOString(), exercises: [] };
+      exercisesToday.forEach(ex => {
+        workout.exercises.push({
+          name: ex,
+          sets: [
+            { reps: document.getElementById(`${ex}-r1`).value, weight: document.getElementById(`${ex}-w1`).value },
+            { reps: document.getElementById(`${ex}-r2`).value, weight: document.getElementById(`${ex}-w2`).value }
+          ]
+        });
+      });
+      
+      const tx = db.transaction('workouts', 'readwrite');
+      tx.objectStore('workouts').add(workout);
+      document.getElementById('logStatus').innerText = "✅ Workout saved locally!";
+      
+      if (navigator.onLine) syncWorkouts();
+    }
+
+    function syncWorkouts() {
+      const tx = db.transaction('workouts', 'readonly');
+      const store = tx.objectStore('workouts');
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const workouts = req.result;
+        if (workouts.length === 0) return;
+        
+        fetch('YOUR_APPS_SCRIPT_WEB_APP_URL', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'sync', workouts })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            // Clear synced logs
+            const txClear = db.transaction('workouts', 'readwrite');
+            txClear.objectStore('workouts').clear();
+            document.getElementById('logStatus').innerText = "✅ Synced with Google Sheets!";
+          }
+        });
+      };
+    }
+
+    window.addEventListener('online', syncWorkouts);
+
+    // Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log("✅ Service Worker Registered"))
-        .catch(err => console.log("❌ Service Worker Error:", err));
+        .then(() => console.log("✅ Service Worker Registered"));
     }
   </script>
 </body>
