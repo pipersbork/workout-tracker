@@ -1,154 +1,71 @@
-/* Reset and Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
-body {
-  background-color: #121212;
-  color: #ffffff;
-  font-size: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-/* Headings */
-h2, h3, h4 {
-  text-align: center;
-  margin: 10px 0;
-}
-
-h2 {
-  font-size: 1.8rem;
-}
-
-h3 {
-  font-size: 1.4rem;
-  margin-top: 15px;
-}
-
 /* Onboarding Section */
 #onboarding {
-  padding: 20px;
+  padding: 25px;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
+#onboarding h2 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+#onboarding p {
+  margin-bottom: 20px;
+  font-size: 1rem;
+  color: #dddddd;
+}
+
+#onboarding h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+  color: #ff6600; /* Orange accent for section titles */
+}
+
+/* Buttons for selections */
 #onboarding button {
   display: inline-block;
   background: #1f1f1f;
   color: #ffffff;
   border: 2px solid #333;
-  border-radius: 8px;
-  padding: 12px 20px;
+  border-radius: 10px;
+  padding: 14px 24px;
   margin: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
+  min-width: 100px;
 }
 
 #onboarding button.selected,
 #onboarding button:hover {
-  background: #ff6600; /* Orange accent */
+  background: #ff6600; /* Orange highlight */
   border-color: #ff6600;
-  color: #fff;
+  color: #000000;
 }
 
-/* App Content */
-#app-content {
-  padding: 15px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-#workout-plan, #history-container {
-  margin-top: 15px;
-  padding: 15px;
-  background: #1f1f1f;
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-#workout-plan ul, #history-container ul {
-  list-style-type: none;
-}
-
-#workout-plan li, #history-container li {
-  padding: 5px 0;
-  border-bottom: 1px solid #333;
-}
-
-#generateWorkout, #saveWorkout {
+/* Google Sign-In Button */
+#google-signin-btn {
   display: block;
-  width: 100%;
-  padding: 14px;
-  margin-top: 12px;
-  background: #ff6600; /* Orange button */
-  color: #000;
+  margin: 20px auto 0;
+  padding: 14px 24px;
+  width: 90%;
+  max-width: 360px;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 10px;
+  border: 2px solid #ff6600;
   font-weight: bold;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-#generateWorkout:hover, #saveWorkout:hover {
-  background: #e65c00; /* Slightly darker orange on hover */
-}
-
-/* Bottom Navigation */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  background-color: #1f1f1f;
-  padding: 10px 0;
-  border-top: 2px solid #333;
-}
-
-.bottom-nav-item {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #ffffff;
   font-size: 1rem;
-  padding: 10px 0;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.bottom-nav-item.active {
-  background: #ff6600; /* Orange active tab */
-  color: #000;
-}
-
-.bottom-nav-item:hover {
-  background: #333;
-}
-
-/* History Section */
-#history-container pre {
-  background: #292929;
-  color: #ffffff;
-  padding: 8px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  font-size: 0.9rem;
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
-  button {
-    font-size: 0.95rem;
-    padding: 10px;
-  }
-
-  h2 {
-    font-size: 1.4rem;
-  }
-
-  h3 {
-    font-size: 1.2rem;
-  }
+#google-signin-btn:hover {
+  background: #ff6600;
+  color: #000000;
 }
