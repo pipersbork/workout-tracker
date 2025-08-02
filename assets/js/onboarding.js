@@ -8,6 +8,11 @@ let preferences = {
   cardioSessions: 0
 };
 
+function markSelected(button) {
+  button.parentElement.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  button.classList.add("selected");
+}
+
 // Event listeners for onboarding buttons
 document.querySelectorAll(".select-goal").forEach(btn => btn.addEventListener("click", () => {
   preferences.goal = btn.dataset.goal;
@@ -43,20 +48,52 @@ document.querySelectorAll(".select-cardio-type").forEach(btn => btn.addEventList
 document.querySelectorAll(".select-cardio-frequency").forEach(btn => btn.addEventListener("click", () => {
   preferences.cardioSessions = parseInt(btn.dataset.cardiofreq);
   markSelected(btn);
-  finishOnboarding();
+  completeOnboarding();
 }));
 
-function markSelected(button) {
-  button.parentElement.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-  button.classList.add("selected");
+async function completeOnboarding() {
+  try {
+    showLoading("Saving your preferences...");
+    await savePreferencesToDB(preferences);
+    await syncPreferencesToGoogleSheet(preferences);
+    showSuccess("Preferences saved! Redirecting...");
+    setTimeout(() => {
+      document.getElementById("onboarding").style.display = "none";
+      document.getElementById("app-content").style.display = "block";
+      document.getElementById("bottom-nav").style.display = "flex";
+      hideLoading();
+    }, 1500);
+  } catch (error) {
+    hideLoading();
+    alert("Could not sync now. Your preferences are saved locally.");
+  }
 }
 
-// Complete onboarding
-async function finishOnboarding() {
-  await savePreferencesToDB(preferences);
-  await syncPreferencesToGoogleSheet(preferences);
+// Loading indicator
+function showLoading(message) {
+  let loader = document.createElement("div");
+  loader.id = "loading-overlay";
+  loader.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); color: white; display: flex;
+    justify-content: center; align-items: center; font-size: 1.2rem; z-index: 9999;
+  `;
+  loader.innerText = message;
+  document.body.appendChild(loader);
+}
 
-  document.getElementById("onboarding").style.display = "none";
-  document.getElementById("app-content").style.display = "block";
-  document.getElementById("bottom-nav").style.display = "flex";
+function hideLoading() {
+  let loader = document.getElementById("loading-overlay");
+  if (loader) loader.remove();
+}
+
+function showSuccess(message) {
+  let success = document.createElement("div");
+  success.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #ff6600; color: black; padding: 10px 20px; border-radius: 8px; font-weight: bold;
+  `;
+  success.innerText = message;
+  document.body.appendChild(success);
+  setTimeout(() => success.remove(), 2000);
 }
