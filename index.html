@@ -1,115 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workout Tracker</title>
   
-  <!-- Theme and Manifest -->
-  <meta name="theme-color" content="#121212">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="./assets/icons/icon-512.png">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="./assets/css/style.css">
-</head>
-<body class="dark-mode">
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   
-  <!-- ✅ Onboarding Screen -->
-  <div id="onboarding" class="onboarding-screen active">
-    <h2>Welcome to Workout Tracker</h2>
-    <p>Select your preferences:</p>
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#121212">
+  
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; color: #333; text-align: center; padding: 20px; }
+    h2 { color: #ff6600; }
+    h3 { margin-top: 20px; }
+    .btn { display: inline-block; padding: 12px 24px; margin: 8px; background: #000; color: #fff; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; }
+    .btn:hover { background: #333; }
+    #signin-btn { margin-top: 30px; }
+    .status { margin-top: 15px; font-size: 14px; color: green; }
+  </style>
+</head>
+<body>
+  <h2>Select your preferences:</h2>
 
-    <!-- Goal -->
-    <h3>Goal:</h3>
-    <div>
-      <button class="select-goal" data-goal="Hypertrophy">Hypertrophy</button>
-      <button class="select-goal" data-goal="Strength">Strength</button>
-    </div>
-
-    <!-- Experience -->
-    <h3>Experience:</h3>
-    <div>
-      <button class="select-experience" data-exp="Beginner">Beginner</button>
-      <button class="select-experience" data-exp="Intermediate">Intermediate</button>
-      <button class="select-experience" data-exp="Advanced">Advanced</button>
-    </div>
-
-    <!-- Equipment -->
-    <h3>Equipment:</h3>
-    <div>
-      <button class="select-equipment" data-equip="Home">Home</button>
-      <button class="select-equipment" data-equip="Gym">Gym</button>
-    </div>
-
-    <!-- Frequency -->
-    <h3>Days per week:</h3>
-    <div>
-      <button class="select-frequency" data-days="2">2</button>
-      <button class="select-frequency" data-days="3">3</button>
-      <button class="select-frequency" data-days="4">4</button>
-      <button class="select-frequency" data-days="5">5</button>
-      <button class="select-frequency" data-days="6">6</button>
-    </div>
-
-    <!-- Cardio Toggle -->
-    <h3>Include Cardio?</h3>
-    <div>
-      <button class="select-cardio-toggle" data-cardio="yes">Yes</button>
-      <button class="select-cardio-toggle" data-cardio="no">No</button>
-    </div>
-
-    <!-- Cardio Options -->
-    <div id="cardio-options" style="display: none;">
-      <h3>Cardio Type:</h3>
-      <div>
-        <button class="select-cardio-type" data-type="Running">Running</button>
-        <button class="select-cardio-type" data-type="Cycling">Cycling</button>
-        <button class="select-cardio-type" data-type="Rowing">Rowing</button>
-      </div>
-
-      <h3>Cardio Sessions per Week:</h3>
-      <div>
-        <button class="select-cardio-frequency" data-cardiofreq="1">1</button>
-        <button class="select-cardio-frequency" data-cardiofreq="2">2</button>
-        <button class="select-cardio-frequency" data-cardiofreq="3">3</button>
-      </div>
-    </div>
-
-    <!-- Google Sign-In -->
-    <button id="google-signin-btn">Sign in with Google</button>
+  <!-- Preferences -->
+  <h3>Goal:</h3>
+  <div>
+    <button class="btn" onclick="setPreference('goal','Hypertrophy')">Hypertrophy</button>
+    <button class="btn" onclick="setPreference('goal','Strength')">Strength</button>
   </div>
 
-  <!-- ✅ Main App Content (Hidden until onboarding complete) -->
-  <div id="app-content" style="display:none;">
-    <h2>Your Workout Plan</h2>
-    <div id="workout-plan">No workout generated yet.</div>
-    <button id="generateWorkout">Generate Workout</button>
-    <button id="saveWorkout">Save Workout</button>
-    
-    <div id="history-container" style="margin-top:20px;">
-      <h3>Workout History</h3>
-      <ul id="history-list"></ul>
-    </div>
+  <h3>Experience:</h3>
+  <div>
+    <button class="btn" onclick="setPreference('experience','Beginner')">Beginner</button>
+    <button class="btn" onclick="setPreference('experience','Intermediate')">Intermediate</button>
+    <button class="btn" onclick="setPreference('experience','Advanced')">Advanced</button>
   </div>
 
-  <!-- ✅ Bottom Navigation -->
-  <div id="bottom-nav" class="bottom-nav" style="display:none;">
-    <button class="bottom-nav-item active" data-view="workout">Workout</button>
-    <button class="bottom-nav-item" data-view="history">History</button>
+  <h3>Equipment:</h3>
+  <div>
+    <button class="btn" onclick="setPreference('equipment','Home')">Home</button>
+    <button class="btn" onclick="setPreference('equipment','Gym')">Gym</button>
   </div>
 
-  <!-- ✅ Scripts -->
-  <script src="./assets/js/db.js"></script>
-  <script src="./assets/js/sync.js"></script>
-  <script src="./assets/js/auth.js"></script>
-  <script src="./assets/js/onboarding.js"></script>
-  <script src="./assets/js/app.js"></script>
-  <script src="./assets/js/navigation.js"></script>
+  <h3>Days per week:</h3>
+  <div>
+    <button class="btn" onclick="setPreference('days',2)">2</button>
+    <button class="btn" onclick="setPreference('days',3)">3</button>
+    <button class="btn" onclick="setPreference('days',4)">4</button>
+    <button class="btn" onclick="setPreference('days',5)">5</button>
+    <button class="btn" onclick="setPreference('days',6)">6</button>
+  </div>
 
-  <!-- ✅ Service Worker -->
+  <h3>Include Cardio?</h3>
+  <div>
+    <button class="btn" onclick="setPreference('cardio',true)">Yes</button>
+    <button class="btn" onclick="setPreference('cardio',false)">No</button>
+  </div>
+
+  <!-- Google Sign-In -->
+  <div id="signin-btn" class="g_id_signin"
+    data-type="standard"
+    data-size="large"
+    data-theme="outline"
+    data-text="sign_in_with"
+    data-shape="rectangular"
+    data-logo_alignment="left"
+    data-client_id="YOUR_GOOGLE_CLIENT_ID"
+    data-callback="handleCredentialResponse">
+  </div>
+
+  <p class="status" id="statusMsg"></p>
+
   <script>
+    // Store preferences locally
+    let userPreferences = JSON.parse(localStorage.getItem('preferences')) || {};
+
+    function setPreference(key, value) {
+      userPreferences[key] = value;
+      localStorage.setItem('preferences', JSON.stringify(userPreferences));
+      document.getElementById('statusMsg').innerText = "Saved: " + key + " = " + value;
+      console.log('Preferences:', userPreferences);
+    }
+
+    // Handle Google Sign-In
+    function handleCredentialResponse(response) {
+      const idToken = response.credential;
+      document.getElementById('statusMsg').innerText = "Signing in...";
+
+      // Send token + preferences to Apps Script
+      fetch('YOUR_APPS_SCRIPT_WEB_APP_URL', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: idToken, preferences: userPreferences })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          document.getElementById('statusMsg').innerText = "✅ Preferences synced successfully!";
+        } else {
+          document.getElementById('statusMsg').innerText = "⚠️ Sync failed: " + JSON.stringify(data);
+        }
+      })
+      .catch(err => {
+        console.error('Error syncing:', err);
+        document.getElementById('statusMsg').innerText = "⚠️ Error syncing (offline mode)";
+      });
+    }
+
+    // Register Service Worker for offline support
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js')
         .then(() => console.log("✅ Service Worker Registered"))
