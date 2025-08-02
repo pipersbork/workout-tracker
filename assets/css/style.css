@@ -1,4 +1,4 @@
-/* General Reset */
+/* Reset and Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -50,8 +50,9 @@ h3 {
 
 #onboarding button.selected,
 #onboarding button:hover {
-  background: #6200ea;
-  border-color: #6200ea;
+  background: #ff6600; /* Orange accent */
+  border-color: #ff6600;
+  color: #fff;
 }
 
 /* App Content */
@@ -83,7 +84,7 @@ h3 {
   width: 100%;
   padding: 14px;
   margin-top: 12px;
-  background: #03dac5;
+  background: #ff6600; /* Orange button */
   color: #000;
   font-weight: bold;
   font-size: 1.1rem;
@@ -94,7 +95,7 @@ h3 {
 }
 
 #generateWorkout:hover, #saveWorkout:hover {
-  background: #018786;
+  background: #e65c00; /* Slightly darker orange on hover */
 }
 
 /* Bottom Navigation */
@@ -118,7 +119,8 @@ h3 {
 }
 
 .bottom-nav-item.active {
-  background: #6200ea;
+  background: #ff6600; /* Orange active tab */
+  color: #000;
 }
 
 .bottom-nav-item:hover {
