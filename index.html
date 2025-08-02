@@ -1,180 +1,516 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Workout Tracker</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#121212">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker - Dark Theme</title>
+  <style>
+    /* Dark Black & Orange Theme */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
-  body { background: #121212; color: #fff; }
-  .hidden { display: none; }
-  .screen { padding: 20px; max-width: 500px; margin: auto; }
+    :root {
+      /* Core Colors */
+      --pure-black: #000000;
+      --dark-black: #0a0a0a;
+      --surface-black: #141414;
+      --card-black: #1a1a1a;
+      
+      /* Orange Variations */
+      --orange-primary: #ff6b35;
+      --orange-hover: #ff8255;
+      --orange-active: #e55a2b;
+      --orange-glow: rgba(255, 107, 53, 0.3);
+      
+      /* Text Colors */
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      
+      /* Status Colors */
+      --success: #4caf50;
+      --error: #f44336;
+      --warning: #ff9800;
+    }
 
-  /* Onboarding */
-  .wizard-step { text-align: center; padding: 40px 20px; }
-  .wizard-step h2 { margin-bottom: 20px; color: #fff; }
-  .btn { display: block; width: 100%; padding: 14px; margin: 8px 0; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
-  .btn-primary { background: #FF6600; color: #fff; }
-  .btn-secondary { background: #333; color: #fff; }
-  .progress { margin-top: 15px; font-size: 14px; color: #aaa; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--pure-black);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-  /* Workout Cards */
-  .plan-container { display: grid; gap: 16px; }
-  .day-card { background: #1E1E1E; border-radius: 12px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-  .day-card h3 { margin-bottom: 10px; color: #FF6600; }
-  .exercise-list p { margin: 4px 0; font-size: 14px; color: #ddd; }
+    /* Updated CSS for existing app */
+    .updated-style {
+      background-color: var(--dark-black);
+      color: var(--text-primary);
+    }
 
-  /* Logging */
-  .exercise-entry { background: #1E1E1E; padding: 16px; margin-bottom: 12px; border-radius: 8px; display: flex; flex-direction: column; }
-  .exercise-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .controls { display: flex; justify-content: space-between; gap: 20px; }
-  .control-group { text-align: center; }
-  .control-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: #FF6600; color: #fff; font-size: 18px; cursor: pointer; margin: 4px; }
-  .value-display { font-size: 18px; color: #fff; }
+    /* All Buttons - Orange Theme */
+    button, .btn {
+      background: var(--orange-primary);
+      color: var(--pure-black);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px var(--orange-glow);
+    }
 
-  /* Bottom Navigation */
-  .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #1E1E1E; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 6px rgba(0,0,0,0.5); }
-  .nav-item { text-align: center; font-size: 12px; color: #aaa; cursor: pointer; }
-  .nav-item.active { color: #FF6600; }
-</style>
+    button:hover, .btn:hover {
+      background: var(--orange-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--orange-glow);
+    }
+
+    button:active, .btn:active {
+      background: var(--orange-active);
+      transform: translateY(0);
+      box-shadow: 0 2px 8px var(--orange-glow);
+    }
+
+    /* Secondary/Ghost Buttons */
+    button.secondary {
+      background: transparent;
+      color: var(--orange-primary);
+      border: 2px solid var(--orange-primary);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: var(--orange-primary);
+      color: var(--pure-black);
+    }
+
+    /* Card Components - Pure Black */
+    .card {
+      background: var(--card-black);
+      border: 1px solid rgba(255, 107, 53, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    /* Enhanced Onboarding Screen */
+    .onboarding-screen {
+      background: var(--pure-black);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .onboarding-screen h2 {
+      color: var(--orange-primary);
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .onboarding-screen h3 {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      margin: 2rem 0 1rem;
+      padding-left: 1rem;
+      border-left: 3px solid var(--orange-primary);
+    }
+
+    .selection-grid {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .select-button {
+      background: var(--surface-black);
+      color: var(--text-secondary);
+      border: 2px solid transparent;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: none;
+    }
+
+    .select-button:hover {
+      background: var(--card-black);
+      border-color: var(--orange-primary);
+      color: var(--text-primary);
+      transform: translateY(0);
+      box-shadow: 0 0 15px var(--orange-glow);
+    }
+
+    .select-button.selected {
+      background: var(--orange-primary);
+      color: var(--pure-black);
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    /* Exercise Card - Dark Theme */
+    .exercise-card {
+      background: var(--surface-black);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .exercise-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--orange-primary);
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+
+    .exercise-card.active::before {
+      transform: scaleY(1);
+    }
+
+    .exercise-card:hover {
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 30px var(--orange-glow);
+    }
+
+    /* Input Fields - Dark Theme */
+    input {
+      background: var(--pure-black);
+      color: var(--text-primary);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    /* Bottom Navigation - Pure Black */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--pure-black);
+      border-top: 1px solid rgba(255, 107, 53, 0.3);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+    }
+
+    .bottom-nav-item {
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      position: relative;
+      transition: all 0.3s ease;
+      box-shadow: none;
+    }
+
+    .bottom-nav-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 3px;
+      background: var(--orange-primary);
+      transition: width 0.3s ease;
+    }
+
+    .bottom-nav-item:hover {
+      color: var(--orange-primary);
+      background: transparent;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .bottom-nav-item.active {
+      color: var(--orange-primary);
+      background: transparent;
+    }
+
+    .bottom-nav-item.active::after {
+      width: 80%;
+    }
+
+    /* Stats Display - Orange Accents */
+    .stat-card {
+      background: var(--surface-black);
+      border: 1px solid rgba(255, 107, 53, 0.2);
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--orange-primary);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px var(--orange-glow);
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--orange-primary);
+      text-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Progress Ring - Orange */
+    .progress-ring-progress {
+      stroke: var(--orange-primary);
+      filter: drop-shadow(0 0 10px var(--orange-glow));
+    }
+
+    /* Floating Action Button - Orange */
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--orange-primary);
+      color: var(--pure-black);
+      border: none;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 20px var(--orange-glow);
+      transition: all 0.3s ease;
+    }
+
+    .fab:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 8px 30px var(--orange-glow);
+    }
+
+    /* Achievement Toast - Orange Glow */
+    .achievement-toast {
+      background: var(--surface-black);
+      border: 2px solid var(--orange-primary);
+      color: var(--text-primary);
+      box-shadow: 0 0 30px var(--orange-glow);
+    }
+
+    .achievement-icon {
+      color: var(--orange-primary);
+      text-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    /* Rest Timer - Dark Theme */
+    .rest-timer {
+      background: var(--pure-black);
+      border: 2px solid var(--orange-primary);
+      box-shadow: 0 0 50px var(--orange-glow);
+    }
+
+    .timer-display {
+      color: var(--orange-primary);
+      text-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    /* Google Sign In Button - Custom Orange */
+    #googleSignInBtn {
+      background: var(--orange-primary);
+      color: var(--pure-black);
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px var(--orange-glow);
+    }
+
+    #googleSignInBtn::before {
+      content: '🔒';
+      font-size: 1.3rem;
+    }
+
+    /* Workout Plan Display */
+    #workout-plan {
+      background: var(--surface-black);
+      border: 1px solid rgba(255, 107, 53, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    #workout-plan h3 {
+      color: var(--orange-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+    }
+
+    #workout-plan ul {
+      list-style: none;
+    }
+
+    #workout-plan li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    #workout-plan li:hover {
+      color: var(--text-primary);
+      padding-left: 1rem;
+      border-left: 3px solid var(--orange-primary);
+    }
+
+    /* Loading Animation - Orange */
+    @keyframes pulse-orange {
+      0% {
+        box-shadow: 0 0 0 0 var(--orange-glow);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(255, 107, 53, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0);
+      }
+    }
+
+    .loading {
+      animation: pulse-orange 2s infinite;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--pure-black);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--orange-primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--orange-hover);
+    }
+  </style>
 </head>
 <body>
+  <!-- Example Enhanced Onboarding -->
+  <div class="onboarding-screen">
+    <h2>💪 Workout Tracker</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+      Let's customize your fitness journey
+    </p>
 
-<!-- Onboarding Wizard -->
-<div id="onboarding" class="screen">
-  <div id="step1" class="wizard-step">
-    <h2>What's your goal?</h2>
-    <button class="btn btn-primary" onclick="nextStep('goal','Hypertrophy')">Hypertrophy</button>
-    <button class="btn btn-primary" onclick="nextStep('goal','Strength')">Strength</button>
-    <div class="progress">Step 1 of 5</div>
+    <h3>Select Your Goal</h3>
+    <div class="selection-grid">
+      <button class="select-button" data-goal="hypertrophy">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💥</div>
+        Hypertrophy
+      </button>
+      <button class="select-button selected" data-goal="strength">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+        Strength
+      </button>
+    </div>
+
+    <h3>Experience Level</h3>
+    <div class="selection-grid">
+      <button class="select-button">Beginner</button>
+      <button class="select-button selected">Intermediate</button>
+      <button class="select-button">Advanced</button>
+    </div>
+
+    <button id="googleSignInBtn">
+      Continue with Google
+    </button>
   </div>
 
-  <div id="step2" class="wizard-step hidden">
-    <h2>Your experience level?</h2>
-    <button class="btn btn-primary" onclick="nextStep('experience','Beginner')">Beginner</button>
-    <button class="btn btn-primary" onclick="nextStep('experience','Intermediate')">Intermediate</button>
-    <button class="btn btn-primary" onclick="nextStep('experience','Advanced')">Advanced</button>
-    <div class="progress">Step 2 of 5</div>
-  </div>
-
-  <div id="step3" class="wizard-step hidden">
-    <h2>Where will you train?</h2>
-    <button class="btn btn-primary" onclick="nextStep('equipment','Home')">Home</button>
-    <button class="btn btn-primary" onclick="nextStep('equipment','Gym')">Gym</button>
-    <div class="progress">Step 3 of 5</div>
-  </div>
-
-  <div id="step4" class="wizard-step hidden">
-    <h2>How many days/week?</h2>
-    <button class="btn btn-primary" onclick="nextStep('days',2)">2</button>
-    <button class="btn btn-primary" onclick="nextStep('days',3)">3</button>
-    <button class="btn btn-primary" onclick="nextStep('days',4)">4</button>
-    <button class="btn btn-primary" onclick="nextStep('days',5)">5</button>
-    <div class="progress">Step 4 of 5</div>
-  </div>
-
-  <div id="step5" class="wizard-step hidden">
-    <h2>Include Cardio?</h2>
-    <button class="btn btn-primary" onclick="nextStep('cardio',true)">Yes</button>
-    <button class="btn btn-primary" onclick="nextStep('cardio',false)">No</button>
-    <div class="progress">Step 5 of 5</div>
-    <div style="margin-top:20px;">
-      <div id="signin-btn" class="g_id_signin"
-        data-type="standard"
-        data-size="large"
-        data-theme="outline"
-        data-client_id="YOUR_GOOGLE_CLIENT_ID"
-        data-callback="handleCredentialResponse">
+  <!-- Example Exercise Card -->
+  <div style="padding: 1rem;">
+    <div class="exercise-card active">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: var(--text-primary); margin: 0;">Bench Press</h3>
+        <span style="background: var(--orange-primary); color: var(--pure-black); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
+          3 x 8-12
+        </span>
+      </div>
+      
+      <div style="display: grid; gap: 0.75rem;">
+        <div style="display: grid; grid-template-columns: 40px 1fr 1fr 60px; gap: 0.5rem; align-items: center;">
+          <span style="color: var(--text-secondary); text-align: center;">1</span>
+          <input type="number" placeholder="Weight (kg)" style="text-align: center;">
+          <input type="number" placeholder="Reps" style="text-align: center;">
+          <button style="padding: 0.5rem; border-radius: 8px;">✓</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Workout Plan Screen -->
-<div id="plan-screen" class="screen hidden">
-  <h2>Your Workout Plan</h2>
-  <div class="plan-container" id="workoutPlan"></div>
-</div>
+  <!-- Example Stats -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem;">
+    <div class="stat-card">
+      <div class="stat-value">12</div>
+      <div class="stat-label">Workouts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">85%</div>
+      <div class="stat-label">Consistency</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">3</div>
+      <div class="stat-label">PRs This Week</div>
+    </div>
+  </div>
 
-<!-- Logging Screen -->
-<div id="logging-screen" class="screen hidden">
-  <h2>Today's Workout</h2>
-  <div id="loggingForm"></div>
-  <button class="btn btn-primary" onclick="saveWorkout()">Save Workout</button>
-  <p id="logStatus"></p>
-</div>
+  <!-- Floating Action Button -->
+  <button class="fab">+</button>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav hidden" id="bottomNav">
-  <div class="nav-item active" onclick="showScreen('plan-screen')">🏋️<br>Plan</div>
-  <div class="nav-item" onclick="showScreen('logging-screen')">📝<br>Log</div>
-  <div class="nav-item" onclick="showHistory()">📅<br>History</div>
-  <div class="nav-item" onclick="showSettings()">⚙️<br>Settings</div>
-</div>
-
-<script>
-let step = 1;
-let userPreferences = {};
-let currentWeek = 1; // Auto-progression counter
-
-function nextStep(key, value) {
-  userPreferences[key] = value;
-  localStorage.setItem('preferences', JSON.stringify(userPreferences));
-  document.getElementById(`step${step}`).classList.add('hidden');
-  step++;
-  if (step <= 5) {
-    document.getElementById(`step${step}`).classList.remove('hidden');
-  }
-}
-
-function handleCredentialResponse(response) {
-  document.getElementById('onboarding').classList.add('hidden');
-  generateWorkoutPlan();
-  document.getElementById('plan-screen').classList.remove('hidden');
-  document.getElementById('bottomNav').classList.remove('hidden');
-}
-
-function generateWorkoutPlan() {
-  const container = document.getElementById('workoutPlan');
-  container.innerHTML = '';
-  const { goal, equipment, days } = JSON.parse(localStorage.getItem('preferences'));
-  const templates = getWorkoutTemplate(days, equipment, goal);
-
-  templates.forEach((dayPlan, i) => {
-    let div = document.createElement('div');
-    div.className = 'day-card';
-    div.innerHTML = `<h3>Day ${i+1}: ${dayPlan.day}</h3>`;
-    dayPlan.exercises.forEach(ex => {
-      let suggestedWeight = ex.weight * (1 + 0.025 * (currentWeek-1));
-      div.innerHTML += `<p>${ex.name} — ${ex.sets} sets (${Math.round(suggestedWeight)} lbs suggested)</p>`;
-    });
-    container.appendChild(div);
-  });
-}
-
-function getWorkoutTemplate(days, equipment, goal) {
-  return [
-    { day: "Push", exercises: [{name:"Bench Press", sets:4, weight:135}, {name:"Overhead Press", sets:3, weight:95}] },
-    { day: "Pull", exercises: [{name:"Deadlift", sets:3, weight:225}, {name:"Pull-Ups", sets:4, weight:0}] }
-  ];
-}
-
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  document.getElementById(screenId).classList.remove('hidden');
-}
-
-function saveWorkout() {
-  document.getElementById('logStatus').textContent = "✅ Workout Saved (Offline if needed)";
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js');
-}
-</script>
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active">Workout</button>
+    <button class="bottom-nav-item">History</button>
+    <button class="bottom-nav-item">Progress</button>
+  </nav>
 </body>
 </html>
