@@ -1,36 +1,22 @@
-const CACHE_NAME = 'progression-cache-v1';
-const OFFLINE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/style.css',
-  '/script.js'
+const CACHE_NAME = 'progression-v1';
+const ASSETS = [
+  '/workout-tracker/',
+  '/workout-tracker/index.html',
+  '/workout-tracker/manifest.json',
+  '/workout-tracker/icons/icon-192.png',
+  '/workout-tracker/icons/icon-512.png'
 ];
 
-// Install Service Worker
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_URLS))
-  );
-  self.skipWaiting();
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-// Activate and cleanup old caches
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+  ));
 });
 
-// Fetch handler
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response =>
-      response || fetch(event.request).catch(() => caches.match('/index.html'))
-    )
-  );
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
