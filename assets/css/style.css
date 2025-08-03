@@ -160,6 +160,75 @@ textarea {
     color: #ddd;
 }
 
+/* Option Buttons (for Experience, Style, Days) */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+.option-btn {
+    background: #222;
+    color: #fff;
+    border: 2px solid #ff6b35;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+.option-btn:hover {
+    background: #ff6b35;
+    color: #111;
+}
+.option-btn.active {
+    background: #ff6b35;
+    color: #111;
+    transform: scale(1.05);
+}
+
+/* Card Style for Goal Selection */
+.card-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+.goal-card {
+    background: #1c1c1e;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px 15px;
+    text-align: center;
+    width: 120px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.3s ease;
+    color: #fff;
+}
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+.goal-card h3 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.goal-card p {
+    font-size: 0.8rem;
+    color: #bbb;
+}
+.goal-card:hover {
+    transform: scale(1.05);
+    border-color: #ff6b35;
+}
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #2a2a2d;
+}
+
 /* Animations */
 @keyframes fadeInScale {
     0% { opacity: 0; transform: scale(0.8); }
@@ -204,34 +273,8 @@ textarea {
         font-size: 1rem;
         padding: 14px 0;
     }
-    .button-group {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.option-btn {
-    background: #222;
-    color: #fff;
-    border: 2px solid #ff6b35;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.option-btn:hover {
-    background: #ff6b35;
-    color: #111;
-}
-
-.option-btn.active {
-    background: #ff6b35;
-    color: #111;
-    transform: scale(1.05);
-}
-
+    .goal-card {
+        width: 100px;
+        padding: 15px;
+    }
 }
