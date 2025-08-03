@@ -1,181 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progression - Workout Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
-            background-size: 400% 400%;
-            opacity: 0;
-            animation: fadeInBackground 1.5s ease forwards, gradientBG 8s ease infinite 1.5s;
-            color: #ff6b35;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            overflow: hidden;
-        }
-
-        @keyframes gradientBG {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
-        }
-
-        @keyframes fadeInBackground {
-            0% {opacity: 0;}
-            100% {opacity: 1;}
-        }
-
-        .container {
-            max-width: 90%;
-            padding: 20px;
-        }
-
-        /* Animations */
-        @keyframes fadeInScale {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUpButton {
-            0% { opacity: 0; transform: translateY(50px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulseGlow {
-            0% {
-                box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 145, 77, 0.6);
-            }
-            100% {
-                box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);
-            }
-        }
-
-        @keyframes dividerGlow {
-            0% {
-                box-shadow: 0 0 0 rgba(255, 107, 53, 0);
-            }
-            50% {
-                box-shadow: 0 0 12px rgba(255, 107, 53, 0.8);
-            }
-            100% {
-                box-shadow: 0 0 0 rgba(255, 107, 53, 0);
-            }
-        }
-
-        /* Title */
-        .main-title {
-            font-size: 3rem;
-            font-weight: bold;
-            letter-spacing: 6px;
-            margin-bottom: 10px;
-            opacity: 0;
-            animation: fadeInScale 1.2s ease forwards;
-        }
-
-        /* Divider line */
-        .divider {
-            width: 80px;
-            height: 2px;
-            background-color: #ff6b35;
-            margin: 10px auto 20px auto;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.2s, dividerGlow 1.5s ease 2.2s;
-        }
-
-        /* Tagline */
-        .tagline {
-            font-size: 1rem;
-            color: #ff6b35;
-            margin-bottom: 35px;
-            line-height: 1.4;
-            opacity: 0;
-            animation: slideUp 1s ease forwards;
-            animation-delay: 1.6s;
-        }
-
-        /* Button */
-        .cta-button {
-            display: inline-block;
-            padding: 16px 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #fff;
-            background: linear-gradient(45deg, #ff6b35, #ff914d);
-            border: none;
-            border-radius: 12px;
-            text-decoration: none;
-            transition: transform 0.2s ease, background 0.3s ease;
-            opacity: 0;
-            animation: slideUpButton 1.2s ease forwards, pulseGlow 2s infinite ease-in-out;
-            animation-delay: 2s, 3.2s; /* glow starts after button appears */
-        }
-
-        .cta-button:hover {
-            transform: scale(1.05);
-            background: linear-gradient(45deg, #ff914d, #ff6b35);
-        }
-
-        /* Responsive adjustments */
-        @media screen and (max-width: 480px) {
-            .main-title {
-                font-size: 2rem;
-                letter-spacing: 3px;
-            }
-            .divider {
-                width: 50px;
-            }
-            .tagline {
-                font-size: 0.9rem;
-                margin-bottom: 25px;
-            }
-            .cta-button {
-                width: 80%;
-                font-size: 1rem;
-                padding: 14px 0;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progression - Workout Tracker</title>
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="manifest" href="./assets/manifest.json">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script defer src="./assets/js/app.js"></script>
+<script defer src="./assets/js/auth.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Horizontal Title -->
+<div class="container">
+
+    <!-- Progress Bar -->
+    <div class="progress-bar"><div class="progress"></div></div>
+
+    <!-- STEP 1 (Your posted intro design) -->
+    <div class="step active" id="step1">
         <div class="main-title">PROGRESSION</div>
-
-        <!-- Divider -->
         <div class="divider"></div>
-
-        <!-- Tagline -->
-        <div class="tagline">
-            BREAK DOWN, BREAK THROUGH
-        </div>
-
-        <!-- CTA Button -->
-        <a href="#" class="cta-button">Begin Onboarding</a>
+        <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
+        <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step2">
+        <h2>👤 Your Info</h2>
+        <input type="text" id="name" placeholder="Name">
+        <select id="goal">
+            <option value="">Select Goal</option>
+            <option value="lose">Lose Fat</option>
+            <option value="gain">Gain Muscle</option>
+            <option value="maintain">Maintain</option>
+        </select>
+        <button class="cta-button" onclick="nextStep()">Next</button>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step" id="step3">
+        <h2>💪 Experience Level</h2>
+        <select id="experience">
+            <option value="">Select Level</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+        </select>
+        <button class="cta-button" onclick="nextStep()">Next</button>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step" id="step4">
+        <h2>🏋️ Workout Preferences</h2>
+        <select id="style">
+            <option value="">Select Style</option>
+            <option value="strength">Strength</option>
+            <option value="cardio">Cardio</option>
+            <option value="hybrid">Hybrid</option>
+        </select>
+        <select id="days">
+            <option value="">Days per week</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+        </select>
+        <button class="cta-button" onclick="nextStep()">Next</button>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step" id="step5">
+        <h2>🔐 Sign in to Sync</h2>
+        <div id="g_id_onload"
+            data-client_id="YOUR_GOOGLE_CLIENT_ID"
+            data-context="signup"
+            data-callback="handleCredentialResponse"
+            data-auto_select="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+        <button class="cta-button" onclick="nextStep()">Next</button>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step" id="step6">
+        <h2>✅ All Set!</h2>
+        <p>Your preferences have been saved.</p>
+        <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
+    </div>
+</div>
 </body>
 </html>
