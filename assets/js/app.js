@@ -55,6 +55,7 @@ async function finishOnboarding() {
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
     plan = generatePlan(userSelections);
+    await saveData("plans", plan); // Persist to IndexedDB
     renderDashboard(plan);
 }
 
@@ -62,25 +63,20 @@ async function finishOnboarding() {
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
-    document.querySelector('.container').style.display = "none";
+    document.querySelector('.container').classList.add("hidden");
     const dashboard = document.getElementById('dashboard');
-    dashboard.style.display = "block";
+    dashboard.classList.remove("hidden");
 
-    document.getElementById('userSummary').innerText = `
-        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
-    `;
+    document.getElementById('userSummary').innerText =
+        `Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}`;
 
-    document.getElementById('volumeSummary').innerText = `
-        ${plan.currentVolume} sets / ${plan.maxVolume} max
-    `;
+    document.getElementById('volumeSummary').innerText =
+        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
 
     document.getElementById('volumeProgress').style.width =
         `${(plan.currentVolume / plan.maxVolume) * 100}%`;
 
-    // Render charts
     renderCharts(plan);
-
-    // Load workout history
     loadWorkouts();
 }
 
@@ -98,7 +94,7 @@ function renderCharts(plan) {
                 data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
                 borderColor: '#ff6b35',
                 fill: false,
-                tension: 0.2
+                tension: 0.3
             }]
         },
         options: {
@@ -180,13 +176,13 @@ async function submitWorkout() {
     }
 
     const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    saveWorkoutToDB(workout);
+    await saveData("workouts", workout);
     closeModal();
     loadWorkouts();
 }
 
 async function loadWorkouts() {
-    const workouts = await getAllWorkoutsFromDB();
+    const workouts = await getAllData("workouts");
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
     workouts.forEach(w => {
@@ -206,6 +202,7 @@ async function saveManualAdjust() {
             ex.reps = parseInt(document.getElementById(`reps-${i}-${j}`).value);
         });
     });
+    await saveData("plans", plan);
     closeModal();
 }
 
@@ -213,7 +210,6 @@ async function saveManualAdjust() {
    PLAN GENERATION (Trainer Logic Placeholder)
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
-    // Simple logic for now; later we'll integrate trainer-based progression
     const baseVolume = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
     return {
         goal,
@@ -244,6 +240,23 @@ function generatePlan({ goal, experience, style, days }) {
 }
 
 /* ===========================
+   EXERCISE LOADING (For Custom Planner)
+=========================== */
+async function loadExercises(filter = {}) {
+    const exercises = await getAllData("exercises");
+
+    let filtered = exercises;
+    if (filter.goal) {
+        filtered = filtered.filter(ex => ex.goal.includes(filter.goal));
+    }
+    if (filter.equipment) {
+        filtered = filtered.filter(ex => ex.equipment.includes(filter.equipment));
+    }
+
+    return filtered;
+}
+
+/* ===========================
    UTILITY
 =========================== */
 function capitalize(str) {
@@ -256,7 +269,7 @@ function capitalize(str) {
 window.onload = async () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
         Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
-        plan = generatePlan(userSelections);
+        plan = await getAllData("plans").then(p => p[0] || generatePlan(userSelections));
         renderDashboard(plan);
     } else {
         document.querySelector('#step1').classList.add('active');
