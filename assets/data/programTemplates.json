@@ -1,0 +1,37 @@
+{
+  "hypertrophy": {
+    "beginner": {
+      "baseVolume": 10,
+      "repRanges": {
+        "primary": [8, 12],
+        "secondary": [6, 8],
+        "tertiary": [12, 15]
+      },
+      "rirStart": 3,
+      "rirEnd": 0,
+      "deloadWeek": 4
+    },
+    "intermediate": {
+      "baseVolume": 14,
+      "repRanges": {
+        "primary": [8, 12],
+        "secondary": [6, 8],
+        "tertiary": [12, 15]
+      },
+      "rirStart": 3,
+      "rirEnd": 0,
+      "deloadWeek": 4
+    },
+    "advanced": {
+      "baseVolume": 18,
+      "repRanges": {
+        "primary": [8, 12],
+        "secondary": [6, 8],
+        "tertiary": [12, 15]
+      },
+      "rirStart": 3,
+      "rirEnd": 0,
+      "deloadWeek": 4
+    }
+  }
+}
