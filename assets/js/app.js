@@ -113,4 +113,65 @@ window.onload = () => {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
     }
+    async function renderDashboard(plan = null) {
+    if (!plan) {
+        plan = await getPlanFromDB();
+    }
+    if (!plan) {
+        console.error("No plan found.");
+        return;
+    }
+
+    // Clear container
+    const container = document.querySelector('.container');
+    container.innerHTML = '';
+
+    // Dashboard Header
+    const dashboardHTML = `
+        <div class="dashboard">
+            <h1>🏋️ Your Training Plan</h1>
+            <p><strong>Goal:</strong> ${capitalize(plan.goal)} | <strong>Level:</strong> ${capitalize(plan.experience)}</p>
+            <p><strong>Week:</strong> ${plan.week} | <strong>Target RIR:</strong> ${plan.rirTarget}</p>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress" style="width:${(plan.currentVolume / plan.maxVolume) * 100}%"></div>
+            </div>
+            <p>${plan.currentVolume} sets / ${plan.maxVolume} max</p>
+
+            <!-- Sessions -->
+            <div class="sessions">
+                ${plan.sessions.map(session => `
+                    <div class="session-card">
+                        <h2>${session.name}</h2>
+                        ${session.exercises.map(ex => `
+                            <div class="exercise">
+                                <p><strong>${ex.name}</strong></p>
+                                <p>${ex.sets} sets × ${ex.reps[0]}–${ex.reps[1]} reps</p>
+                                <p>RIR: ${ex.rir}</p>
+                                ${ex.load ? `<p>Load: ${ex.load}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('')}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="dashboard-actions">
+                <button class="cta-button" onclick="logWorkout()">Log Workout</button>
+                <button class="cta-button" onclick="manualAdjust()">Custom Adjust</button>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = dashboardHTML;
+}
+
+/**
+ * Helper to capitalize text
+ */
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 };
