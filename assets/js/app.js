@@ -1,3 +1,4 @@
+/* ===== Global State ===== */
 let currentStep = 1;
 const totalSteps = 6;
 
@@ -6,15 +7,18 @@ const userSelections = {
     experience: "",
     style: "",
     days: "",
-    frequency: 2
+    frequency: 2 // default, adjust based on onboarding
 };
 
-/* ===== Onboarding Functions ===== */
+let trainingPlan = null; // Holds current plan
+
+/* ===== Progress Bar Update ===== */
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
 }
 
+/* ===== Navigation Logic ===== */
 function nextStep() {
     const current = document.getElementById('step' + currentStep);
     current.classList.remove('active');
@@ -39,119 +43,241 @@ function validateStep(field) {
 
 function selectCard(element, field, value) {
     userSelections[field] = value;
+
     const group = element.parentElement.querySelectorAll('.goal-card');
     group.forEach(card => card.classList.remove('active'));
+
     element.classList.add('active');
 }
 
+/* ===== Finish Onboarding ===== */
 async function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
-    renderDashboard();
+    // Generate training plan based on selections
+    trainingPlan = generatePlan(userSelections);
+    localStorage.setItem("trainingPlan", JSON.stringify(trainingPlan));
+
+    renderDashboard(trainingPlan);
+}
+
+/* ===== Render Dashboard ===== */
+function renderDashboard(plan = null) {
+    if (!plan) {
+        const savedPlan = localStorage.getItem("trainingPlan");
+        if (savedPlan) {
+            plan = JSON.parse(savedPlan);
+        }
+    }
+    if (!plan) {
+        console.error("No plan found.");
+        return;
+    }
+
+    document.querySelector('.container').style.display = 'none';
+    document.getElementById('dashboard').classList.remove('hidden');
+
+    // Update summary
+    document.getElementById('userSummary').innerHTML = `
+        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
+    `;
+
+    // Update progress bar
+    const progressPercent = (plan.currentVolume / plan.maxVolume) * 100;
+    document.getElementById('volumeProgress').style.width = `${progressPercent}%`;
+    document.getElementById('volumeSummary').textContent =
+        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
+
+    // Render charts
+    renderCharts(plan);
+
+    // Load workout history
+    loadWorkoutHistory();
+}
+
+/* ===== Generate Training Plan ===== */
+function generatePlan(selections) {
+    const baseVolume = selections.goal === "muscle" ? 10 : 6;
+    const maxVolume = selections.goal === "muscle" ? 20 : 12;
+
+    return {
+        goal: selections.goal,
+        experience: selections.experience,
+        style: selections.style,
+        days: selections.days,
+        week: 1,
+        currentVolume: baseVolume,
+        maxVolume,
+        rirTarget: selections.experience === "beginner" ? 3 : 2,
+        sessions: generateSessions(selections)
+    };
+}
+
+function generateSessions(selections) {
+    const exercises = selections.goal === "muscle"
+        ? ["Squat", "Bench Press", "Row", "Shoulder Press"]
+        : ["Run", "Burpee", "Push-up", "Sit-up"];
+    return Array.from({ length: selections.days }, (_, i) => ({
+        name: `Session ${i + 1}`,
+        exercises: exercises.map(ex => ({
+            name: ex,
+            sets: 3,
+            reps: [8, 12],
+            rir: selections.experience === "beginner" ? 3 : 2
+        }))
+    }));
+}
+
+/* ===== Charts ===== */
+let volumeChartInstance = null;
+let loadChartInstance = null;
+
+function renderCharts(plan) {
+    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
+    const ctxLoad = document.getElementById('loadChart').getContext('2d');
+
+    const volumeData = {
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+        datasets: [{
+            label: "Training Volume (Sets)",
+            data: [plan.currentVolume, plan.currentVolume + 2, plan.currentVolume + 4, plan.maxVolume],
+            backgroundColor: "rgba(255,107,53,0.7)"
+        }]
+    };
+
+    const loadData = {
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+        datasets: [{
+            label: "Estimated Load Progression",
+            data: [100, 105, 110, 115],
+            backgroundColor: "rgba(255,145,77,0.7)"
+        }]
+    };
+
+    if (volumeChartInstance) volumeChartInstance.destroy();
+    if (loadChartInstance) loadChartInstance.destroy();
+
+    volumeChartInstance = new Chart(ctxVolume, {
+        type: 'bar',
+        data: volumeData,
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    loadChartInstance = new Chart(ctxLoad, {
+        type: 'line',
+        data: loadData,
+        options: { responsive: true }
+    });
+}
+
+/* ===== Workout History ===== */
+function loadWorkoutHistory() {
+    const history = JSON.parse(localStorage.getItem("workoutHistory") || "[]");
+    const list = document.getElementById('workoutList');
+    list.innerHTML = "";
+    history.forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${w.date} - Fatigue: ${w.fatigue}`;
+        list.appendChild(li);
+    });
+}
+
+function saveWorkoutToHistory(entry) {
+    const history = JSON.parse(localStorage.getItem("workoutHistory") || "[]");
+    history.push(entry);
+    localStorage.setItem("workoutHistory", JSON.stringify(history));
+    loadWorkoutHistory();
 }
 
 /* ===== Modal Logic ===== */
-function openModal() {
-    document.getElementById('modal').classList.remove('hidden');
+function openModal(type) {
+    const modal = document.getElementById('modal');
+    const body = document.getElementById('modal-body');
+
+    if (type === "logWorkout") {
+        body.innerHTML = `
+            <h2>Log Workout</h2>
+            <label>Fatigue Score (1-10)</label>
+            <input type="number" id="fatigueScore" min="1" max="10">
+            <textarea id="workoutNotes" placeholder="Notes"></textarea>
+            <button class="cta-button" onclick="submitWorkout()">Save</button>
+        `;
+    } else if (type === "planner") {
+        body.innerHTML = `
+            <h2>Adjust Your Plan</h2>
+            <p>Edit sets/RIR for exercises</p>
+            ${trainingPlan.sessions.map((session, sIndex) => `
+                <div>
+                    <h3>${session.name}</h3>
+                    ${session.exercises.map((ex, eIndex) => `
+                        <div>
+                            <p>${ex.name}</p>
+                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}"> Sets
+                            <input type="number" id="rir-${sIndex}-${eIndex}" value="${ex.rir}"> RIR
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
+            <button class="cta-button" onclick="saveManualAdjust()">Save Changes</button>
+        `;
+    } else if (type === "settings") {
+        body.innerHTML = `
+            <h2>Settings</h2>
+            <p>Additional options coming soon...</p>
+        `;
+    }
+
+    modal.classList.remove('hidden');
 }
 
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-/* ===== Dashboard Rendering ===== */
-async function renderDashboard(plan = null) {
-    const container = document.querySelector('.container');
-    container.innerHTML = `
-        <div class="dashboard">
-            <h1>Welcome to Progression</h1>
-            <p><strong>Goal:</strong> ${capitalize(userSelections.goal)} | <strong>Experience:</strong> ${capitalize(userSelections.experience)}</p>
-            <p><strong>Style:</strong> ${capitalize(userSelections.style)} | <strong>Days:</strong> ${userSelections.days}</p>
-
-            <!-- Quick Setup & Advanced Buttons -->
-            <div class="dashboard-actions" style="margin: 20px;">
-                <button class="cta-button" onclick="openModal()">⚡ Quick Setup</button>
-                <a href="mesocycle.html" class="cta-button" style="display:block; text-align:center;">🛠 Advanced Planner</a>
-            </div>
-
-            <!-- Placeholder for plan preview -->
-            <div id="planPreview" style="margin-top:20px;">
-                ${plan ? renderPlanPreview(plan) : "<p>No plan created yet. Use Quick Setup or Advanced Planner.</p>"}
-            </div>
-        </div>
-    `;
-}
-
-/* Render preview of plan */
-function renderPlanPreview(plan) {
-    return `
-        <h2>Your Plan</h2>
-        <p><strong>Weeks:</strong> ${plan.weeks} | <strong>Intensity:</strong> ${capitalize(plan.intensity)}</p>
-        <p><strong>Volume Progression:</strong></p>
-        <ul>
-            ${plan.weeksArray.map((w, i) => `<li>Week ${i + 1}: ${w.sets} sets | RIR ${w.rir}</li>`).join('')}
-        </ul>
-    `;
-}
-
-/* ===== Quick Setup Plan Generator ===== */
-function generateQuickMesocycle() {
-    const weeks = parseInt(document.getElementById('weeks').value);
-    const intensity = document.getElementById('intensity').value;
-
-    const baseSets = userSelections.experience === 'beginner' ? 8 : userSelections.experience === 'advanced' ? 14 : 10;
-    const rirStart = 4;
-    const rirEnd = intensity === 'high' ? 0 : 1;
-
-    const weeksArray = [];
-    for (let i = 0; i < weeks; i++) {
-        const sets = baseSets + Math.floor((i / weeks) * 4); // progressive overload
-        const rir = Math.max(rirStart - Math.floor((i / weeks) * (rirStart - rirEnd)), rirEnd);
-        weeksArray.push({ week: i + 1, sets, rir });
+/* ===== Save Workout (Log Modal) ===== */
+function submitWorkout() {
+    const fatigue = parseInt(document.getElementById('fatigueScore').value);
+    if (!fatigue || fatigue < 1 || fatigue > 10) {
+        alert("Enter a valid fatigue score (1-10)");
+        return;
     }
+    const notes = document.getElementById('workoutNotes').value;
 
-    const plan = { weeks, intensity, weeksArray };
+    saveWorkoutToHistory({
+        date: new Date().toLocaleDateString(),
+        fatigue,
+        notes
+    });
 
-    savePlanToDB(plan);
     closeModal();
-    renderDashboard(plan);
 }
 
-/* ===== IndexedDB Helpers for Plan ===== */
-async function savePlanToDB(plan) {
-    await initDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction("preferences", "readwrite");
-        tx.objectStore("preferences").put({ id: 2, plan });
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject("Failed to save plan");
+/* ===== Save Manual Adjust ===== */
+function saveManualAdjust() {
+    trainingPlan.sessions.forEach((session, sIndex) => {
+        session.exercises.forEach((ex, eIndex) => {
+            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
+            ex.rir = parseInt(document.getElementById(`rir-${sIndex}-${eIndex}`).value);
+        });
     });
+
+    localStorage.setItem("trainingPlan", JSON.stringify(trainingPlan));
+    renderDashboard(trainingPlan);
+    closeModal();
 }
 
-async function getPlanFromDB() {
-    await initDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction("preferences", "readonly");
-        const request = tx.objectStore("preferences").get(2);
-        request.onsuccess = () => resolve(request.result ? request.result.plan : null);
-        request.onerror = () => reject("Failed to fetch plan");
-    });
-}
-
-/* ===== Utility ===== */
+/* ===== Helpers ===== */
 function capitalize(str) {
-    return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-/* ===== On Load ===== */
-window.onload = async () => {
+/* ===== Page Load ===== */
+window.onload = () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
-        const savedSelections = JSON.parse(localStorage.getItem("userSelections"));
-        Object.assign(userSelections, savedSelections);
-
-        const savedPlan = await getPlanFromDB();
-        renderDashboard(savedPlan);
+        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
+        trainingPlan = JSON.parse(localStorage.getItem("trainingPlan")) || generatePlan(userSelections);
+        renderDashboard(trainingPlan);
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
