@@ -1,5 +1,11 @@
-/* Base reset and body styling */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ----------------------------
+   Base Styles
+----------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
@@ -7,10 +13,10 @@ body {
     animation: gradientBG 8s ease infinite;
     color: #ff6b35;
     height: 100vh;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
 }
 
 @keyframes gradientBG {
@@ -19,7 +25,9 @@ body {
     100% {background-position: 0% 50%;}
 }
 
-/* Container */
+/* ----------------------------
+   Container and Steps
+----------------------------- */
 .container {
     text-align: center;
     width: 100%;
@@ -57,14 +65,39 @@ body {
     pointer-events: none;
     transition: opacity 0.6s ease, transform 0.6s ease;
 }
-.step.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.step.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
 
-/* Titles and animations */
-.main-title { font-size: 3rem; font-weight: bold; letter-spacing: 6px; margin-bottom: 10px; animation: fadeInScale 1.2s ease forwards; }
-.divider { width: 80px; height: 2px; background-color: #ff6b35; margin: 10px auto 20px auto; animation: fadeIn 1s ease forwards 1.2s, dividerGlow 1.5s ease 2.2s; }
-.tagline { font-size: 1rem; margin-bottom: 35px; animation: slideUp 1s ease forwards; animation-delay: 1.6s; }
-
-/* Buttons */
+/* ----------------------------
+   Onboarding Intro
+----------------------------- */
+.main-title {
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+    opacity: 0;
+    animation: fadeInScale 1.2s ease forwards;
+}
+.divider {
+    width: 80px;
+    height: 2px;
+    background-color: #ff6b35;
+    margin: 10px auto 20px auto;
+    opacity: 0;
+    animation: fadeIn 1s ease forwards 1.2s, dividerGlow 1.5s ease 2.2s;
+}
+.tagline {
+    font-size: 1rem;
+    color: #ff6b35;
+    margin-bottom: 35px;
+    opacity: 0;
+    animation: slideUp 1s ease forwards;
+    animation-delay: 1.6s;
+}
 .cta-button {
     display: inline-block;
     padding: 16px 40px;
@@ -74,12 +107,17 @@ body {
     background: linear-gradient(45deg, #ff6b35, #ff914d);
     border: none;
     border-radius: 12px;
+    text-decoration: none;
     margin-top: 15px;
     transition: transform 0.2s ease, background 0.3s ease;
+    opacity: 0;
     animation: slideUpButton 1.2s ease forwards, pulseGlow 2s infinite ease-in-out;
     animation-delay: 2s, 3.2s;
 }
-.cta-button:hover { transform: scale(1.05); background: linear-gradient(45deg, #ff914d, #ff6b35); }
+.cta-button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #ff914d, #ff6b35);
+}
 
 /* Inputs */
 input, select, textarea {
@@ -93,14 +131,14 @@ input, select, textarea {
     background: #222;
     color: #fff;
 }
-textarea { resize: none; height: 80px; }
+textarea {
+    resize: none;
+    height: 80px;
+}
 
-/* Dashboard */
-.dashboard { padding: 20px; text-align: center; color: #fff; }
-.sessions { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-.session-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: left; color: #fff; }
-
-/* Card group */
+/* ----------------------------
+   Card Groups (Goals, Style, Days)
+----------------------------- */
 .card-group {
     display: flex;
     flex-wrap: nowrap;
@@ -110,9 +148,6 @@ textarea { resize: none; height: 80px; }
     padding: 10px;
     -webkit-overflow-scrolling: touch;
 }
-.card-group::-webkit-scrollbar { height: 6px; }
-.card-group::-webkit-scrollbar-thumb { background: #ff6b35; border-radius: 3px; }
-
 .goal-card {
     flex: 0 0 auto;
     background: #1c1c1e;
@@ -120,76 +155,161 @@ textarea { resize: none; height: 80px; }
     border-radius: 12px;
     padding: 20px 15px;
     text-align: center;
-    width: clamp(120px, 30%, 140px);
+    width: 140px;
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.3s ease;
     color: #fff;
 }
-.goal-card .icon { font-size: 1.8rem; margin-bottom: 8px; }
-.goal-card h3 { font-size: clamp(0.9rem, 3vw, 1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.goal-card p { font-size: 0.8rem; color: #bbb; }
-.goal-card:hover { transform: scale(1.05); border-color: #ff6b35; }
-.goal-card.active { border-color: #ff6b35; background: #2a2a2d; }
-
-/* Log & Adjust Modal (moved out of media query) */
-.log-workout, .manual-adjust {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: left;
-    color: #fff;
-    width: 90%;
-    max-width: 400px;
-    margin: auto;
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
 }
-.log-workout input, .manual-adjust input, textarea {
-    width: 100%;
-    margin: 10px 0;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    background: #222;
-    color: #fff;
+.goal-card h3 {
+    font-size: clamp(0.9rem, 3vw, 1rem);
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.2;
 }
-.session-edit { margin-bottom: 15px; }
+.goal-card p {
+    font-size: 0.8rem;
+    color: #bbb;
+}
+.goal-card:hover {
+    transform: scale(1.05);
+    border-color: #ff6b35;
+}
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #2a2a2d;
+}
 
-/* Animations */
-@keyframes fadeInScale { 0% {opacity:0;transform:scale(0.8);}100%{opacity:1;transform:scale(1);} }
-@keyframes fadeIn { 0% {opacity:0;}100%{opacity:1;} }
-@keyframes slideUp { 0% {opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);} }
-@keyframes slideUpButton { 0% {opacity:0;transform:translateY(50px);}100%{opacity:1;transform:translateY(0);} }
-@keyframes pulseGlow { 0% {box-shadow:0 0 10px rgba(255,107,53,0.6);}50%{box-shadow:0 0 20px rgba(255,107,53,0.8);}100%{box-shadow:0 0 10px rgba(255,107,53,0.6);} }
-@keyframes dividerGlow { 0% {box-shadow:0 0 0 rgba(255,107,53,0);}50%{box-shadow:0 0 12px rgba(255,107,53,0.8);}100%{box-shadow:0 0 0 rgba(255,107,53,0);} }
-
-/* Mobile adjustments */
-@media screen and (max-width: 480px) {
-    .main-title { font-size: 2rem; letter-spacing: 3px; }
-    .divider { width: 50px; }
-    .tagline { font-size: 0.9rem; margin-bottom: 25px; }
-    .cta-button { width: 80%; font-size: 1rem; padding: 14px 0; }
-    .goal-card { width: 110px; padding: 15px; }
-    .modal {
+/* ----------------------------
+   Modal Styling
+----------------------------- */
+.modal {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background: rgba(0,0,0,0.7);
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     z-index: 9999;
 }
-.modal.hidden { display: none; }
+.modal.hidden {
+    display: none;
+}
 .modal-content {
     background: #1c1c1e;
     padding: 20px;
     border-radius: 12px;
-    width: 90%; max-width: 400px;
+    width: 90%;
+    max-width: 400px;
     color: #fff;
     position: relative;
     animation: fadeInScale 0.3s ease;
 }
 .close-btn {
-    position: absolute; top: 10px; right: 15px;
-    font-size: 1.5rem; cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
     color: #ff6b35;
 }
 
+/* ----------------------------
+   Dashboard
+----------------------------- */
+.dashboard {
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+}
+.sessions {
+    margin: 20px 0;
+}
+.session-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+.exercise {
+    text-align: left;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+.dashboard-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+.workout-history {
+    text-align: left;
+    font-size: 0.9rem;
+    color: #ddd;
+    margin: 20px auto;
+    max-width: 400px;
+}
+canvas {
+    width: 100% !important;
+    max-width: 400px;
+    margin: 20px auto;
+    display: block;
+}
+
+/* ----------------------------
+   Animations
+----------------------------- */
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+@keyframes slideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUpButton {
+    0% { opacity: 0; transform: translateY(50px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
+    50% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 145, 77, 0.6);}
+    100% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
+}
+@keyframes dividerGlow {
+    0% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
+    50% { box-shadow: 0 0 12px rgba(255, 107, 53, 0.8);}
+    100% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
+}
+
+/* ----------------------------
+   Responsive Tweaks
+----------------------------- */
+@media screen and (max-width: 480px) {
+    .main-title {
+        font-size: 2rem;
+        letter-spacing: 3px;
+    }
+    .divider { width: 50px; }
+    .tagline {
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+    }
+    .cta-button {
+        width: 80%;
+        font-size: 1rem;
+        padding: 14px 0;
+    }
+    .goal-card {
+        width: 120px;
+        padding: 15px;
+    }
 }
