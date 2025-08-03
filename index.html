@@ -19,6 +19,8 @@
 <script defer src="./assets/js/app.js"></script>
 <script defer src="./assets/js/auth.js"></script>
 <script defer src="./assets/js/db.js"></script>
+<script defer src="./assets/js/plan.js"></script>
+<script defer src="./assets/js/log.js"></script>
 </head>
 <body>
 <div class="container">
@@ -135,12 +137,58 @@
     </div>
 </div>
 
-<!-- Modal -->
-<div id="modal" class="modal hidden">
+<!-- ===== Modals ===== -->
+
+<!-- Plan Selection Modal -->
+<div id="planModal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div id="modal-body"></div>
+        <h2>Plan a Mesocycle</h2>
+        <div class="modal-options">
+            <div class="option-card">Copy a mesocycle</div>
+            <div class="option-card">Resume plan</div>
+            <div class="option-card">Start with a template</div>
+            <div class="option-card">Start from scratch</div>
+        </div>
+        <button class="cta-button full-width">Begin</button>
     </div>
 </div>
+
+<!-- Muscle Group Modal -->
+<div id="muscleModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>Muscle Groups</h2>
+        <p>Choose a muscle group</p>
+        <ul class="list-options">
+            <li>Chest</li>
+            <li>Back</li>
+            <li>Triceps</li>
+            <li>Biceps</li>
+            <li>Shoulders</li>
+            <li>Quads</li>
+            <li>Glutes</li>
+            <li>Hamstrings</li>
+            <li>Calves</li>
+            <li>Traps</li>
+            <li>Forearms</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Exercise Selection Modal -->
+<div id="exerciseModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>Exercises</h2>
+        <input type="text" placeholder="Search exercises">
+        <ul class="list-options">
+            <li>Cable Chest Press</li>
+            <li>Cable Flye</li>
+            <li>Dumbbell Bench Press</li>
+        </ul>
+    </div>
+</div>
+
 </body>
 </html>
