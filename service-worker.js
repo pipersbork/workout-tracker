@@ -1,26 +1,36 @@
 const CACHE_NAME = 'progression-cache-v1';
-const urlsToCache = [
+const OFFLINE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/assets/css/style.css',
-  '/js/main.js',
-  '/js/sync.js',
-  '/js/workout-templates.js'
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/style.css',
+  '/script.js'
 ];
 
+// Install Service Worker
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_URLS))
+  );
+  self.skipWaiting();
 });
 
+// Activate and cleanup old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(key => key !== CACHE_NAME && caches.delete(key))))
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
   );
 });
 
+// Fetch handler
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then(response =>
+      response || fetch(event.request).catch(() => caches.match('/index.html'))
+    )
   );
 });
