@@ -1,6 +1,13 @@
 let currentStep = 1;
 const totalSteps = 6;
 
+const userSelections = {
+    goal: "",
+    experience: "",
+    style: "",
+    days: ""
+};
+
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
@@ -20,41 +27,16 @@ function nextStep() {
     }, 200);
 }
 
-function finishOnboarding() {
-    localStorage.setItem("onboardingCompleted", "true");
-    document.querySelector('.container').innerHTML = `
-        <h1>Dashboard Placeholder</h1>
-        <p>Your app goes here.</p>
-    `;
-}
-
-// On load
-window.onload = () => {
-    if (localStorage.getItem("onboardingCompleted") === "true") {
-        document.querySelector('.container').innerHTML = `
-            <h1>Dashboard Placeholder</h1>
-            <p>Your app goes here.</p>
-        `;
-    } else {
-        document.querySelector('#step1').classList.add('active');
-        updateProgress();
-    }
-    const userSelections = {
-    goal: "",
-    experience: "",
-    style: "",
-    days: ""
-};
-
 function selectOption(field, value) {
     userSelections[field] = value;
 
-    // Remove active state from other buttons in the same group
+    // Remove active from all buttons in this group
     const group = document.querySelector(`.button-group[data-field="${field}"]`);
     group.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
 
-    // Add active to clicked button
-    const clickedBtn = [...group.querySelectorAll('.option-btn')].find(btn => btn.textContent.includes(value) || btn.getAttribute('onclick').includes(value));
+    // Highlight clicked button
+    const clickedBtn = [...group.querySelectorAll('.option-btn')]
+        .find(btn => btn.getAttribute('onclick').includes(value));
     if (clickedBtn) clickedBtn.classList.add('active');
 }
 
@@ -64,4 +46,11 @@ function finishOnboarding() {
     renderDashboard();
 }
 
+window.onload = () => {
+    if (localStorage.getItem("onboardingCompleted") === "true") {
+        renderDashboard();
+    } else {
+        document.querySelector('#step1').classList.add('active');
+        updateProgress();
+    }
 };
