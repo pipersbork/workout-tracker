@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Progression - Workout Tracker</title>
 
 <!-- Styles -->
-<link rel="stylesheet" href="./assets/css/style.css" />
-<link rel="manifest" href="./assets/manifest.json" />
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="manifest" href="./assets/manifest.json">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,17 +17,18 @@
 
 <!-- App Scripts -->
 <script defer src="./assets/js/app.js"></script>
-<script defer src="./assets/js/trainerLogic.js" type="module"></script>
 <script defer src="./assets/js/auth.js"></script>
 <script defer src="./assets/js/db.js"></script>
 </head>
 <body>
 <div class="container">
 
-    <!-- Progress Bar -->
+    <!-- ===========================
+         ONBOARDING PROGRESS BAR
+    ============================ -->
     <div class="progress-bar"><div class="progress"></div></div>
 
-    <!-- STEP 1 -->
+    <!-- STEP 1: Welcome -->
     <div class="step active" id="step1">
         <div class="main-title">PROGRESSION</div>
         <div class="divider"></div>
@@ -35,7 +36,7 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2 -->
+    <!-- STEP 2: Goal -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
@@ -59,7 +60,7 @@
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3 -->
+    <!-- STEP 3: Experience -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
@@ -83,7 +84,7 @@
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4 -->
+    <!-- STEP 4: Preferences -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
@@ -115,7 +116,7 @@
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5 -->
+    <!-- STEP 5: Sign-In -->
     <div class="step" id="step5">
         <h2>🔐 Sign in to Sync</h2>
         <div id="g_id_onload"
@@ -128,7 +129,7 @@
         <button class="cta-button" onclick="nextStep()">Skip for Now</button>
     </div>
 
-    <!-- STEP 6 -->
+    <!-- STEP 6: Complete -->
     <div class="step" id="step6">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
@@ -142,12 +143,19 @@
         <h1>🏋️ Your Training Dashboard</h1>
         <p id="userSummary"></p>
 
-        <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
+        <!-- Progress Indicator -->
+        <div class="progress-bar">
+            <div class="progress" id="volumeProgress"></div>
+        </div>
         <p id="volumeSummary"></p>
 
         <!-- Charts -->
-        <div class="chart-container"><canvas id="volumeChart"></canvas></div>
-        <div class="chart-container"><canvas id="loadChart"></canvas></div>
+        <div class="chart-container">
+            <canvas id="volumeChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="loadChart"></canvas>
+        </div>
 
         <!-- Workout History -->
         <div class="workout-history">
