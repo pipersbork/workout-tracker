@@ -1,25 +1,42 @@
-document.getElementById("generateWorkout").addEventListener("click", () => {
-  let workoutPlan = `
-    <ul>
-      <li>Squat - 4 sets of 8 reps</li>
-      <li>Bench Press - 4 sets of 8 reps</li>
-      <li>Barbell Row - 4 sets of 8 reps</li>
-    </ul>
-  `;
-  document.getElementById("workout-plan").innerHTML = workoutPlan;
-});
+let currentStep = 1;
+const totalSteps = 6;
 
-document.getElementById("saveWorkout").addEventListener("click", async () => {
-  let workoutData = {
-    date: new Date().toLocaleString(),
-    plan: document.getElementById("workout-plan").innerHTML
-  };
+function updateProgress() {
+    const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    document.querySelector('.progress').style.width = percentage + "%";
+}
 
-  try {
-    await saveWorkoutToDB(workoutData);
-    await syncWorkoutToGoogleSheet(workoutData);
-    showSuccess("Workout saved!");
-  } catch (error) {
-    showSuccess("Saved offline. Will sync later.");
-  }
-});
+function nextStep() {
+    const current = document.getElementById('step' + currentStep);
+    current.classList.remove('active');
+
+    setTimeout(() => {
+        currentStep++;
+        const next = document.getElementById('step' + currentStep);
+        if (next) {
+            next.classList.add('active');
+            updateProgress();
+        }
+    }, 200);
+}
+
+function finishOnboarding() {
+    localStorage.setItem("onboardingCompleted", "true");
+    document.querySelector('.container').innerHTML = `
+        <h1>Dashboard Placeholder</h1>
+        <p>Your app goes here.</p>
+    `;
+}
+
+// On load
+window.onload = () => {
+    if (localStorage.getItem("onboardingCompleted") === "true") {
+        document.querySelector('.container').innerHTML = `
+            <h1>Dashboard Placeholder</h1>
+            <p>Your app goes here.</p>
+        `;
+    } else {
+        document.querySelector('#step1').classList.add('active');
+        updateProgress();
+    }
+};
