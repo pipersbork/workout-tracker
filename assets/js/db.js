@@ -1,126 +1,119 @@
-// db.js - IndexedDB setup for offline-first data
+/* ----------------------------
+   IndexedDB Setup
+----------------------------- */
 const DB_NAME = "workout-tracker";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped version for new "plan" store
 let db;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzxomn7b3HhL_Fjm2gXFxvRvo0cz4CI4ym2ETb2oL37kp1qgxJYzo0hbSmsEv4SYw9Cog/exec";
 
 function initDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = (event) => {
-      db = event.target.result;
-      if (!db.objectStoreNames.contains("preferences")) {
-        db.createObjectStore("preferences", { keyPath: "id", autoIncrement: true });
-      }
-      if (!db.objectStoreNames.contains("workouts")) {
-        db.createObjectStore("workouts", { keyPath: "id", autoIncrement: true });
-      }
-    };
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
 
-    request.onsuccess = (event) => {
-      db = event.target.result;
-      resolve(db);
-    };
+            if (!db.objectStoreNames.contains("preferences")) {
+                db.createObjectStore("preferences", { keyPath: "id", autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains("workouts")) {
+                db.createObjectStore("workouts", { keyPath: "id", autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains("plan")) {
+                db.createObjectStore("plan", { keyPath: "id", autoIncrement: true });
+            }
+        };
 
-    request.onerror = (event) => reject(event.target.error);
-  });
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
+
+        request.onerror = (event) => reject(event.target.error);
+    });
 }
 
-// Save user preferences locally
+/* ----------------------------
+   Preferences
+----------------------------- */
 async function savePreferencesToDB(preferences) {
-  await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("preferences", "readwrite");
-    tx.objectStore("preferences").put({ id: 1, ...preferences });
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject("Failed to save preferences locally");
-  });
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("preferences", "readwrite");
+        tx.objectStore("preferences").put({ id: 1, ...preferences });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject("Failed to save preferences");
+    });
 }
 
-// Get preferences
 async function getPreferencesFromDB() {
-  await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("preferences", "readonly");
-    const request = tx.objectStore("preferences").get(1);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject("Failed to load preferences");
-  });
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("preferences", "readonly");
+        const request = tx.objectStore("preferences").get(1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject("Failed to load preferences");
+    });
 }
 
-// Save workout locally
+/* ----------------------------
+   Workouts
+----------------------------- */
 async function saveWorkoutToDB(workout) {
-  await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("workouts", "readwrite");
-    tx.objectStore("workouts").add(workout);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject("Failed to save workout locally");
-  });
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("workouts", "readwrite");
+        tx.objectStore("workouts").add(workout);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject("Failed to save workout");
+    });
 }
 
-// Get all workouts
 async function getAllWorkoutsFromDB() {
-  await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("workouts", "readonly");
-    const store = tx.objectStore("workouts");
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject("Failed to fetch workouts");
-  });
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("workouts", "readonly");
+        const request = tx.objectStore("workouts").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject("Failed to fetch workouts");
+    });
 }
 
-/* ✅ SYNC LOGIC */
-
-// Sync Preferences to Google Sheet
-async function syncPreferences() {
-  const prefs = await getPreferencesFromDB();
-  if (!prefs) return;
-
-  return fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "onboarding",
-      data: prefs
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Preferences synced:", data);
-  })
-  .catch(err => console.error("Sync error:", err));
+/* ----------------------------
+   Plan
+----------------------------- */
+async function savePlanToDB(plan) {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("plan", "readwrite");
+        const store = tx.objectStore("plan");
+        store.clear(); // Keep only latest plan
+        store.add({ id: 1, ...plan });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject("Failed to save plan");
+    });
 }
 
-// Sync Workouts to Google Sheet
-async function syncWorkouts() {
-  const workouts = await getAllWorkoutsFromDB();
-  if (!workouts || workouts.length === 0) return;
-
-  return fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "syncWorkouts",
-      token: localStorage.getItem("googleToken"),
-      workouts
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Workouts synced:", data);
-
-    // Clear after successful sync
-    const tx = db.transaction("workouts", "readwrite");
-    tx.objectStore("workouts").clear();
-  })
-  .catch(err => console.error("Sync error:", err));
+async function getPlanFromDB() {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("plan", "readonly");
+        const request = tx.objectStore("plan").get(1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject("Failed to fetch plan");
+    });
 }
 
-// Auto sync when online
-window.addEventListener("online", () => {
-  syncPreferences();
-  syncWorkouts();
-});
+/* ----------------------------
+   Clear All Data (Optional)
+----------------------------- */
+async function clearAllData() {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(["preferences", "workouts", "plan"], "readwrite");
+        tx.objectStore("preferences").clear();
+        tx.objectStore("workouts").clear();
+        tx.objectStore("plan").clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject("Failed to clear data");
+    });
+}
