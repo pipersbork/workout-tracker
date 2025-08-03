@@ -14,7 +14,6 @@ function syncWorkouts(token) {
     .then(res => res.json())
     .then(data => {
       if (data.status === "success") {
-        // Clear synced logs
         const txClear = db.transaction('workouts', 'readwrite');
         txClear.objectStore('workouts').clear();
         document.getElementById('logStatus').textContent = "✅ Synced to Google Sheets!";
