@@ -9,6 +9,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script defer src="./assets/js/app.js"></script>
 <script defer src="./assets/js/auth.js"></script>
+<script defer src="./assets/js/db.js"></script>
 </head>
 <body>
 <div class="container">
@@ -16,7 +17,7 @@
     <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
 
-    <!-- STEP 1 (Your posted intro design) -->
+    <!-- STEP 1 -->
     <div class="step active" id="step1">
         <div class="main-title">PROGRESSION</div>
         <div class="divider"></div>
@@ -26,45 +27,42 @@
 
     <!-- STEP 2 -->
     <div class="step" id="step2">
-        <h2>👤 Your Info</h2>
-        <input type="text" id="name" placeholder="Name">
-        <select id="goal">
-            <option value="">Select Goal</option>
-            <option value="lose">Lose Fat</option>
-            <option value="gain">Gain Muscle</option>
-            <option value="maintain">Maintain</option>
-        </select>
+        <h2>👤 Your Goal</h2>
+        <div class="button-group" data-field="goal">
+            <button onclick="selectOption('goal', 'lose')" class="option-btn">Lose Fat</button>
+            <button onclick="selectOption('goal', 'gain')" class="option-btn">Gain Muscle</button>
+            <button onclick="selectOption('goal', 'maintain')" class="option-btn">Maintain</button>
+        </div>
         <button class="cta-button" onclick="nextStep()">Next</button>
     </div>
 
     <!-- STEP 3 -->
     <div class="step" id="step3">
         <h2>💪 Experience Level</h2>
-        <select id="experience">
-            <option value="">Select Level</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-        </select>
+        <div class="button-group" data-field="experience">
+            <button onclick="selectOption('experience', 'beginner')" class="option-btn">Beginner</button>
+            <button onclick="selectOption('experience', 'intermediate')" class="option-btn">Intermediate</button>
+            <button onclick="selectOption('experience', 'advanced')" class="option-btn">Advanced</button>
+        </div>
         <button class="cta-button" onclick="nextStep()">Next</button>
     </div>
 
     <!-- STEP 4 -->
     <div class="step" id="step4">
         <h2>🏋️ Workout Preferences</h2>
-        <select id="style">
-            <option value="">Select Style</option>
-            <option value="strength">Strength</option>
-            <option value="cardio">Cardio</option>
-            <option value="hybrid">Hybrid</option>
-        </select>
-        <select id="days">
-            <option value="">Days per week</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-        </select>
+        <p>Style:</p>
+        <div class="button-group" data-field="style">
+            <button onclick="selectOption('style', 'strength')" class="option-btn">Strength</button>
+            <button onclick="selectOption('style', 'cardio')" class="option-btn">Cardio</button>
+            <button onclick="selectOption('style', 'hybrid')" class="option-btn">Hybrid</button>
+        </div>
+        <p>Days per week:</p>
+        <div class="button-group" data-field="days">
+            <button onclick="selectOption('days', '3')" class="option-btn">3</button>
+            <button onclick="selectOption('days', '4')" class="option-btn">4</button>
+            <button onclick="selectOption('days', '5')" class="option-btn">5</button>
+            <button onclick="selectOption('days', '6')" class="option-btn">6</button>
+        </div>
         <button class="cta-button" onclick="nextStep()">Next</button>
     </div>
 
@@ -78,7 +76,7 @@
             data-auto_select="false">
         </div>
         <div class="g_id_signin" data-type="standard"></div>
-        <button class="cta-button" onclick="nextStep()">Next</button>
+        <button class="cta-button" onclick="nextStep()">Skip for Now</button>
     </div>
 
     <!-- STEP 6 -->
