@@ -1,183 +1,771 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Progression - Workout Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker - Cleaned Up</title>
+  <style>
+    /* ===========================
+       VARIABLES & RESET
+    =========================== */
+    :root {
+      /* Pure Black Theme */
+      --black-primary: #000000;
+      --black-surface: #0a0a0a;
+      --black-card: #141414;
+      --black-elevated: #1a1a1a;
+      
+      /* Orange Accents */
+      --orange-primary: #ff6b35;
+      --orange-hover: #ff8255;
+      --orange-active: #e55a2b;
+      --orange-dim: rgba(255, 107, 53, 0.2);
+      --orange-glow: rgba(255, 107, 53, 0.4);
+      
+      /* Text Hierarchy */
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      
+      /* System Colors */
+      --success: #4caf50;
+      --error: #f44336;
+      --warning: #ffa726;
+      
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
 
-<!-- Styles -->
-<link rel="stylesheet" href="./assets/css/style.css">
-<link rel="manifest" href="./assets/manifest.json">
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--black-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-<!-- Google Sign-In -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+    /* ===========================
+       LAYOUT CONTAINERS
+    =========================== */
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-<!-- App Scripts -->
-<script defer src="./assets/js/app.js"></script>
-<script defer src="./assets/js/auth.js"></script>
-<script defer src="./assets/js/db.js"></script>
+    .content-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    .section {
+      padding: var(--space-lg);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ===========================
+       TYPOGRAPHY
+    =========================== */
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--orange-primary);
+      text-align: center;
+      margin-bottom: var(--space-xl);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-md);
+    }
+
+    /* ===========================
+       BUTTONS
+    =========================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-md) var(--space-xl);
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: var(--orange-primary);
+      color: var(--black-primary);
+      box-shadow: 0 4px 20px var(--orange-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--orange-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px var(--orange-glow);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px var(--orange-glow);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--orange-primary);
+      border: 2px solid var(--orange-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--orange-primary);
+      color: var(--black-primary);
+    }
+
+    .btn-block {
+      display: flex;
+      width: 100%;
+    }
+
+    /* ===========================
+       CARDS & SELECTIONS
+    =========================== */
+    .card {
+      background: var(--black-card);
+      border: 1px solid var(--orange-dim);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-md);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 30px var(--orange-glow);
+      transform: translateY(-2px);
+    }
+
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    .selection-card {
+      background: var(--black-surface);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .selection-card:hover {
+      border-color: var(--orange-dim);
+      background: var(--black-card);
+    }
+
+    .selection-card.active {
+      border-color: var(--orange-primary);
+      background: var(--black-elevated);
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    .selection-card .icon {
+      font-size: 2rem;
+      margin-bottom: var(--space-sm);
+      display: block;
+    }
+
+    .selection-card h4 {
+      font-size: 1rem;
+      margin-bottom: var(--space-xs);
+      color: var(--text-primary);
+    }
+
+    .selection-card p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ===========================
+       FORMS & INPUTS
+    =========================== */
+    .form-group {
+      margin-bottom: var(--space-lg);
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-sm);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: var(--space-md);
+      background: var(--black-primary);
+      border: 2px solid var(--black-elevated);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--orange-primary);
+      box-shadow: 0 0 15px var(--orange-glow);
+    }
+
+    /* ===========================
+       PROGRESS INDICATORS
+    =========================== */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--black-elevated);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: var(--space-md);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange-primary), var(--orange-hover));
+      border-radius: var(--radius-full);
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    /* ===========================
+       BOTTOM NAVIGATION
+    =========================== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--black-primary);
+      border-top: 1px solid var(--black-elevated);
+      display: flex;
+      justify-content: space-around;
+      padding: var(--space-sm) 0;
+      z-index: 100;
+    }
+
+    .nav-item {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: var(--space-sm) var(--space-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      color: var(--text-secondary);
+    }
+
+    .nav-item.active {
+      color: var(--orange-primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 20%;
+      right: 20%;
+      height: 3px;
+      background: var(--orange-primary);
+      border-radius: var(--radius-full);
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    /* ===========================
+       WORKOUT DISPLAY
+    =========================== */
+    .workout-plan {
+      background: var(--black-card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+
+    .exercise-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--black-elevated);
+      transition: all 0.3s ease;
+    }
+
+    .exercise-item:last-child {
+      border-bottom: none;
+    }
+
+    .exercise-item:hover {
+      background: var(--black-elevated);
+      border-radius: var(--radius-sm);
+    }
+
+    .exercise-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .exercise-details {
+      display: flex;
+      gap: var(--space-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* ===========================
+       LOADING & FEEDBACK
+    =========================== */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--black-elevated);
+      border-top-color: var(--orange-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--black-elevated);
+      color: var(--text-primary);
+      padding: var(--space-md) var(--space-xl);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--orange-primary);
+      box-shadow: 0 4px 20px var(--orange-glow);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    /* ===========================
+       RESPONSIVE DESIGN
+    =========================== */
+    @media (max-width: 480px) {
+      .section {
+        padding: var(--space-md);
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .selection-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: var(--space-sm);
+      }
+
+      .selection-card {
+        padding: var(--space-md);
+      }
+
+      .selection-card .icon {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* ===========================
+       ANIMATIONS
+    =========================== */
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .slide-up {
+      animation: slideUp 0.5s ease forwards;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===========================
+       UTILITY CLASSES
+    =========================== */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mb-0 { margin-bottom: 0; }
+    .mb-1 { margin-bottom: var(--space-sm); }
+    .mb-2 { margin-bottom: var(--space-md); }
+    .mb-3 { margin-bottom: var(--space-lg); }
+    .mb-4 { margin-bottom: var(--space-xl); }
+
+    .mt-0 { margin-top: 0; }
+    .mt-1 { margin-top: var(--space-sm); }
+    .mt-2 { margin-top: var(--space-md); }
+    .mt-3 { margin-top: var(--space-lg); }
+    .mt-4 { margin-top: var(--space-xl); }
+  </style>
 </head>
 <body>
-<div class="container">
+  <div class="app-container">
+    <!-- Onboarding Section -->
+    <div id="onboarding" class="content-wrapper">
+      <div class="section fade-in">
+        <h1>💪 Workout Tracker</h1>
+        <p class="text-center mb-4">Let's customize your fitness journey</p>
 
-    <!-- Progress Bar -->
-    <div class="progress-bar"><div class="progress"></div></div>
+        <!-- Progress Bar -->
+        <div class="progress-bar mb-4">
+          <div class="progress-fill" style="width: 20%"></div>
+        </div>
 
-    <!-- STEP 1 -->
-    <div class="step active" id="step1">
-        <div class="main-title">PROGRESSION</div>
-        <div class="divider"></div>
-        <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-        <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
+        <!-- Goal Selection -->
+        <div class="form-group">
+          <h3>What's your primary goal?</h3>
+          <div class="selection-grid">
+            <div class="selection-card" data-goal="hypertrophy">
+              <span class="icon">💪</span>
+              <h4>Hypertrophy</h4>
+              <p>Build muscle</p>
+            </div>
+            <div class="selection-card" data-goal="strength">
+              <span class="icon">⚡</span>
+              <h4>Strength</h4>
+              <p>Get stronger</p>
+            </div>
+            <div class="selection-card" data-goal="endurance">
+              <span class="icon">🏃</span>
+              <h4>Endurance</h4>
+              <p>Last longer</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience Level -->
+        <div class="form-group">
+          <h3>What's your experience level?</h3>
+          <div class="selection-grid">
+            <div class="selection-card" data-experience="beginner">
+              <span class="icon">🌱</span>
+              <h4>Beginner</h4>
+              <p>< 6 months</p>
+            </div>
+            <div class="selection-card" data-experience="intermediate">
+              <span class="icon">📈</span>
+              <h4>Intermediate</h4>
+              <p>6-24 months</p>
+            </div>
+            <div class="selection-card" data-experience="advanced">
+              <span class="icon">🔥</span>
+              <h4>Advanced</h4>
+              <p>2+ years</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equipment -->
+        <div class="form-group">
+          <h3>Where do you train?</h3>
+          <div class="selection-grid">
+            <div class="selection-card" data-equipment="home">
+              <span class="icon">🏠</span>
+              <h4>Home</h4>
+              <p>Limited gear</p>
+            </div>
+            <div class="selection-card" data-equipment="gym">
+              <span class="icon">🏋️</span>
+              <h4>Gym</h4>
+              <p>Full access</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frequency -->
+        <div class="form-group">
+          <h3>How many days per week?</h3>
+          <div class="selection-grid">
+            <div class="selection-card" data-frequency="2">
+              <span class="icon">2️⃣</span>
+              <h4>2 Days</h4>
+            </div>
+            <div class="selection-card" data-frequency="3">
+              <span class="icon">3️⃣</span>
+              <h4>3 Days</h4>
+            </div>
+            <div class="selection-card" data-frequency="4">
+              <span class="icon">4️⃣</span>
+              <h4>4 Days</h4>
+            </div>
+            <div class="selection-card" data-frequency="5">
+              <span class="icon">5️⃣</span>
+              <h4>5 Days</h4>
+            </div>
+            <div class="selection-card" data-frequency="6">
+              <span class="icon">6️⃣</span>
+              <h4>6 Days</h4>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block">
+          Continue Setup
+        </button>
+      </div>
     </div>
 
-    <!-- STEP 2: Goal -->
-    <div class="step" id="step2">
-        <h2>Your Goal</h2>
-        <p>Select your training focus:</p>
-        <div class="card-group" data-field="goal">
-            <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
-                <div class="icon">💪</div>
-                <h3>Muscle Building</h3>
-                <p>Strength & Hypertrophy</p>
+    <!-- Main App Content -->
+    <div id="app-content" class="content-wrapper hidden">
+      <!-- Workout Tab -->
+      <div id="workout-content" class="section">
+        <h1>Today's Workout</h1>
+        
+        <div class="workout-plan">
+          <h3 class="mb-3">Push Day - Chest & Shoulders</h3>
+          
+          <div class="exercise-item">
+            <span class="exercise-name">Bench Press</span>
+            <div class="exercise-details">
+              <span>4 sets</span>
+              <span>8-10 reps</span>
+              <span>RIR 2</span>
             </div>
-            <div class="goal-card" onclick="selectCard(this, 'goal', 'cardio')">
-                <div class="icon">🏃</div>
-                <h3>Cardio</h3>
-                <p>Endurance Training</p>
+          </div>
+          
+          <div class="exercise-item">
+            <span class="exercise-name">Overhead Press</span>
+            <div class="exercise-details">
+              <span>3 sets</span>
+              <span>8-10 reps</span>
+              <span>RIR 2</span>
             </div>
-            <div class="goal-card" onclick="selectCard(this, 'goal', 'combined')">
-                <div class="icon">🔥</div>
-                <h3>Combined</h3>
-                <p>Balance Both</p>
+          </div>
+          
+          <div class="exercise-item">
+            <span class="exercise-name">Incline Dumbbell Press</span>
+            <div class="exercise-details">
+              <span>3 sets</span>
+              <span>10-12 reps</span>
+              <span>RIR 1</span>
             </div>
+          </div>
+          
+          <div class="exercise-item">
+            <span class="exercise-name">Lateral Raises</span>
+            <div class="exercise-details">
+              <span>4 sets</span>
+              <span>12-15 reps</span>
+              <span>RIR 0</span>
+            </div>
+          </div>
         </div>
-        <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
+
+        <button class="btn btn-primary btn-block mb-2">
+          Start Workout
+        </button>
+        
+        <button class="btn btn-secondary btn-block">
+          Generate New Plan
+        </button>
+      </div>
+
+      <!-- History Tab -->
+      <div id="history-content" class="section hidden">
+        <h1>Workout History</h1>
+        
+        <div class="card">
+          <h3>Monday, Dec 4</h3>
+          <p class="text-muted mb-0">Push Day - Completed</p>
+        </div>
+        
+        <div class="card">
+          <h3>Saturday, Dec 2</h3>
+          <p class="text-muted mb-0">Pull Day - Completed</p>
+        </div>
+        
+        <div class="card">
+          <h3>Thursday, Nov 30</h3>
+          <p class="text-muted mb-0">Legs Day - Completed</p>
+        </div>
+      </div>
+
+      <!-- Progress Tab -->
+      <div id="progress-content" class="section hidden">
+        <h1>Your Progress</h1>
+        
+        <div class="card text-center">
+          <h2 class="mb-1">12</h2>
+          <p class="text-muted">Workouts This Month</p>
+        </div>
+        
+        <div class="card text-center">
+          <h2 class="mb-1">85%</h2>
+          <p class="text-muted">Consistency Score</p>
+        </div>
+        
+        <div class="card text-center">
+          <h2 class="mb-1">3</h2>
+          <p class="text-muted">Personal Records</p>
+        </div>
+      </div>
     </div>
 
-    <!-- STEP 3: Experience -->
-    <div class="step" id="step3">
-        <h2>Experience Level</h2>
-        <p>Choose your fitness level:</p>
-        <div class="card-group" data-field="experience">
-            <div class="goal-card" onclick="selectCard(this, 'experience', 'beginner')">
-                <div class="icon">🌱</div>
-                <h3>Beginner</h3>
-                <p>New to training</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'experience', 'experienced')">
-                <div class="icon">⚡</div>
-                <h3>Experienced</h3>
-                <p>6–18 months</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'experience', 'advanced')">
-                <div class="icon">🔥</div>
-                <h3>Advanced</h3>
-                <p>18+ months</p>
-            </div>
-        </div>
-        <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
-    </div>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav hidden" id="bottom-nav">
+      <button class="nav-item active" data-tab="workout">
+        <span>Workout</span>
+      </button>
+      <button class="nav-item" data-tab="history">
+        <span>History</span>
+      </button>
+      <button class="nav-item" data-tab="progress">
+        <span>Progress</span>
+      </button>
+    </nav>
+  </div>
 
-    <!-- STEP 4: Preferences -->
-    <div class="step" id="step4">
-        <h2>Workout Preferences</h2>
-        <p>Select your preferred style:</p>
-        <div class="card-group" data-field="style">
-            <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
-                <div class="icon">🏋️</div>
-                <h3>Gym</h3>
-                <p>Heavy Lifts</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'style', 'home')">
-                <div class="icon">🏠</div>
-                <h3>Home</h3>
-                <p>Minimal Equipment</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'style', 'hybrid')">
-                <div class="icon">🔥</div>
-                <h3>Hybrid</h3>
-                <p>Mix of Both</p>
-            </div>
-        </div>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay hidden" id="loading">
+    <div class="loading-spinner"></div>
+  </div>
 
-        <p>How many days per week?</p>
-        <div class="card-group" data-field="days">
-            <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3><p>Balanced</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3><p>Intense</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '6')"><h3>6</h3><p>Max Effort</p></div>
-        </div>
-        <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
-    </div>
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
 
-    <!-- STEP 5: Sign-In -->
-    <div class="step" id="step5">
-        <h2>🔐 Sign in to Sync</h2>
-        <div id="g_id_onload"
-            data-client_id="YOUR_GOOGLE_CLIENT_ID"
-            data-context="signup"
-            data-callback="handleCredentialResponse"
-            data-auto_select="false">
-        </div>
-        <div class="g_id_signin" data-type="standard"></div>
-        <button class="cta-button" onclick="nextStep()">Skip for Now</button>
-    </div>
+  <script>
+    // Simple tab navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const tab = item.dataset.tab;
+        
+        // Update nav state
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Show/hide content
+        document.querySelectorAll('[id$="-content"]').forEach(content => content.classList.add('hidden'));
+        document.getElementById(`${tab}-content`).classList.remove('hidden');
+      });
+    });
 
-    <!-- STEP 6: Complete -->
-    <div class="step" id="step6">
-        <h2>✅ All Set!</h2>
-        <p>Your preferences have been saved.</p>
-        <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
-    </div>
-</div>
+    // Selection cards
+    document.querySelectorAll('.selection-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const group = card.parentElement;
+        group.querySelectorAll('.selection-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+    });
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-    <div class="dashboard">
-        <h1>🏋️ Your Training Dashboard</h1>
+    // Toast function
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
 
-        <!-- User Summary -->
-        <p id="userSummary"></p>
-
-        <!-- Progress Indicator -->
-        <div class="progress-bar">
-            <div class="progress" id="volumeProgress"></div>
-        </div>
-        <p id="volumeSummary"></p>
-
-        <!-- Charts -->
-        <div class="chart-container">
-            <canvas id="volumeChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="loadChart"></canvas>
-        </div>
-
-        <!-- Workout History -->
-        <div class="workout-history">
-            <h2>Workout History</h2>
-            <ul id="workoutList"></ul>
-        </div>
-
-        <!-- Bottom Navigation -->
-        <div class="bottom-nav">
-            <button onclick="openModal('logWorkout')">Log Workout</button>
-            <button onclick="openModal('planner')">Planner</button>
-            <button onclick="openModal('settings')">Settings</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="modal hidden">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div id="modal-body"></div>
-    </div>
-</div>
+    // Demo continue button
+    document.querySelector('.btn-primary').addEventListener('click', () => {
+      document.getElementById('onboarding').classList.add('hidden');
+      document.getElementById('app-content').classList.remove('hidden');
+      document.getElementById('bottom-nav').classList.remove('hidden');
+      showToast('Welcome to Workout Tracker!');
+    });
+  </script>
 </body>
 </html>
