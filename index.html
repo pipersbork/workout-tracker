@@ -26,15 +26,29 @@
     </div>
 
     <!-- STEP 2 -->
-    <div class="step" id="step2">
-        <h2>👤 Your Goal</h2>
-        <div class="button-group" data-field="goal">
-            <button onclick="selectOption('goal', 'lose')" class="option-btn">Lose Fat</button>
-            <button onclick="selectOption('goal', 'gain')" class="option-btn">Gain Muscle</button>
-            <button onclick="selectOption('goal', 'maintain')" class="option-btn">Maintain</button>
+<div class="step" id="step2">
+    <h2>Your Goal</h2>
+    <p>Select the type of training focus:</p>
+    <div class="card-group" data-field="goal">
+        <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
+            <div class="icon">💪</div>
+            <h3>Muscle Building</h3>
+            <p>Strength & Hypertrophy</p>
         </div>
-        <button class="cta-button" onclick="nextStep()">Next</button>
+        <div class="goal-card" onclick="selectCard(this, 'goal', 'cardio')">
+            <div class="icon">🏃</div>
+            <h3>Cardio</h3>
+            <p>Endurance Training</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'goal', 'combined')">
+            <div class="icon">🔥</div>
+            <h3>Combined</h3>
+            <p>Balance Both</p>
+        </div>
     </div>
+    <button class="cta-button" onclick="nextStep()">Next</button>
+</div>
+
 
     <!-- STEP 3 -->
     <div class="step" id="step3">
