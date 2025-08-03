@@ -1,32 +1,28 @@
-/* ===============================
-   GLOBAL STATE
-=============================== */
 let currentStep = 1;
 const totalSteps = 6;
-const userSelections = { goal: "", experience: "", style: "", days: "" };
 
-/* ===============================
-   ONBOARDING FLOW
-=============================== */
+const userSelections = {
+    goal: "",
+    experience: "",
+    style: "",
+    days: ""
+};
+
+// Update progress bar
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
 }
 
+// Go to next onboarding step
 function nextStep() {
-    const current = document.getElementById('step' + currentStep);
-    current.classList.remove('active');
-
-    setTimeout(() => {
-        currentStep++;
-        const next = document.getElementById('step' + currentStep);
-        if (next) {
-            next.classList.add('active');
-            updateProgress();
-        }
-    }, 200);
+    document.getElementById('step' + currentStep).classList.remove('active');
+    currentStep++;
+    document.getElementById('step' + currentStep).classList.add('active');
+    updateProgress();
 }
 
+// Validate selection
 function validateStep(field) {
     if (!userSelections[field]) {
         alert("Please select an option before continuing.");
@@ -35,6 +31,7 @@ function validateStep(field) {
     return true;
 }
 
+// Select a card
 function selectCard(element, field, value) {
     userSelections[field] = value;
     const group = element.parentElement.querySelectorAll('.goal-card');
@@ -42,183 +39,95 @@ function selectCard(element, field, value) {
     element.classList.add('active');
 }
 
-/* ===============================
-   PLAN GENERATION LOGIC
-=============================== */
-async function generatePlan(selections) {
-    const { goal, experience, days, style } = selections;
-    const experienceMap = {
-        beginner: { baseSets: 8, rir: 3, maxVolume: 80 },
-        experienced: { baseSets: 12, rir: 2, maxVolume: 100 },
-        advanced: { baseSets: 14, rir: 1, maxVolume: 120 }
-    };
-    const exp = experienceMap[experience];
-    const sessions = [];
-    const exerciseLibrary = {
-        gym: {
-            push: ["Barbell Bench Press", "Incline Dumbbell Press", "Overhead Press", "Lateral Raise"],
-            pull: ["Pull-Ups", "Barbell Row", "Face Pulls", "Bicep Curl"],
-            legs: ["Back Squat", "Romanian Deadlift", "Leg Press", "Calf Raises"]
-        },
-        home: {
-            push: ["Push-Ups", "Dumbbell Press", "Pike Push-Up", "DB Lateral Raise"],
-            pull: ["Inverted Row", "DB Row", "Band Pull-Apart", "DB Curl"],
-            legs: ["Bodyweight Squat", "Lunge", "Glute Bridge", "Calf Raise"]
-        }
-    };
-    let split;
-    if (days == 3) split = ["Full Body", "Full Body", "Full Body"];
-    else if (days == 4) split = ["Upper", "Lower", "Upper", "Lower"];
-    else if (days == 5) split = ["Push", "Pull", "Legs", "Upper", "Lower"];
-    else split = ["Push", "Pull", "Legs", "Push", "Pull", "Legs"];
-
-    split.forEach(dayType => {
-        let exercises = [];
-        const library = exerciseLibrary[style];
-        if (dayType === "Full Body") {
-            exercises = [library.push[0], library.pull[0], library.legs[0]];
-        } else if (dayType === "Upper" || dayType === "Push") {
-            exercises = library.push.concat(library.pull.slice(0, 2));
-        } else if (dayType === "Lower" || dayType === "Legs") {
-            exercises = library.legs;
-        }
-        const exerciseDetails = exercises.map(name => ({
-            name,
-            sets: Math.round(exp.baseSets / days),
-            reps: goal === "muscle" ? [8, 12] : goal === "cardio" ? [12, 20] : [6, 10],
-            rir: exp.rir
-        }));
-        sessions.push({ name: `${dayType} Day`, exercises: exerciseDetails });
-    });
-
-    return {
-        goal,
-        experience,
-        style,
-        days,
-        week: 1,
-        rirTarget: exp.rir,
-        currentVolume: days * exp.baseSets,
-        maxVolume: exp.maxVolume,
-        sessions
-    };
-}
-
-/* ===============================
-   ONBOARDING COMPLETE → PLAN
-=============================== */
-async function finishOnboarding() {
-    const plan = await generatePlan(userSelections);
+// Finish onboarding → dashboard
+function finishOnboarding() {
+    localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
-    localStorage.setItem("trainingPlan", JSON.stringify(plan));
-    renderDashboard(plan);
+    showDashboard();
 }
 
-/* ===============================
-   DASHBOARD + MODAL
-=============================== */
-function renderDashboard(plan = null) {
-    if (!plan) {
-        plan = JSON.parse(localStorage.getItem("trainingPlan"));
-        if (!plan) return;
-    }
+// Show dashboard
+function showDashboard() {
     document.querySelector('.container').classList.add('hidden');
-    const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-
-    dashboard.innerHTML = `
-        <div class="dashboard">
-            <h1>🏋️ Your Training Dashboard</h1>
-            <p><strong>Goal:</strong> ${plan.goal} | <strong>Level:</strong> ${plan.experience}</p>
-            <div class="progress-bar">
-                <div class="progress" style="width:${(plan.currentVolume / plan.maxVolume) * 100}%"></div>
-            </div>
-            <p>${plan.currentVolume} sets / ${plan.maxVolume} max</p>
-
-            <button class="cta-button" onclick="openModal('planner')">Customize Plan</button>
-        </div>
+    document.getElementById('dashboard').classList.remove('hidden');
+    const summary = `
+        Goal: ${capitalize(userSelections.goal)} |
+        Level: ${capitalize(userSelections.experience)} |
+        Style: ${capitalize(userSelections.style)} |
+        Days: ${userSelections.days}/week
+    `;
+    document.getElementById('userSummary').textContent = summary;
+    document.getElementById('planSummary').innerHTML = `
+        <h3>Your Plan (Preview)</h3>
+        <p>Start with ${userSelections.days} days/week focusing on ${userSelections.goal}.</p>
     `;
 }
 
+// Modal
 function openModal(type) {
     const modal = document.getElementById('modal');
     const body = document.getElementById('modal-body');
-    modal.classList.remove('hidden');
 
-    if (type === 'planner') {
-        const plan = JSON.parse(localStorage.getItem("trainingPlan"));
+    if (type === 'customize') {
         body.innerHTML = `
-            <h2>Edit Your Plan</h2>
-            ${plan.sessions.map((s, i) => `
-                <div class="planner-form">
-                    <h3>${s.name}</h3>
-                    ${s.exercises.map((ex, j) => `
-                        <div class="exercise-row">
-                            <input type="text" id="ex-name-${i}-${j}" value="${ex.name}">
-                            <input type="number" id="ex-sets-${i}-${j}" value="${ex.sets}">
-                            <input type="text" id="ex-reps-${i}-${j}" value="${ex.reps[0]}-${ex.reps[1]}">
-                            <input type="number" id="ex-rir-${i}-${j}" value="${ex.rir}">
-                        </div>
-                    `).join('')}
-                    <button onclick="addExercise(${i})">+ Add Exercise</button>
+            <h2>Customize Your Plan</h2>
+            <div class="planner-form">
+                <p>Add or edit exercises:</p>
+                <div id="exercise-list">
+                    <div class="exercise-row">
+                        <input type="text" placeholder="Exercise Name">
+                        <input type="number" placeholder="Sets">
+                        <input type="number" placeholder="Reps">
+                    </div>
                 </div>
-            `).join('')}
-            <button class="cta-button" onclick="savePlan()">Save Changes</button>
+                <button onclick="addExerciseRow()">+ Add Exercise</button>
+                <button onclick="saveCustomization()">Save</button>
+            </div>
+        `;
+    } else if (type === 'log') {
+        body.innerHTML = `
+            <h2>Log Workout</h2>
+            <textarea placeholder="Workout notes..." style="width:100%;height:100px;"></textarea>
+            <button onclick="closeModal()">Save Log</button>
         `;
     }
+
+    modal.classList.remove('hidden');
 }
 
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-function addExercise(sessionIndex) {
-    const container = document.querySelectorAll('.planner-form')[sessionIndex];
-    const newRow = document.createElement('div');
-    newRow.classList.add('exercise-row');
-    newRow.innerHTML = `
+// Add new exercise row
+function addExerciseRow() {
+    const list = document.getElementById('exercise-list');
+    const row = document.createElement('div');
+    row.className = 'exercise-row';
+    row.innerHTML = `
         <input type="text" placeholder="Exercise Name">
         <input type="number" placeholder="Sets">
-        <input type="text" placeholder="Reps (e.g. 8-12)">
-        <input type="number" placeholder="RIR">
+        <input type="number" placeholder="Reps">
     `;
-    container.insertBefore(newRow, container.lastElementChild);
+    list.appendChild(row);
 }
 
-function savePlan() {
-    const plan = JSON.parse(localStorage.getItem("trainingPlan"));
-    const forms = document.querySelectorAll('.planner-form');
-
-    forms.forEach((form, i) => {
-        const rows = form.querySelectorAll('.exercise-row');
-        const updatedExercises = [];
-        rows.forEach(row => {
-            const inputs = row.querySelectorAll('input');
-            const [name, sets, reps, rir] = [...inputs].map(input => input.value);
-            if (name && sets && reps) {
-                const repRange = reps.split('-').map(Number);
-                updatedExercises.push({
-                    name,
-                    sets: parseInt(sets),
-                    reps: repRange,
-                    rir: parseInt(rir)
-                });
-            }
-        });
-        plan.sessions[i].exercises = updatedExercises;
-    });
-
-    localStorage.setItem("trainingPlan", JSON.stringify(plan));
+function saveCustomization() {
+    alert("Customization saved (future logic will handle DB updates).");
     closeModal();
-    renderDashboard(plan);
 }
 
-/* ===============================
-   ON LOAD
-=============================== */
+// Capitalize helper
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// On load
 window.onload = () => {
-    if (localStorage.getItem("trainingPlan")) {
-        renderDashboard();
+    if (localStorage.getItem("onboardingCompleted") === "true") {
+        const saved = JSON.parse(localStorage.getItem("userSelections"));
+        Object.assign(userSelections, saved);
+        showDashboard();
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
