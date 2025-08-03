@@ -171,6 +171,74 @@ body {
     font-size: 0.95rem;
     color: #ddd;
 }
+/* ===========================
+   PLANNER MODAL
+=========================== */
+.planner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    color: #fff;
+}
+
+.planner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.planner-header input {
+    flex: 1;
+    padding: 8px;
+    margin-right: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #222;
+    color: #fff;
+}
+
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.tab {
+    padding: 8px 12px;
+    cursor: pointer;
+    background: #222;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+.tab.active {
+    background: #ff6b35;
+    color: #111;
+}
+
+.exercise-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.exercise-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+}
+.exercise-item button {
+    background: #ff6b35;
+    color: #111;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.exercise-item button:hover {
+    background: #ff914d;
+}
+
 
 /* ===========================
    MODAL
