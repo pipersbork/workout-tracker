@@ -105,6 +105,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <script>
+// ✅ Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(() => console.log('✅ Service Worker Registered'))
+    .catch(err => console.error('❌ Service Worker Error:', err));
+}
+
 /* State & IndexedDB Setup */
 let userPreferences = JSON.parse(localStorage.getItem('preferences')) || { goal: 'Hypertrophy', equipment: 'Gym', days: 3 };
 let currentWeek = 1;
