@@ -141,14 +141,18 @@
         <h1>🏋️ Your Training Dashboard</h1>
         <p id="userSummary"></p>
 
+        <!-- Progress Indicator -->
         <div class="progress-bar">
             <div class="progress" id="volumeProgress"></div>
         </div>
         <p id="volumeSummary"></p>
 
-        <!-- Template Management -->
-        <div class="template-section">
-            <button class="cta-button" onclick="openPlannerModal()">Manage Templates</button>
+        <!-- Charts -->
+        <div class="chart-container">
+            <canvas id="volumeChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="loadChart"></canvas>
         </div>
 
         <!-- Workout History -->
@@ -156,25 +160,23 @@
             <h2>Workout History</h2>
             <ul id="workoutList"></ul>
         </div>
+
+        <!-- Sticky Bottom Nav -->
+        <div class="bottom-nav">
+            <button onclick="openModal('logWorkout')">Log Workout</button>
+            <button onclick="openModal('planner')">Planner</button>
+            <button onclick="openModal('templates')">Templates</button>
+            <button onclick="openModal('settings')">Settings</button>
+        </div>
     </div>
 </div>
 
-<!-- MODALS -->
+<!-- MODAL -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div id="modal-body"></div>
     </div>
 </div>
-
-<!-- CONFIRM DELETE MODAL -->
-<div id="deleteModal" class="modal hidden">
-    <div class="modal-content">
-        <p>Are you sure you want to delete this template?</p>
-        <button onclick="confirmDeleteTemplate()" class="cta-button">Yes, Delete</button>
-        <button onclick="closeDeleteModal()" class="cta-button">Cancel</button>
-    </div>
-</div>
-
 </body>
 </html>
