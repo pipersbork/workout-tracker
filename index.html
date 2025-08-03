@@ -1,143 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Progression - Workout Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progression - Workout Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<!-- GitHub Pages Base Path -->
-<base href="/workout-tracker/">
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
+            color: #ff6b35;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#121212">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-512.png">
+        @keyframes gradientBG {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
 
-<!-- Google Sign-In -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+        .container {
+            max-width: 90%;
+            padding: 20px;
+        }
 
-<style>
-/* ===================
-   GLOBAL STYLES
-=================== */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: Arial, sans-serif; background: #121212; color: #fff; height: 100vh; }
-.screen { display: none; width: 100%; height: 100vh; }
-.active { display: block; }
+        /* Title */
+        .main-title {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+        }
 
-/* ===================
-   ONBOARDING STYLES
-=================== */
-.container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.energy-wave { position: absolute; border: 3px solid #ff6b35; border-radius: 50%; opacity: 0; transform: scale(0); }
-.wave-1 { width: 100px; height: 100px; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); }
-.wave-2 { width: 200px; height: 200px; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); }
-.wave-3 { width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); }
-.black-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: radial-gradient(circle,#000 30%,#1a1a1a 70%,transparent 100%); border-radius: 50%; opacity: 0; }
-.progression-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 72px; font-weight: bold; color: #ff6b35; letter-spacing: 8px; opacity: 0; }
-.progression-letters { display: inline-block; opacity: 0; transform: translateY(100px) rotateX(90deg); }
-.tagline-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 300; color: #ff6b35; opacity: 0; margin-top: 20px; }
-.begin-button { position: absolute; top: 70%; left: 50%; transform: translateX(-50%); background: linear-gradient(45deg,#ff6b35,#ff8c42); border: none; padding: 20px 60px; font-size: 24px; font-weight: bold; color: white; border-radius: 15px; opacity: 0; cursor: pointer; }
+        /* Divider line */
+        .divider {
+            width: 80px;
+            height: 2px;
+            background-color: #ff6b35;
+            margin: 10px auto 20px auto;
+        }
 
-/* Animations */
-.energy-wave-expand-and-reverse { animation: waveExpand 2.5s ease-in-out forwards; }
-.black-hole-appear { animation: blackHoleAppear .8s ease-in forwards; }
-.black-hole-collapse { animation: blackHoleCollapse .6s ease-out forwards; }
-.text-emerge-from-singularity { animation: textAppear 1.2s ease-out forwards; }
-.letter-emerge-from-center { animation: letterAppear .5s ease-out forwards; }
-.tagline-emerge { animation: taglineAppear 1s ease-out forwards; }
-.button-appear { animation: buttonAppear 1s ease-out forwards; }
+        /* Tagline */
+        .tagline {
+            font-size: 1rem;
+            color: #ff6b35;
+            margin-bottom: 35px;
+            line-height: 1.4;
+        }
 
-@keyframes waveExpand {0%{opacity:.8;transform:translate(-50%,-50%)scale(0);}30%{opacity:1;transform:translate(-50%,-50%)scale(4);}100%{opacity:0;transform:translate(-50%,-50%)scale(0);} }
-@keyframes blackHoleAppear {from{opacity:0;transform:translate(-50%,-50%)scale(0);}to{opacity:1;transform:translate(-50%,-50%)scale(3);} }
-@keyframes blackHoleCollapse {from{opacity:1;transform:translate(-50%,-50%)scale(3);}to{opacity:0;transform:translate(-50%,-50%)scale(0);} }
-@keyframes textAppear {0%{opacity:0;transform:translate(-50%,-50%)scale(0);}100%{opacity:1;transform:translate(-50%,-50%)scale(1);} }
-@keyframes letterAppear {0%{opacity:0;transform:scale(0);}50%{opacity:1;transform:scale(1.3);}100%{opacity:1;transform:scale(1);} }
-@keyframes taglineAppear {0%{opacity:0;}100%{opacity:1;} }
-@keyframes buttonAppear {from{opacity:0;transform:translateX(-50%)translateY(50px);}to{opacity:1;transform:translateX(-50%)translateY(0);} }
+        /* Button */
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #ff6b35, #ff914d);
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
 
-/* ===================
-   DASHBOARD STYLES
-=================== */
-.dashboard { text-align:center; padding:30px; max-width:500px; margin:auto; }
-.logo { font-size:48px; font-weight:bold; color:#ff3b30; margin-bottom:10px; }
-.tagline-home { color:#8e8e93;font-size:16px;margin-bottom:20px;text-transform:uppercase; }
-.btn { display:block;width:100%;padding:18px;margin:10px 0;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer;border:none; }
-.btn-primary { background:linear-gradient(135deg,#ff3b30,#ff6347);color:#fff; }
-.stats-hint { margin-top:30px;padding:16px;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.1); }
-</style>
+        .cta-button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #ff914d, #ff6b35);
+        }
+
+        /* Responsive adjustments */
+        @media screen and (max-width: 480px) {
+            .main-title {
+                font-size: 2rem;
+                letter-spacing: 3px;
+            }
+            .divider {
+                width: 50px;
+            }
+            .tagline {
+                font-size: 0.9rem;
+                margin-bottom: 25px;
+            }
+            .cta-button {
+                width: 80%;
+                font-size: 1rem;
+                padding: 14px 0;
+            }
+        }
+    </style>
 </head>
 <body>
-<noscript><p>Please enable JavaScript to use this app.</p></noscript>
+    <div class="container">
+        <!-- Horizontal Title -->
+        <div class="main-title">PROGRESSION</div>
 
-<!-- ONBOARDING -->
-<div id="onboarding-screen" class="screen active">
-  <div class="container">
-    <div class="energy-wave wave-1" id="wave1"></div>
-    <div class="energy-wave wave-2" id="wave2"></div>
-    <div class="energy-wave wave-3" id="wave3"></div>
-    <div class="black-hole" id="blackHole"></div>
-    <div class="progression-text" id="progressionText">
-      <span class="progression-letters" data-delay="0">P</span>
-      <span class="progression-letters" data-delay="100">R</span>
-      <span class="progression-letters" data-delay="200">O</span>
-      <span class="progression-letters" data-delay="300">G</span>
-      <span class="progression-letters" data-delay="400">R</span>
-      <span class="progression-letters" data-delay="500">E</span>
-      <span class="progression-letters" data-delay="600">S</span>
-      <span class="progression-letters" data-delay="700">S</span>
-      <span class="progression-letters" data-delay="800">I</span>
-      <span class="progression-letters" data-delay="900">O</span>
-      <span class="progression-letters" data-delay="1000">N</span>
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Tagline -->
+        <div class="tagline">
+            BREAK DOWN, BREAK THROUGH
+        </div>
+
+        <!-- CTA Button -->
+        <a href="#" class="cta-button">Begin Onboarding</a>
     </div>
-    <div class="tagline-text" id="taglineText">BREAK DOWN, BREAK THROUGH</div>
-    <button class="begin-button" id="beginButton">Begin Onboarding</button>
-  </div>
-</div>
-
-<!-- HOME DASHBOARD -->
-<div id="home-screen" class="screen">
-  <div class="dashboard">
-    <div class="logo">Progression</div>
-    <div class="tagline-home">Smart Training</div>
-    <button class="btn btn-primary">🏋️ Start Next Workout</button>
-    <button class="btn btn-primary">✨ View Plan</button>
-    <div class="stats-hint">
-      <div id="lastWorkoutText">Loading last workout...</div>
-    </div>
-  </div>
-</div>
-
-<script>
-// SPA Navigation
-document.getElementById('beginButton').addEventListener('click', () => {
-  document.getElementById('onboarding-screen').classList.remove('active');
-  document.getElementById('home-screen').classList.add('active');
-});
-
-// Onboarding Animation
-function startOnboardingAnimation() {
-  const waves = [wave1, wave2, wave3], letters = document.querySelectorAll('.progression-letters');
-  waves.forEach(w => w.className = w.className);
-  setTimeout(() => waves[0].classList.add('energy-wave-expand-and-reverse'), 500);
-  setTimeout(() => waves[1].classList.add('energy-wave-expand-and-reverse'), 650);
-  setTimeout(() => waves[2].classList.add('energy-wave-expand-and-reverse'), 800);
-  setTimeout(() => blackHole.classList.add('black-hole-appear'), 2200);
-  setTimeout(() => blackHole.classList.add('black-hole-collapse'), 3000);
-  setTimeout(() => progressionText.classList.add('text-emerge-from-singularity'), 3300);
-  setTimeout(() => letters.forEach(l => setTimeout(() => l.classList.add('letter-emerge-from-center'), parseInt(l.dataset.delay) * 0.6)), 3800);
-  setTimeout(() => taglineText.classList.add('tagline-emerge'), 4400);
-  setTimeout(() => beginButton.classList.add('button-appear'), 5000);
-}
-window.addEventListener('load', () => setTimeout(startOnboardingAnimation, 300));
-
-// ✅ Register Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(() => console.log('✅ Service Worker Registered'))
-    .catch(err => console.error('❌ SW Error:', err));
-}
-</script>
 </body>
 </html>
