@@ -1,4 +1,6 @@
-/* ===== Global State ===== */
+// ==========================
+// State Management
+// ==========================
 let currentStep = 1;
 const totalSteps = 6;
 
@@ -7,18 +9,19 @@ const userSelections = {
     experience: "",
     style: "",
     days: "",
-    frequency: 2 // default, adjust based on onboarding
+    frequency: 2 // Default, can be adjusted later
 };
 
-let trainingPlan = null; // Holds current plan
+let workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
 
-/* ===== Progress Bar Update ===== */
+// ==========================
+// Onboarding Functions
+// ==========================
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
 }
 
-/* ===== Navigation Logic ===== */
 function nextStep() {
     const current = document.getElementById('step' + currentStep);
     current.classList.remove('active');
@@ -50,181 +53,60 @@ function selectCard(element, field, value) {
     element.classList.add('active');
 }
 
-/* ===== Finish Onboarding ===== */
 async function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
-
-    // Generate training plan based on selections
-    trainingPlan = generatePlan(userSelections);
-    localStorage.setItem("trainingPlan", JSON.stringify(trainingPlan));
-
-    renderDashboard(trainingPlan);
+    renderDashboard();
 }
 
-/* ===== Render Dashboard ===== */
-function renderDashboard(plan = null) {
-    if (!plan) {
-        const savedPlan = localStorage.getItem("trainingPlan");
-        if (savedPlan) {
-            plan = JSON.parse(savedPlan);
-        }
-    }
-    if (!plan) {
-        console.error("No plan found.");
-        return;
-    }
+// ==========================
+// Dashboard Rendering
+// ==========================
+function renderDashboard() {
+    document.querySelector('.container').classList.add('hidden');
+    const dashboard = document.getElementById('dashboard');
+    dashboard.classList.remove('hidden');
 
-    document.querySelector('.container').style.display = 'none';
-    document.getElementById('dashboard').classList.remove('hidden');
-
-    // Update summary
-    document.getElementById('userSummary').innerHTML = `
-        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
+    const planSummary = `
+        <strong>Goal:</strong> ${capitalize(userSelections.goal)} | 
+        <strong>Level:</strong> ${capitalize(userSelections.experience)} | 
+        <strong>Days:</strong> ${userSelections.days}/week
     `;
 
-    // Update progress bar
-    const progressPercent = (plan.currentVolume / plan.maxVolume) * 100;
-    document.getElementById('volumeProgress').style.width = `${progressPercent}%`;
-    document.getElementById('volumeSummary').textContent =
-        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
+    document.getElementById('userSummary').innerHTML = planSummary;
 
-    // Render charts
-    renderCharts(plan);
-
-    // Load workout history
+    updateCharts();
     loadWorkoutHistory();
 }
 
-/* ===== Generate Training Plan ===== */
-function generatePlan(selections) {
-    const baseVolume = selections.goal === "muscle" ? 10 : 6;
-    const maxVolume = selections.goal === "muscle" ? 20 : 12;
-
-    return {
-        goal: selections.goal,
-        experience: selections.experience,
-        style: selections.style,
-        days: selections.days,
-        week: 1,
-        currentVolume: baseVolume,
-        maxVolume,
-        rirTarget: selections.experience === "beginner" ? 3 : 2,
-        sessions: generateSessions(selections)
-    };
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function generateSessions(selections) {
-    const exercises = selections.goal === "muscle"
-        ? ["Squat", "Bench Press", "Row", "Shoulder Press"]
-        : ["Run", "Burpee", "Push-up", "Sit-up"];
-    return Array.from({ length: selections.days }, (_, i) => ({
-        name: `Session ${i + 1}`,
-        exercises: exercises.map(ex => ({
-            name: ex,
-            sets: 3,
-            reps: [8, 12],
-            rir: selections.experience === "beginner" ? 3 : 2
-        }))
-    }));
-}
-
-/* ===== Charts ===== */
-let volumeChartInstance = null;
-let loadChartInstance = null;
-
-function renderCharts(plan) {
-    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-    const ctxLoad = document.getElementById('loadChart').getContext('2d');
-
-    const volumeData = {
-        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-        datasets: [{
-            label: "Training Volume (Sets)",
-            data: [plan.currentVolume, plan.currentVolume + 2, plan.currentVolume + 4, plan.maxVolume],
-            backgroundColor: "rgba(255,107,53,0.7)"
-        }]
-    };
-
-    const loadData = {
-        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-        datasets: [{
-            label: "Estimated Load Progression",
-            data: [100, 105, 110, 115],
-            backgroundColor: "rgba(255,145,77,0.7)"
-        }]
-    };
-
-    if (volumeChartInstance) volumeChartInstance.destroy();
-    if (loadChartInstance) loadChartInstance.destroy();
-
-    volumeChartInstance = new Chart(ctxVolume, {
-        type: 'bar',
-        data: volumeData,
-        options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-
-    loadChartInstance = new Chart(ctxLoad, {
-        type: 'line',
-        data: loadData,
-        options: { responsive: true }
-    });
-}
-
-/* ===== Workout History ===== */
-function loadWorkoutHistory() {
-    const history = JSON.parse(localStorage.getItem("workoutHistory") || "[]");
-    const list = document.getElementById('workoutList');
-    list.innerHTML = "";
-    history.forEach(w => {
-        const li = document.createElement('li');
-        li.textContent = `${w.date} - Fatigue: ${w.fatigue}`;
-        list.appendChild(li);
-    });
-}
-
-function saveWorkoutToHistory(entry) {
-    const history = JSON.parse(localStorage.getItem("workoutHistory") || "[]");
-    history.push(entry);
-    localStorage.setItem("workoutHistory", JSON.stringify(history));
-    loadWorkoutHistory();
-}
-
-/* ===== Modal Logic ===== */
+// ==========================
+// Workout Logging
+// ==========================
 function openModal(type) {
     const modal = document.getElementById('modal');
-    const body = document.getElementById('modal-body');
+    const modalBody = document.getElementById('modal-body');
 
-    if (type === "logWorkout") {
-        body.innerHTML = `
+    if (type === 'logWorkout') {
+        modalBody.innerHTML = `
             <h2>Log Workout</h2>
+            <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
             <label>Fatigue Score (1-10)</label>
             <input type="number" id="fatigueScore" min="1" max="10">
-            <textarea id="workoutNotes" placeholder="Notes"></textarea>
-            <button class="cta-button" onclick="submitWorkout()">Save</button>
+            <button class="cta-button full-width" onclick="submitWorkout()">Save</button>
         `;
-    } else if (type === "planner") {
-        body.innerHTML = `
-            <h2>Adjust Your Plan</h2>
-            <p>Edit sets/RIR for exercises</p>
-            ${trainingPlan.sessions.map((session, sIndex) => `
-                <div>
-                    <h3>${session.name}</h3>
-                    ${session.exercises.map((ex, eIndex) => `
-                        <div>
-                            <p>${ex.name}</p>
-                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}"> Sets
-                            <input type="number" id="rir-${sIndex}-${eIndex}" value="${ex.rir}"> RIR
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('')}
-            <button class="cta-button" onclick="saveManualAdjust()">Save Changes</button>
+    } else if (type === 'planner') {
+        modalBody.innerHTML = `
+            <h2>Workout Planner</h2>
+            <p>Feature coming soon: Customize your program!</p>
         `;
-    } else if (type === "settings") {
-        body.innerHTML = `
+    } else if (type === 'settings') {
+        modalBody.innerHTML = `
             <h2>Settings</h2>
-            <p>Additional options coming soon...</p>
+            <button class="cta-button full-width" onclick="resetApp()">Reset App</button>
         `;
     }
 
@@ -235,49 +117,106 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-/* ===== Save Workout (Log Modal) ===== */
 function submitWorkout() {
-    const fatigue = parseInt(document.getElementById('fatigueScore').value);
-    if (!fatigue || fatigue < 1 || fatigue > 10) {
-        alert("Enter a valid fatigue score (1-10)");
+    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
+    const notes = document.getElementById('workoutNotes').value.trim();
+
+    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
+        alert("Please enter a valid fatigue score (1-10).");
         return;
     }
-    const notes = document.getElementById('workoutNotes').value;
 
-    saveWorkoutToHistory({
-        date: new Date().toLocaleDateString(),
-        fatigue,
+    const workout = {
+        date: new Date().toISOString(),
+        fatigue: fatigueScore,
         notes
-    });
+    };
+
+    workouts.push(workout);
+    localStorage.setItem("workoutHistory", JSON.stringify(workouts));
 
     closeModal();
+    updateCharts();
+    loadWorkoutHistory();
 }
 
-/* ===== Save Manual Adjust ===== */
-function saveManualAdjust() {
-    trainingPlan.sessions.forEach((session, sIndex) => {
-        session.exercises.forEach((ex, eIndex) => {
-            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
-            ex.rir = parseInt(document.getElementById(`rir-${sIndex}-${eIndex}`).value);
-        });
+function resetApp() {
+    localStorage.clear();
+    location.reload();
+}
+
+// ==========================
+// Workout History
+// ==========================
+function loadWorkoutHistory() {
+    const list = document.getElementById('workoutList');
+    list.innerHTML = "";
+
+    if (workouts.length === 0) {
+        list.innerHTML = "<li>No workouts logged yet.</li>";
+        return;
+    }
+
+    workouts.slice(-5).reverse().forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${new Date(w.date).toLocaleDateString()} - Fatigue: ${w.fatigue} ${w.notes ? "| " + w.notes : ""}`;
+        list.appendChild(li);
+    });
+}
+
+// ==========================
+// Charts
+// ==========================
+let volumeChart, loadChart;
+
+function updateCharts() {
+    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
+    const ctxLoad = document.getElementById('loadChart').getContext('2d');
+
+    const labels = workouts.map(w => new Date(w.date).toLocaleDateString());
+    const fatigueData = workouts.map(w => w.fatigue);
+    const loadData = workouts.map(() => Math.floor(Math.random() * 100) + 50); // Placeholder
+
+    if (volumeChart) volumeChart.destroy();
+    if (loadChart) loadChart.destroy();
+
+    volumeChart = new Chart(ctxVolume, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Fatigue Score',
+                data: fatigueData,
+                backgroundColor: '#ff6b35'
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
-    localStorage.setItem("trainingPlan", JSON.stringify(trainingPlan));
-    renderDashboard(trainingPlan);
-    closeModal();
+    loadChart = new Chart(ctxLoad, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Estimated Load (kg)',
+                data: loadData,
+                borderColor: '#ff914d',
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: { responsive: true }
+    });
 }
 
-/* ===== Helpers ===== */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/* ===== Page Load ===== */
+// ==========================
+// On Page Load
+// ==========================
 window.onload = () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
-        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
-        trainingPlan = JSON.parse(localStorage.getItem("trainingPlan")) || generatePlan(userSelections);
-        renderDashboard(trainingPlan);
+        const savedSelections = JSON.parse(localStorage.getItem("userSelections"));
+        Object.assign(userSelections, savedSelections);
+        renderDashboard();
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
