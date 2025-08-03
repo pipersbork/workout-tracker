@@ -1,3 +1,7 @@
+/* ----------------------------
+   Global State
+----------------------------- */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzxomn7b3HhL_Fjm2gXFxvRvo0cz4CI4ym2ETb2oL37kp1qgxJYzo0hbSmsEv4SYw9Cog/exec";
 let currentStep = 1;
 const totalSteps = 6;
 
@@ -6,20 +10,20 @@ const userSelections = {
     experience: "",
     style: "",
     days: "",
-    frequency: 2 // Default
+    frequency: 2
 };
 
-/* Update progress bar */
+/* ----------------------------
+   Onboarding Functions
+----------------------------- */
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
 }
 
-/* Go to next step */
 function nextStep() {
     const current = document.getElementById('step' + currentStep);
     current.classList.remove('active');
-
     setTimeout(() => {
         currentStep++;
         const next = document.getElementById('step' + currentStep);
@@ -30,7 +34,6 @@ function nextStep() {
     }, 200);
 }
 
-/* Validate selection */
 function validateStep(field) {
     if (!userSelections[field]) {
         alert("Please select an option before continuing.");
@@ -39,7 +42,6 @@ function validateStep(field) {
     return true;
 }
 
-/* Select option card */
 function selectCard(element, field, value) {
     userSelections[field] = value;
     const group = element.parentElement.querySelectorAll('.goal-card');
@@ -47,7 +49,6 @@ function selectCard(element, field, value) {
     element.classList.add('active');
 }
 
-/* Complete onboarding and generate plan */
 async function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
@@ -57,7 +58,9 @@ async function finishOnboarding() {
     renderDashboard(plan);
 }
 
-/* Render dashboard */
+/* ----------------------------
+   Dashboard Rendering
+----------------------------- */
 async function renderDashboard(plan = null) {
     if (!plan) {
         plan = await getPlanFromDB();
@@ -79,6 +82,11 @@ async function renderDashboard(plan = null) {
             </div>
             <p>${plan.currentVolume} sets / ${plan.maxVolume} max</p>
 
+            <!-- Charts -->
+            <canvas id="volumeChart"></canvas>
+            <canvas id="loadChart"></canvas>
+
+            <!-- Sessions -->
             <div class="sessions">
                 ${plan.sessions.map(session => `
                     <div class="session-card">
@@ -88,88 +96,103 @@ async function renderDashboard(plan = null) {
                                 <p><strong>${ex.name}</strong></p>
                                 <p>${ex.sets} sets × ${ex.reps[0]}–${ex.reps[1]} reps</p>
                                 <p>RIR: ${ex.rir}</p>
-                                ${ex.load ? `<p>Load: ${ex.load}</p>` : ''}
                             </div>
                         `).join('')}
                     </div>
                 `).join('')}
             </div>
 
+            <!-- Action Buttons -->
             <div class="dashboard-actions">
-                <button class="cta-button" onclick="logWorkout()">Log Workout</button>
-                <button class="cta-button" onclick="manualAdjust()">Custom Adjust</button>
+                <button class="cta-button" onclick="openModal('logWorkout')">Log Workout</button>
+                <button class="cta-button" onclick="openModal('manualAdjust')">Custom Adjust</button>
+            </div>
+
+            <!-- Workout History -->
+            <div class="workout-history">
+                <h3>Recent Workouts</h3>
+                <ul id="workoutList"></ul>
             </div>
         </div>
     `;
+
+    loadWorkouts();
+    renderCharts(plan);
 }
 
-/* Log workout UI */
-function logWorkout() {
-    const container = document.querySelector('.container');
-    container.innerHTML = `
-        <div class="log-workout">
+/* ----------------------------
+   Modals
+----------------------------- */
+function openModal(type) {
+    const modal = document.getElementById('modal');
+    const body = document.getElementById('modal-body');
+
+    if (type === 'logWorkout') {
+        body.innerHTML = `
             <h2>Log Your Workout</h2>
-            <textarea id="workoutNotes" placeholder="Optional notes"></textarea>
-            <label for="fatigueScore">Fatigue Score (1–10):</label>
+            <label for="fatigueScore">Fatigue (1–10):</label>
             <input type="number" id="fatigueScore" min="1" max="10">
+            <textarea id="workoutNotes" placeholder="Optional notes"></textarea>
             <button class="cta-button" onclick="submitWorkout()">Submit</button>
-            <button class="cta-button" onclick="renderDashboard()">Cancel</button>
-        </div>
-    `;
+        `;
+    } else if (type === 'manualAdjust') {
+        buildManualAdjustUI(body);
+    }
+
+    modal.classList.remove('hidden');
 }
 
-/* Submit workout */
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
 async function submitWorkout() {
     const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
+    const notes = document.getElementById('workoutNotes').value;
+
     if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
+        alert("Enter a valid fatigue score (1–10).");
         return;
     }
 
-    const notes = document.getElementById('workoutNotes').value;
-    let currentPlan = await getPlanFromDB();
+    let plan = await getPlanFromDB();
+    plan = applyProgression(plan);
+    plan = checkFatigue(fatigueScore, plan);
 
-    currentPlan = applyProgression(currentPlan, []);
-    currentPlan = checkFatigue(fatigueScore, currentPlan);
-
-    await savePlanToDB(currentPlan);
+    await savePlanToDB(plan);
     await saveWorkoutToDB({ date: new Date().toISOString(), fatigue: fatigueScore, notes });
 
-    renderDashboard(currentPlan);
+    closeModal();
+    renderDashboard(plan);
 }
 
-/* Manual adjustments */
-async function manualAdjust() {
+/* ----------------------------
+   Manual Adjust UI
+----------------------------- */
+async function buildManualAdjustUI(container) {
     const plan = await getPlanFromDB();
-
-    const container = document.querySelector('.container');
     container.innerHTML = `
-        <div class="manual-adjust">
-            <h2>Custom Adjustments</h2>
-            ${plan.sessions.map((session, sIndex) => `
-                <div class="session-edit">
-                    <h3>${session.name}</h3>
-                    ${session.exercises.map((ex, eIndex) => `
-                        <div>
-                            <p>${ex.name}</p>
-                            <label>Sets:</label>
-                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}">
-                            <label>RIR:</label>
-                            <input type="number" id="rir-${sIndex}-${eIndex}" value="${ex.rir}">
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('')}
-            <button class="cta-button" onclick="saveManualAdjust()">Save Changes</button>
-            <button class="cta-button" onclick="renderDashboard()">Cancel</button>
-        </div>
+        <h2>Custom Adjustments</h2>
+        ${plan.sessions.map((session, sIndex) => `
+            <div class="session-edit">
+                <h3>${session.name}</h3>
+                ${session.exercises.map((ex, eIndex) => `
+                    <div>
+                        <p>${ex.name}</p>
+                        <label>Sets:</label>
+                        <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}">
+                        <label>RIR:</label>
+                        <input type="number" id="rir-${sIndex}-${eIndex}" value="${ex.rir}">
+                    </div>
+                `).join('')}
+            </div>
+        `).join('')}
+        <button class="cta-button" onclick="saveManualAdjust()">Save Changes</button>
     `;
 }
 
-/* Save adjustments */
 async function saveManualAdjust() {
     const plan = await getPlanFromDB();
-
     plan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
             ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
@@ -178,15 +201,71 @@ async function saveManualAdjust() {
     });
 
     await savePlanToDB(plan);
+    closeModal();
     renderDashboard(plan);
 }
 
-/* Helper */
+/* ----------------------------
+   Workout History
+----------------------------- */
+async function loadWorkouts() {
+    const workouts = await getAllWorkoutsFromDB();
+    const list = document.getElementById('workoutList');
+    if (!list) return;
+    list.innerHTML = "";
+    workouts.slice(-5).forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${new Date(w.date).toLocaleDateString()} | Fatigue: ${w.fatigue}`;
+        list.appendChild(li);
+    });
+}
+
+/* ----------------------------
+   Charts
+----------------------------- */
+function renderCharts(plan) {
+    const ctxVolume = document.getElementById('volumeChart');
+    const ctxLoad = document.getElementById('loadChart');
+
+    new Chart(ctxVolume, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3'],
+            datasets: [{
+                label: 'Volume (sets)',
+                data: [plan.currentVolume, plan.currentVolume + 10, plan.currentVolume + 20],
+                borderColor: '#ff6b35',
+                backgroundColor: 'rgba(255,107,53,0.2)',
+                fill: true
+            }]
+        }
+    });
+
+    new Chart(ctxLoad, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3'],
+            datasets: [{
+                label: 'Load (kg)',
+                data: [100, 105, 110],
+                borderColor: '#ff914d',
+                backgroundColor: 'rgba(255,145,77,0.2)',
+                fill: true
+            }]
+        }
+    });
+}
+
+/* ----------------------------
+   Helpers
+----------------------------- */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-/* On page load */
+/* ----------------------------
+   On Load
+----------------------------- */
 window.onload = async () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
         const savedSelections = JSON.parse(localStorage.getItem("userSelections"));
