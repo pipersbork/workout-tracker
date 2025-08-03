@@ -23,7 +23,7 @@
 <body>
 <div class="container">
 
-    <!-- Progress Bar (Onboarding) -->
+    <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
 
     <!-- STEP 1 -->
@@ -34,7 +34,7 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2 -->
+    <!-- STEP 2: Goal -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
@@ -58,7 +58,7 @@
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3 -->
+    <!-- STEP 3: Experience -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
@@ -82,7 +82,7 @@
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4 -->
+    <!-- STEP 4: Preferences -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
@@ -114,7 +114,7 @@
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5 -->
+    <!-- STEP 5: Sign-In -->
     <div class="step" id="step5">
         <h2>🔐 Sign in to Sync</h2>
         <div id="g_id_onload"
@@ -127,7 +127,7 @@
         <button class="cta-button" onclick="nextStep()">Skip for Now</button>
     </div>
 
-    <!-- STEP 6 -->
+    <!-- STEP 6: Complete -->
     <div class="step" id="step6">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
@@ -135,48 +135,16 @@
     </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-    <div class="dashboard">
-        <h1>🏋️ Your Training Dashboard</h1>
-        <p id="userSummary"></p>
+<!-- Dashboard (Dynamic) -->
+<div id="dashboard" class="hidden"></div>
 
-        <!-- Progress Indicator -->
-        <div class="progress-bar">
-            <div class="progress" id="volumeProgress"></div>
-        </div>
-        <p id="volumeSummary"></p>
-
-        <!-- Charts -->
-        <div class="chart-container">
-            <canvas id="volumeChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="loadChart"></canvas>
-        </div>
-
-        <!-- Workout History -->
-        <div class="workout-history">
-            <h2>Workout History</h2>
-            <ul id="workoutList"></ul>
-        </div>
-
-        <!-- Sticky Bottom Nav -->
-        <div class="bottom-nav">
-            <button onclick="openModal('logWorkout')">Log Workout</button>
-            <button onclick="openModal('planner')">Planner</button>
-            <button onclick="openModal('settings')">Settings</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL -->
+<!-- Modal -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div id="modal-body"></div>
     </div>
 </div>
-
 </body>
 </html>
+
