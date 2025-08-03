@@ -1,0 +1,65 @@
+let dayCount = 0;
+
+function initMesocycle() {
+    document.querySelector('.meso-header').classList.add('hidden');
+    document.getElementById('meso-builder').classList.remove('hidden');
+    addDay(); // Start with one day
+}
+
+function addDay() {
+    dayCount++;
+    const container = document.getElementById('days-container');
+
+    const dayCard = document.createElement('div');
+    dayCard.classList.add('day-card');
+    dayCard.innerHTML = `
+        <h3>Day ${dayCount}</h3>
+        <select>
+            <option value="">Add a label</option>
+            <option value="Push">Push</option>
+            <option value="Pull">Pull</option>
+            <option value="Legs">Legs</option>
+        </select>
+        <div class="muscle-groups"></div>
+        <div class="add-muscle-btn" onclick="openModal('muscle', ${dayCount})">+ Add a Muscle Group</div>
+    `;
+    container.appendChild(dayCard);
+}
+
+function openModal(type, dayIndex) {
+    const modal = document.getElementById('modal');
+    const body = document.getElementById('modal-body');
+    modal.classList.remove('hidden');
+
+    if (type === 'muscle') {
+        body.innerHTML = `
+            <h2>Muscle Groups</h2>
+            <p>Choose a muscle group</p>
+            <ul class="list-options">
+                ${['Chest','Back','Triceps','Biceps','Shoulders','Quads','Glutes','Hamstrings','Calves','Traps','Forearms']
+                    .map(muscle => `<li onclick="addMuscleGroup(${dayIndex}, '${muscle}')">${muscle}</li>`)
+                    .join('')}
+            </ul>
+        `;
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+function addMuscleGroup(dayIndex, muscle) {
+    const container = document.querySelectorAll('.day-card')[dayIndex - 1].querySelector('.muscle-groups');
+    const muscleTag = document.createElement('div');
+    muscleTag.textContent = muscle;
+    muscleTag.style.background = '#444';
+    muscleTag.style.padding = '6px';
+    muscleTag.style.margin = '5px 0';
+    muscleTag.style.borderRadius = '6px';
+    container.appendChild(muscleTag);
+    closeModal();
+}
+
+function saveMesocycle() {
+    alert("Mesocycle saved! (Later: sync to DB)");
+}
