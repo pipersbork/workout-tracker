@@ -4,9 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Progression - Workout Tracker</title>
+
+<!-- Styles -->
 <link rel="stylesheet" href="./assets/css/style.css">
 <link rel="manifest" href="./assets/manifest.json">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- App Scripts -->
 <script defer src="./assets/js/app.js"></script>
 <script defer src="./assets/js/auth.js"></script>
 <script defer src="./assets/js/db.js"></script>
@@ -62,57 +71,45 @@
             <div class="goal-card" onclick="selectCard(this, 'experience', 'experienced')">
                 <div class="icon">⚡</div>
                 <h3>Experienced</h3>
-                <p>6–18 months experience</p>
+                <p>6–18 months</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'experience', 'advanced')">
                 <div class="icon">🔥</div>
                 <h3>Advanced</h3>
-                <p>18+ months experience</p>
+                <p>18+ months</p>
             </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4: Workout Preferences -->
+    <!-- STEP 4: Preferences -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
-        <p>Select your preferred training style:</p>
+        <p>Select your preferred style:</p>
         <div class="card-group" data-field="style">
             <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
                 <div class="icon">🏋️</div>
                 <h3>Gym</h3>
-                <p>Heavy lifts & power</p>
+                <p>Heavy Lifts</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'style', 'home')">
-                <div class="icon">🏃</div>
+                <div class="icon">🏠</div>
                 <h3>Home</h3>
-                <p>Endurance focus</p>
+                <p>Minimal Equipment</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'style', 'hybrid')">
                 <div class="icon">🔥</div>
                 <h3>Hybrid</h3>
-                <p>Best of both worlds</p>
+                <p>Mix of Both</p>
             </div>
         </div>
 
         <p>How many days per week?</p>
         <div class="card-group" data-field="days">
-            <div class="goal-card" onclick="selectCard(this, 'days', '3')">
-                <h3>3</h3>
-                <p>Light schedule</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '4')">
-                <h3>4</h3>
-                <p>Balanced</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '5')">
-                <h3>5</h3>
-                <p>Serious training</p>
-            </div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '6')">
-                <h3>6</h3>
-                <p>Max effort</p>
-            </div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3><p>Balanced</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3><p>Intense</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '6')"><h3>6</h3><p>Max Effort</p></div>
         </div>
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
@@ -136,15 +133,14 @@
         <p>Your preferences have been saved.</p>
         <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
     </div>
-    <!-- Modal Container -->
+</div>
+
+<!-- Modal -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div id="modal-body"></div>
     </div>
-</div>
-
-
 </div>
 </body>
 </html>
