@@ -191,18 +191,21 @@ textarea {
 /* Card Style for Goal Selection */
 .card-group {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap; /* Keep all cards in one line */
+    justify-content: flex-start;
     gap: 15px;
-    margin: 20px 0;
+    overflow-x: auto; /* Enable horizontal scroll on smaller screens */
+    padding: 10px;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 .goal-card {
+    flex: 0 0 auto; /* Prevent shrinking */
     background: #1c1c1e;
     border: 2px solid #333;
     border-radius: 12px;
     padding: 20px 15px;
     text-align: center;
-    width: 120px;
+    width: 120px; /* Consistent size for all cards */
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.3s ease;
     color: #fff;
