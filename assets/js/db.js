@@ -2,6 +2,7 @@
 const DB_NAME = "workout-tracker";
 const DB_VERSION = 1;
 let db;
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzxomn7b3HhL_Fjm2gXFxvRvo0cz4CI4ym2ETb2oL37kp1qgxJYzo0hbSmsEv4SYw9Cog/exec";
 
 function initDB() {
   return new Promise((resolve, reject) => {
@@ -70,3 +71,56 @@ async function getAllWorkoutsFromDB() {
     request.onerror = () => reject("Failed to fetch workouts");
   });
 }
+
+/* ✅ SYNC LOGIC */
+
+// Sync Preferences to Google Sheet
+async function syncPreferences() {
+  const prefs = await getPreferencesFromDB();
+  if (!prefs) return;
+
+  return fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "onboarding",
+      data: prefs
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Preferences synced:", data);
+  })
+  .catch(err => console.error("Sync error:", err));
+}
+
+// Sync Workouts to Google Sheet
+async function syncWorkouts() {
+  const workouts = await getAllWorkoutsFromDB();
+  if (!workouts || workouts.length === 0) return;
+
+  return fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "syncWorkouts",
+      token: localStorage.getItem("googleToken"),
+      workouts
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Workouts synced:", data);
+
+    // Clear after successful sync
+    const tx = db.transaction("workouts", "readwrite");
+    tx.objectStore("workouts").clear();
+  })
+  .catch(err => console.error("Sync error:", err));
+}
+
+// Auto sync when online
+window.addEventListener("online", () => {
+  syncPreferences();
+  syncWorkouts();
+});
