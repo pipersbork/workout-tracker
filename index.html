@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Progression - Workout Tracker</title>
 
 <!-- Styles -->
-<link rel="stylesheet" href="./assets/css/style.css">
-<link rel="manifest" href="./assets/manifest.json">
+<link rel="stylesheet" href="./assets/css/style.css" />
+<link rel="manifest" href="./assets/manifest.json" />
 
-<!-- Chart.js for future -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Google Sign-In -->
@@ -17,13 +17,14 @@
 
 <!-- App Scripts -->
 <script defer src="./assets/js/app.js"></script>
+<script defer src="./assets/js/trainerLogic.js" type="module"></script>
 <script defer src="./assets/js/auth.js"></script>
 <script defer src="./assets/js/db.js"></script>
 </head>
 <body>
 <div class="container">
 
-    <!-- Onboarding Progress Bar -->
+    <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
 
     <!-- STEP 1 -->
@@ -42,17 +43,17 @@
             <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
                 <div class="icon">💪</div>
                 <h3>Muscle Building</h3>
-                <p>Hypertrophy & Strength</p>
+                <p>Strength & Hypertrophy</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'goal', 'cardio')">
                 <div class="icon">🏃</div>
                 <h3>Cardio</h3>
-                <p>Endurance Focus</p>
+                <p>Endurance Training</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'goal', 'combined')">
                 <div class="icon">🔥</div>
-                <h3>Hybrid</h3>
-                <p>Best of Both Worlds</p>
+                <h3>Combined</h3>
+                <p>Balance Both</p>
             </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
@@ -90,7 +91,7 @@
             <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
                 <div class="icon">🏋️</div>
                 <h3>Gym</h3>
-                <p>Full Equipment</p>
+                <p>Heavy Lifts</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'style', 'home')">
                 <div class="icon">🏠</div>
@@ -103,6 +104,7 @@
                 <p>Mix of Both</p>
             </div>
         </div>
+
         <p>How many days per week?</p>
         <div class="card-group" data-field="days">
             <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
@@ -116,7 +118,12 @@
     <!-- STEP 5 -->
     <div class="step" id="step5">
         <h2>🔐 Sign in to Sync</h2>
-        <p>(Optional for now)</p>
+        <div id="g_id_onload"
+            data-client_id="YOUR_GOOGLE_CLIENT_ID"
+            data-context="signup"
+            data-callback="handleCredentialResponse"
+            data-auto_select="false">
+        </div>
         <div class="g_id_signin" data-type="standard"></div>
         <button class="cta-button" onclick="nextStep()">Skip for Now</button>
     </div>
@@ -135,13 +142,24 @@
         <h1>🏋️ Your Training Dashboard</h1>
         <p id="userSummary"></p>
 
-        <!-- Placeholder for plan -->
-        <div id="planSummary"></div>
+        <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
+        <p id="volumeSummary"></p>
 
-        <!-- Action Buttons -->
-        <div class="dashboard-actions">
-            <button class="cta-button" onclick="openModal('customize')">Customize Plan</button>
-            <button class="cta-button" onclick="openModal('log')">Log Workout</button>
+        <!-- Charts -->
+        <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+        <div class="chart-container"><canvas id="loadChart"></canvas></div>
+
+        <!-- Workout History -->
+        <div class="workout-history">
+            <h2>Workout History</h2>
+            <ul id="workoutList"></ul>
+        </div>
+
+        <!-- Sticky Bottom Nav -->
+        <div class="bottom-nav">
+            <button onclick="openModal('logWorkout')">Log Workout</button>
+            <button onclick="openModal('planner')">Planner</button>
+            <button onclick="openModal('settings')">Settings</button>
         </div>
     </div>
 </div>
