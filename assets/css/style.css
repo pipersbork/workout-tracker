@@ -204,4 +204,34 @@ textarea {
         font-size: 1rem;
         padding: 14px 0;
     }
+    .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.option-btn {
+    background: #222;
+    color: #fff;
+    border: 2px solid #ff6b35;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.option-btn:hover {
+    background: #ff6b35;
+    color: #111;
+}
+
+.option-btn.active {
+    background: #ff6b35;
+    color: #111;
+    transform: scale(1.05);
+}
+
 }
