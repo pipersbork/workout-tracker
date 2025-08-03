@@ -1,45 +1,30 @@
-const API_URL = "https://script.google.com/macros/s/YOUR_GOOGLE_APPS_SCRIPT_URL/exec";
+function syncWorkouts(token) {
+  const tx = db.transaction('workouts', 'readonly');
+  const store = tx.objectStore('workouts');
+  const req = store.getAll();
+  req.onsuccess = () => {
+    const workouts = req.result;
+    if (workouts.length === 0) return;
 
-// Sync user preferences to Google Sheets
-async function syncPreferencesToGoogleSheet(preferences) {
-  try {
-    const response = await fetch(API_URL + "?action=savePreferences", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(preferences)
-    });
-
-    if (!response.ok) throw new Error("Failed to sync preferences");
-    return true;
-  } catch (error) {
-    console.warn("Preferences sync failed. Retrying later.");
-    // Optionally: Add retry queue logic
-    return false;
-  }
+    fetch('YOUR_APPS_SCRIPT_WEB_APP_URL', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, workouts })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        // Clear synced logs
+        const txClear = db.transaction('workouts', 'readwrite');
+        txClear.objectStore('workouts').clear();
+        document.getElementById('logStatus').textContent = "✅ Synced to Google Sheets!";
+      }
+    })
+    .catch(err => console.error("Sync error:", err));
+  };
 }
 
-// Sync workout to Google Sheets
-async function syncWorkoutToGoogleSheet(workout) {
-  try {
-    const response = await fetch(API_URL + "?action=saveWorkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(workout)
-    });
-
-    if (!response.ok) throw new Error("Failed to sync workout");
-    return true;
-  } catch (error) {
-    console.warn("Workout sync failed. Will retry later.");
-    return false;
-  }
+function handleCredentialResponse(response) {
+  const token = response.credential;
+  syncWorkouts(token);
 }
-
-// Retry sync when online
-window.addEventListener("online", async () => {
-  console.log("✅ Back online. Retrying sync...");
-  const workouts = await getAllWorkoutsFromDB();
-  for (let workout of workouts) {
-    await syncWorkoutToGoogleSheet(workout);
-  }
-});
