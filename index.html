@@ -28,7 +28,7 @@
     <!-- STEP 2 -->
 <div class="step" id="step2">
     <h2>Your Goal</h2>
-    <p>Select the type of training focus:</p>
+    <p>Select your training focus:</p>
     <div class="card-group" data-field="goal">
         <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
             <div class="icon">💪</div>
@@ -46,39 +46,77 @@
             <p>Balance Both</p>
         </div>
     </div>
-    <button class="cta-button" onclick="nextStep()">Next</button>
+    <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
+</div>
+
+    <!-- STEP 3 -->
+   <div class="step" id="step3">
+    <h2>Experience Level</h2>
+    <p>Choose your fitness level:</p>
+    <div class="card-group" data-field="experience">
+        <div class="goal-card" onclick="selectCard(this, 'experience', 'beginner')">
+            <div class="icon">🌱</div>
+            <h3>Beginner</h3>
+            <p>New to training</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'experience', 'intermediate')">
+            <div class="icon">⚡</div>
+            <h3>Intermediate</h3>
+            <p>6–18 months experience</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'experience', 'advanced')">
+            <div class="icon">🔥</div>
+            <h3>Advanced</h3>
+            <p>18+ months experience</p>
+        </div>
+    </div>
+    <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
 </div>
 
 
-    <!-- STEP 3 -->
-    <div class="step" id="step3">
-        <h2>💪 Experience Level</h2>
-        <div class="button-group" data-field="experience">
-            <button onclick="selectOption('experience', 'beginner')" class="option-btn">Beginner</button>
-            <button onclick="selectOption('experience', 'intermediate')" class="option-btn">Intermediate</button>
-            <button onclick="selectOption('experience', 'advanced')" class="option-btn">Advanced</button>
-        </div>
-        <button class="cta-button" onclick="nextStep()">Next</button>
-    </div>
-
     <!-- STEP 4 -->
     <div class="step" id="step4">
-        <h2>🏋️ Workout Preferences</h2>
-        <p>Style:</p>
-        <div class="button-group" data-field="style">
-            <button onclick="selectOption('style', 'strength')" class="option-btn">Strength</button>
-            <button onclick="selectOption('style', 'cardio')" class="option-btn">Cardio</button>
-            <button onclick="selectOption('style', 'hybrid')" class="option-btn">Hybrid</button>
+    <h2>Workout Preferences</h2>
+    <p>Select your preferred training style:</p>
+    <div class="card-group" data-field="style">
+        <div class="goal-card" onclick="selectCard(this, 'style', 'strength')">
+            <div class="icon">🏋️</div>
+            <h3>Strength</h3>
+            <p>Heavy lifts & power</p>
         </div>
-        <p>Days per week:</p>
-        <div class="button-group" data-field="days">
-            <button onclick="selectOption('days', '3')" class="option-btn">3</button>
-            <button onclick="selectOption('days', '4')" class="option-btn">4</button>
-            <button onclick="selectOption('days', '5')" class="option-btn">5</button>
-            <button onclick="selectOption('days', '6')" class="option-btn">6</button>
+        <div class="goal-card" onclick="selectCard(this, 'style', 'cardio')">
+            <div class="icon">🏃</div>
+            <h3>Cardio</h3>
+            <p>Endurance focus</p>
         </div>
-        <button class="cta-button" onclick="nextStep()">Next</button>
+        <div class="goal-card" onclick="selectCard(this, 'style', 'hybrid')">
+            <div class="icon">🔥</div>
+            <h3>Hybrid</h3>
+            <p>Best of both worlds</p>
+        </div>
     </div>
+    <p>How many days per week?</p>
+    <div class="card-group" data-field="days">
+        <div class="goal-card" onclick="selectCard(this, 'days', '3')">
+            <h3>3</h3>
+            <p>Light schedule</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'days', '4')">
+            <h3>4</h3>
+            <p>Balanced</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'days', '5')">
+            <h3>5</h3>
+            <p>Serious training</p>
+        </div>
+        <div class="goal-card" onclick="selectCard(this, 'days', '6')">
+            <h3>6</h3>
+            <p>Max effort</p>
+        </div>
+    </div>
+    <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
+</div>
+
 
     <!-- STEP 5 -->
     <div class="step" id="step5">
