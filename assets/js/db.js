@@ -1,5 +1,5 @@
 const DB_NAME = "progression-app";
-const DB_VERSION = 3; // Increment when schema changes
+const DB_VERSION = 3; // Incremented for template store
 let db;
 
 function initDB() {
@@ -9,20 +9,24 @@ function initDB() {
         request.onupgradeneeded = (event) => {
             db = event.target.result;
 
+            // Preferences store
             if (!db.objectStoreNames.contains("preferences")) {
                 db.createObjectStore("preferences", { keyPath: "id" });
             }
 
+            // Training plan store
             if (!db.objectStoreNames.contains("plan")) {
                 db.createObjectStore("plan", { keyPath: "id" });
             }
 
+            // Workout logs store
             if (!db.objectStoreNames.contains("workouts")) {
                 db.createObjectStore("workouts", { keyPath: "id", autoIncrement: true });
             }
 
+            // Templates store
             if (!db.objectStoreNames.contains("templates")) {
-                db.createObjectStore("templates", { keyPath: "id", autoIncrement: true });
+                db.createObjectStore("templates", { keyPath: "id" });
             }
         };
 
@@ -103,7 +107,7 @@ async function saveTemplateToDB(template) {
     await initDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction("templates", "readwrite");
-        tx.objectStore("templates").add(template);
+        tx.objectStore("templates").put(template);
         tx.oncomplete = resolve;
         tx.onerror = () => reject("Failed to save template");
     });
@@ -114,7 +118,17 @@ async function getAllTemplatesFromDB() {
     return new Promise((resolve, reject) => {
         const tx = db.transaction("templates", "readonly");
         const request = tx.objectStore("templates").getAll();
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => resolve(request.result || []);
         request.onerror = () => reject("Failed to fetch templates");
+    });
+}
+
+async function deleteTemplateFromDB(id) {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("templates", "readwrite");
+        tx.objectStore("templates").delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject("Failed to delete template");
     });
 }
