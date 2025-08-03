@@ -29,6 +29,8 @@ body {
     width: 100%;
     height: 100%;
     position: relative;
+    overflow-y: auto;
+    padding-bottom: 30px;
 }
 
 /* Progress bar */
@@ -111,7 +113,7 @@ body {
     transform: scale(1.05);
     background: linear-gradient(45deg, #ff914d, #ff6b35);
 }
-input, select {
+input, select, textarea {
     display: block;
     width: 90%;
     margin: 10px auto;
@@ -119,6 +121,43 @@ input, select {
     border-radius: 8px;
     border: 1px solid #ccc;
     font-size: 1rem;
+    background: #222;
+    color: #fff;
+}
+textarea {
+    resize: none;
+    height: 80px;
+}
+
+/* Dashboard Styles */
+.dashboard {
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+}
+.workout-form, .workout-history {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    margin: 15px auto;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+}
+.workout-form h2, .workout-history h2 {
+    margin-bottom: 10px;
+    color: #ff6b35;
+}
+.workout-history ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+.workout-history li {
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    font-size: 0.95rem;
+    color: #ddd;
 }
 
 /* Animations */
