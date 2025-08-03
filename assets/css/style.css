@@ -1,45 +1,36 @@
-/* Base */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* ===== Base ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
     background-size: 400% 400%;
     animation: gradientBG 8s ease infinite;
-    color: #ff6b35;
+    color: #fff;
     height: 100vh;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-
 @keyframes gradientBG {
     0% {background-position: 0% 50%;}
     50% {background-position: 100% 50%;}
     100% {background-position: 0% 50%;}
 }
 
-/* Container and steps */
 .container {
-    text-align: center;
     width: 100%;
-    height: 100%;
-    position: relative;
+    max-width: 900px;
+    text-align: center;
     overflow-y: auto;
-    padding-bottom: 30px;
+    padding: 20px;
 }
 
-/* Progress bar */
+/* ===== Progress Bar ===== */
 .progress-bar {
     width: 80%;
     background: #333;
     height: 8px;
     border-radius: 5px;
-    overflow: hidden;
     margin: 20px auto;
 }
 .progress {
@@ -49,25 +40,11 @@ body {
     transition: width 0.4s ease;
 }
 
-/* Steps */
-.step {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
-    width: 90%;
-    max-width: 400px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease, transform 0.6s ease;
-}
-.step.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) scale(1);
-}
+/* ===== Steps ===== */
+.step { display: none; }
+.step.active { display: block; }
 
-/* Cinematic intro for Step 1 */
+/* ===== Cinematic Intro (Step 1) ===== */
 .main-title {
     font-size: 3rem;
     font-weight: bold;
@@ -86,112 +63,78 @@ body {
 }
 .tagline {
     font-size: 1rem;
-    color: #ff6b35;
     margin-bottom: 35px;
-    line-height: 1.4;
     opacity: 0;
     animation: slideUp 1s ease forwards;
     animation-delay: 1.6s;
 }
+
+/* ===== Buttons ===== */
 .cta-button {
-    display: inline-block;
-    padding: 16px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff;
+    display: block;
+    width: 80%;
+    margin: 20px auto;
+    padding: 14px;
     background: linear-gradient(45deg, #ff6b35, #ff914d);
     border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.cta-button:hover { transform: scale(1.05); }
+
+/* ===== Card Group ===== */
+.card-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 15px 0;
+}
+.goal-card {
+    background: #1c1c1e;
+    border: 2px solid #333;
     border-radius: 12px;
-    text-decoration: none;
-    margin-top: 15px;
-    transition: transform 0.2s ease, background 0.3s ease;
-    opacity: 0;
-    animation: slideUpButton 1.2s ease forwards, pulseGlow 2s infinite ease-in-out;
-    animation-delay: 2s, 3.2s;
-}
-.cta-button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(45deg, #ff914d, #ff6b35);
-}
-input, select, textarea {
-    display: block;
-    width: 90%;
-    margin: 10px auto;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-    background: #222;
+    padding: 20px 15px;
+    text-align: center;
+    width: 130px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.3s ease;
     color: #fff;
 }
-textarea {
-    resize: none;
-    height: 80px;
+.goal-card .icon { font-size: 1.8rem; margin-bottom: 8px; }
+.goal-card:hover, .goal-card.active {
+    transform: scale(1.05);
+    border-color: #ff6b35;
 }
 
-/* Dashboard Styles */
+/* ===== Dashboard & Modals ===== */
 .dashboard {
     padding: 20px;
     text-align: center;
-    color: #fff;
 }
-.dashboard h1 {
-    margin-bottom: 10px;
-}
-.dashboard .progress-bar {
-    margin-top: 10px;
-    margin-bottom: 5px;
-}
+.dashboard .progress-bar { margin: 10px auto; }
 
-/* Workout History */
-.workout-form, .workout-history {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    margin: 15px auto;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 500px;
-}
-.workout-history ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-align: left;
-}
-.workout-history li {
-    padding: 8px;
-    border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #ddd;
-}
-
-/* Charts */
-.chart-container {
-    width: 100%;
-    max-width: 600px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
-}
-
-/* Modal */
 .modal {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
 }
 .modal.hidden { display: none; }
 .modal-content {
-    background: #1c1c1e;
+    background: #222;
     padding: 20px;
     border-radius: 10px;
     width: 90%;
-    max-width: 400px;
+    max-width: 500px;
+    max-height: 90%;
+    overflow-y: auto;
     color: #fff;
 }
 .close-btn {
@@ -199,42 +142,27 @@ textarea {
     font-size: 1.5rem;
     cursor: pointer;
 }
-
-/* Card Group for onboarding */
-.card-group {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 15px;
-    overflow-x: auto;
-    padding: 10px;
-}
-.goal-card {
-    flex: 0 0 auto;
-    background: #1c1c1e;
-    border: 2px solid #333;
-    border-radius: 12px;
-    padding: 20px 15px;
-    text-align: center;
-    width: 140px;
+.modal-options .option-card {
+    background: #333;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.3s ease;
-    color: #fff;
+    transition: background 0.3s ease;
 }
-.goal-card .icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-}
-.goal-card:hover {
-    transform: scale(1.05);
-    border-color: #ff6b35;
-}
-.goal-card.active {
-    border-color: #ff6b35;
-    background: #2a2a2d;
-}
+.option-card:hover { background: #444; }
 
-/* Animations */
+/* ===== Lists in Modals ===== */
+.list-options { list-style: none; padding: 0; margin: 10px 0; }
+.list-options li {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    text-align: left;
+}
+.list-options li:hover { background: #333; }
+
+/* ===== Animations ===== */
 @keyframes fadeInScale {
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }
@@ -246,25 +174,4 @@ textarea {
 @keyframes slideUp {
     0% { opacity: 0; transform: translateY(20px); }
     100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideUpButton {
-    0% { opacity: 0; transform: translateY(50px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-    50% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 145, 77, 0.6);}
-    100% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-}
-@keyframes dividerGlow {
-    0% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
-    50% { box-shadow: 0 0 12px rgba(255, 107, 53, 0.8);}
-    100% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
-}
-
-/* Responsive tweaks */
-@media screen and (max-width: 480px) {
-    .main-title { font-size: 2rem; }
-    .divider { width: 50px; }
-    .goal-card { width: 110px; padding: 15px; }
 }
