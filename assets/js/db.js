@@ -1,5 +1,5 @@
 const DB_NAME = "progression-app";
-const DB_VERSION = 2; // Increment when schema changes
+const DB_VERSION = 3; // Increment when schema changes
 let db;
 
 function initDB() {
@@ -19,6 +19,10 @@ function initDB() {
 
             if (!db.objectStoreNames.contains("workouts")) {
                 db.createObjectStore("workouts", { keyPath: "id", autoIncrement: true });
+            }
+
+            if (!db.objectStoreNames.contains("templates")) {
+                db.createObjectStore("templates", { keyPath: "id", autoIncrement: true });
             }
         };
 
@@ -91,5 +95,26 @@ async function getAllWorkoutsFromDB() {
         const request = tx.objectStore("workouts").getAll();
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject("Failed to fetch workouts");
+    });
+}
+
+/* ---------------- TEMPLATES ---------------- */
+async function saveTemplateToDB(template) {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("templates", "readwrite");
+        tx.objectStore("templates").add(template);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject("Failed to save template");
+    });
+}
+
+async function getAllTemplatesFromDB() {
+    await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("templates", "readonly");
+        const request = tx.objectStore("templates").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject("Failed to fetch templates");
     });
 }
