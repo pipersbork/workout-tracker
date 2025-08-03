@@ -1,65 +1,49 @@
-let dayCount = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Mesocycle Planner</title>
+<link rel="stylesheet" href="./assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script defer src="./assets/js/mesocycle.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>🛠 Advanced Mesocycle Planner</h1>
+    <p>Create or customize your training plan</p>
 
-function initMesocycle() {
-    document.querySelector('.meso-header').classList.add('hidden');
-    document.getElementById('meso-builder').classList.remove('hidden');
-    addDay(); // Start with one day
-}
+    <div class="planner-form">
+        <label>Weeks in Mesocycle:</label>
+        <input type="number" id="weeks" value="6" min="4" max="12">
 
-function addDay() {
-    dayCount++;
-    const container = document.getElementById('days-container');
+        <label>Base Sets Per Muscle Group:</label>
+        <input type="number" id="baseSets" value="10" min="6" max="20">
 
-    const dayCard = document.createElement('div');
-    dayCard.classList.add('day-card');
-    dayCard.innerHTML = `
-        <h3>Day ${dayCount}</h3>
-        <select>
-            <option value="">Add a label</option>
-            <option value="Push">Push</option>
-            <option value="Pull">Pull</option>
-            <option value="Legs">Legs</option>
-        </select>
-        <div class="muscle-groups"></div>
-        <div class="add-muscle-btn" onclick="openModal('muscle', ${dayCount})">+ Add a Muscle Group</div>
-    `;
-    container.appendChild(dayCard);
-}
+        <label>Progression Rate (Sets Per Week):</label>
+        <input type="number" id="progressionRate" value="2" min="1" max="5">
 
-function openModal(type, dayIndex) {
-    const modal = document.getElementById('modal');
-    const body = document.getElementById('modal-body');
-    modal.classList.remove('hidden');
+        <label>Starting RIR:</label>
+        <input type="number" id="startRIR" value="3" min="1" max="5">
 
-    if (type === 'muscle') {
-        body.innerHTML = `
-            <h2>Muscle Groups</h2>
-            <p>Choose a muscle group</p>
-            <ul class="list-options">
-                ${['Chest','Back','Triceps','Biceps','Shoulders','Quads','Glutes','Hamstrings','Calves','Traps','Forearms']
-                    .map(muscle => `<li onclick="addMuscleGroup(${dayIndex}, '${muscle}')">${muscle}</li>`)
-                    .join('')}
-            </ul>
-        `;
-    }
-}
+        <label>Ending RIR:</label>
+        <input type="number" id="endRIR" value="0" min="0" max="3">
 
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
+        <h3>Add Exercises:</h3>
+        <div id="exerciseList">
+            <!-- Dynamic exercise inputs go here -->
+        </div>
+        <button class="cta-button" onclick="addExercise()">+ Add Exercise</button>
 
-function addMuscleGroup(dayIndex, muscle) {
-    const container = document.querySelectorAll('.day-card')[dayIndex - 1].querySelector('.muscle-groups');
-    const muscleTag = document.createElement('div');
-    muscleTag.textContent = muscle;
-    muscleTag.style.background = '#444';
-    muscleTag.style.padding = '6px';
-    muscleTag.style.margin = '5px 0';
-    muscleTag.style.borderRadius = '6px';
-    container.appendChild(muscleTag);
-    closeModal();
-}
+        <button class="cta-button" onclick="generateAdvancedPlan()">Generate Plan</button>
+        <button class="cta-button" onclick="saveAdvancedPlan()">Save & Return</button>
+        <a href="index.html" class="cta-button">Cancel</a>
+    </div>
 
-function saveMesocycle() {
-    alert("Mesocycle saved! (Later: sync to DB)");
-}
+    <!-- Chart Preview -->
+    <div class="chart-container">
+        <canvas id="progressionChart"></canvas>
+    </div>
+</div>
+</body>
+</html>
