@@ -39,4 +39,29 @@ window.onload = () => {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
     }
+    const userSelections = {
+    goal: "",
+    experience: "",
+    style: "",
+    days: ""
+};
+
+function selectOption(field, value) {
+    userSelections[field] = value;
+
+    // Remove active state from other buttons in the same group
+    const group = document.querySelector(`.button-group[data-field="${field}"]`);
+    group.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+
+    // Add active to clicked button
+    const clickedBtn = [...group.querySelectorAll('.option-btn')].find(btn => btn.textContent.includes(value) || btn.getAttribute('onclick').includes(value));
+    if (clickedBtn) clickedBtn.classList.add('active');
+}
+
+function finishOnboarding() {
+    localStorage.setItem("onboardingCompleted", "true");
+    localStorage.setItem("userSelections", JSON.stringify(userSelections));
+    renderDashboard();
+}
+
 };
