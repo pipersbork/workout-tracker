@@ -1,22 +1,10 @@
-// ==========================
-// State Management
-// ==========================
 let currentStep = 1;
 const totalSteps = 6;
+const userSelections = { goal: "", experience: "", style: "", days: "" };
 
-const userSelections = {
-    goal: "",
-    experience: "",
-    style: "",
-    days: "",
-    frequency: 2 // Default, can be adjusted later
-};
-
-let workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
-
-// ==========================
-// Onboarding Functions
-// ==========================
+/* -------------------
+    ONBOARDING FLOW
+------------------- */
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.querySelector('.progress').style.width = percentage + "%";
@@ -25,7 +13,6 @@ function updateProgress() {
 function nextStep() {
     const current = document.getElementById('step' + currentStep);
     current.classList.remove('active');
-
     setTimeout(() => {
         currentStep++;
         const next = document.getElementById('step' + currentStep);
@@ -46,177 +33,136 @@ function validateStep(field) {
 
 function selectCard(element, field, value) {
     userSelections[field] = value;
-
     const group = element.parentElement.querySelectorAll('.goal-card');
     group.forEach(card => card.classList.remove('active'));
-
     element.classList.add('active');
 }
 
 async function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
-    renderDashboard();
+    showDashboard();
 }
 
-// ==========================
-// Dashboard Rendering
-// ==========================
-function renderDashboard() {
+/* -------------------
+    DASHBOARD
+------------------- */
+async function showDashboard() {
     document.querySelector('.container').classList.add('hidden');
-    const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
 
-    const planSummary = `
-        <strong>Goal:</strong> ${capitalize(userSelections.goal)} | 
-        <strong>Level:</strong> ${capitalize(userSelections.experience)} | 
-        <strong>Days:</strong> ${userSelections.days}/week
-    `;
+    const summary = document.getElementById('userSummary');
+    summary.textContent = `Goal: ${capitalize(userSelections.goal)} | Level: ${capitalize(userSelections.experience)} | Days: ${userSelections.days}`;
 
-    document.getElementById('userSummary').innerHTML = planSummary;
-
-    updateCharts();
-    loadWorkoutHistory();
+    updateVolumeProgress(0, 100); // placeholder
+    loadWorkouts();
 }
 
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+function updateVolumeProgress(current, max) {
+    document.getElementById('volumeProgress').style.width = `${(current / max) * 100}%`;
+    document.getElementById('volumeSummary').textContent = `${current} / ${max} sets`;
 }
 
-// ==========================
-// Workout Logging
-// ==========================
+/* -------------------
+    MODAL LOGIC
+------------------- */
 function openModal(type) {
     const modal = document.getElementById('modal');
     const modalBody = document.getElementById('modal-body');
+    modal.classList.remove('hidden');
 
-    if (type === 'logWorkout') {
+    if (type === 'planner') {
         modalBody.innerHTML = `
-            <h2>Log Workout</h2>
-            <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
-            <label>Fatigue Score (1-10)</label>
-            <input type="number" id="fatigueScore" min="1" max="10">
-            <button class="cta-button full-width" onclick="submitWorkout()">Save</button>
-        `;
-    } else if (type === 'planner') {
-        modalBody.innerHTML = `
-            <h2>Workout Planner</h2>
-            <p>Feature coming soon: Customize your program!</p>
-        `;
-    } else if (type === 'settings') {
-        modalBody.innerHTML = `
-            <h2>Settings</h2>
-            <button class="cta-button full-width" onclick="resetApp()">Reset App</button>
+            <div class="planner-form">
+                <h2>Create Your Workout Template</h2>
+                <p>Customize your session below:</p>
+                <label for="templateName">Template Name:</label>
+                <input type="text" id="templateName" placeholder="e.g., Push Day" />
+                <div id="exerciseList">
+                    <div class="exercise-row">
+                        <input type="text" placeholder="Exercise Name" class="exercise-name" />
+                        <input type="number" placeholder="Sets" class="exercise-sets" />
+                        <input type="text" placeholder="Reps (e.g., 8-10)" class="exercise-reps" />
+                    </div>
+                </div>
+                <button type="button" onclick="addExerciseRow()">+ Add Exercise</button>
+                <button type="button" class="save-btn" onclick="saveTemplate()">Save Template</button>
+            </div>
         `;
     }
-
-    modal.classList.remove('hidden');
 }
 
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-function submitWorkout() {
-    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
-    const notes = document.getElementById('workoutNotes').value.trim();
+function addExerciseRow() {
+    const container = document.getElementById('exerciseList');
+    const div = document.createElement('div');
+    div.classList.add('exercise-row');
+    div.innerHTML = `
+        <input type="text" placeholder="Exercise Name" class="exercise-name" />
+        <input type="number" placeholder="Sets" class="exercise-sets" />
+        <input type="text" placeholder="Reps (e.g., 8-10)" class="exercise-reps" />
+    `;
+    container.appendChild(div);
+}
 
-    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1-10).");
+function saveTemplate() {
+    const templateName = document.getElementById('templateName').value.trim();
+    if (!templateName) {
+        alert("Please enter a template name.");
         return;
     }
 
-    const workout = {
-        date: new Date().toISOString(),
-        fatigue: fatigueScore,
-        notes
-    };
+    const exercises = [];
+    document.querySelectorAll('.exercise-row').forEach(row => {
+        const name = row.querySelector('.exercise-name').value.trim();
+        const sets = row.querySelector('.exercise-sets').value.trim();
+        const reps = row.querySelector('.exercise-reps').value.trim();
+        if (name && sets && reps) {
+            exercises.push({ name, sets: parseInt(sets), reps });
+        }
+    });
 
-    workouts.push(workout);
-    localStorage.setItem("workoutHistory", JSON.stringify(workouts));
+    if (exercises.length === 0) {
+        alert("Add at least one exercise.");
+        return;
+    }
+
+    const template = { name: templateName, exercises };
+    console.log("Saved Template:", template);
+    saveTemplateToDB(template);
+    alert(`Template "${templateName}" saved!`);
 
     closeModal();
-    updateCharts();
-    loadWorkoutHistory();
 }
 
-function resetApp() {
-    localStorage.clear();
-    location.reload();
-}
-
-// ==========================
-// Workout History
-// ==========================
-function loadWorkoutHistory() {
+/* -------------------
+    WORKOUT LOGGING
+------------------- */
+async function loadWorkouts() {
+    const workouts = await getAllWorkoutsFromDB();
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
-
-    if (workouts.length === 0) {
-        list.innerHTML = "<li>No workouts logged yet.</li>";
-        return;
-    }
-
-    workouts.slice(-5).reverse().forEach(w => {
+    workouts.forEach(w => {
         const li = document.createElement('li');
-        li.textContent = `${new Date(w.date).toLocaleDateString()} - Fatigue: ${w.fatigue} ${w.notes ? "| " + w.notes : ""}`;
+        li.textContent = `${w.details} (${new Date(w.date).toLocaleDateString()})`;
         list.appendChild(li);
     });
 }
 
-// ==========================
-// Charts
-// ==========================
-let volumeChart, loadChart;
-
-function updateCharts() {
-    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-    const ctxLoad = document.getElementById('loadChart').getContext('2d');
-
-    const labels = workouts.map(w => new Date(w.date).toLocaleDateString());
-    const fatigueData = workouts.map(w => w.fatigue);
-    const loadData = workouts.map(() => Math.floor(Math.random() * 100) + 50); // Placeholder
-
-    if (volumeChart) volumeChart.destroy();
-    if (loadChart) loadChart.destroy();
-
-    volumeChart = new Chart(ctxVolume, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Fatigue Score',
-                data: fatigueData,
-                backgroundColor: '#ff6b35'
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-
-    loadChart = new Chart(ctxLoad, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Estimated Load (kg)',
-                data: loadData,
-                borderColor: '#ff914d',
-                fill: false,
-                tension: 0.3
-            }]
-        },
-        options: { responsive: true }
-    });
+/* Utility */
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ==========================
-// On Page Load
-// ==========================
+/* On Load */
 window.onload = () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
         const savedSelections = JSON.parse(localStorage.getItem("userSelections"));
         Object.assign(userSelections, savedSelections);
-        renderDashboard();
+        showDashboard();
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
