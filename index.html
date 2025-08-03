@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Progression Workouts</title>
+<title>RP Workout</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#121212">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -34,7 +34,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
 /* Logging Screen */
 .exercise-entry { background: #1E1E1E; padding: 14px; border-radius: 8px; margin-bottom: 12px; }
-.exercise-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.exercise-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; }
 .controls { display: flex; justify-content: space-around; }
 .control-group { text-align: center; }
 .control-btn { width: 32px; height: 32px; border-radius: 50%; background: #FF6600; color: #fff; border: none; font-size: 18px; cursor: pointer; }
@@ -51,13 +51,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <!-- Screen 1: Home -->
 <div id="home-screen" class="screen active-screen">
   <div class="dashboard">
-    <div class="logo">Progression</div>
+    <div class="logo">RP</div>
     <div class="tagline">Smart Training</div>
     <button class="btn btn-primary" onclick="navigate('logging-screen')">🏋️ Start Next Workout</button>
     <button class="btn btn-secondary" onclick="navigate('plan-screen')">✨ View Plan</button>
     <div class="stats-hint">
       <div class="stats-title">Ready to train</div>
-      <div class="stats-value" id="lastWorkoutText">Your last workout was 2 days ago</div>
+      <div class="stats-value" id="lastWorkoutText">Loading...</div>
     </div>
   </div>
 </div>
@@ -85,7 +85,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <!-- Screen 5: Settings -->
 <div id="settings-screen" class="screen">
   <h2>Settings</h2>
-  <p>Google Sync, Preferences, and App Settings will go here.</p>
+  <p>Connect your account:</p>
+  <div id="signin-btn" class="g_id_signin"
+    data-type="standard"
+    data-size="large"
+    data-theme="outline"
+    data-client_id="YOUR_GOOGLE_CLIENT_ID"
+    data-callback="handleCredentialResponse">
+  </div>
 </div>
 
 <!-- Bottom Navigation -->
@@ -98,9 +105,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <script>
-let userPreferences = JSON.parse(localStorage.getItem('preferences')) || {};
+/* State & IndexedDB Setup */
+let userPreferences = JSON.parse(localStorage.getItem('preferences')) || { goal: 'Hypertrophy', equipment: 'Gym', days: 3 };
 let currentWeek = 1;
+let db;
+const request = indexedDB.open('WorkoutDB', 1);
+request.onupgradeneeded = e => {
+  db = e.target.result;
+  db.createObjectStore('workouts', { keyPath: 'id', autoIncrement: true });
+};
+request.onsuccess = e => { db = e.target.result; loadLastWorkout(); };
 
+/* Navigation */
 function navigate(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
   document.getElementById(screenId).classList.add('active-screen');
@@ -110,12 +126,11 @@ function navigate(screenId) {
   });
 }
 
+/* Generate Plan */
 function generateWorkoutPlan() {
   const container = document.getElementById('workoutPlan');
   container.innerHTML = '';
-  const { goal, equipment, days } = userPreferences;
-  const templates = getWorkoutTemplate(days, equipment, goal);
-
+  const templates = getWorkoutTemplate(userPreferences.days);
   templates.forEach((dayPlan, i) => {
     let div = document.createElement('div');
     div.className = 'day-card';
@@ -128,19 +143,90 @@ function generateWorkoutPlan() {
   });
 }
 
-function getWorkoutTemplate(days, equipment, goal) {
+/* Template */
+function getWorkoutTemplate(days) {
   return [
     { day: "Push", exercises: [{name:"Bench Press", sets:4, weight:135},{name:"Overhead Press", sets:3, weight:95}] },
     { day: "Pull", exercises: [{name:"Deadlift", sets:3, weight:225},{name:"Pull-Ups", sets:4, weight:0}] }
   ];
 }
 
-function saveWorkout() {
-  document.getElementById('logStatus').textContent = "✅ Workout Saved (Offline if needed)";
+/* Logging Screen */
+function loadLoggingUI() {
+  const form = document.getElementById('loggingForm');
+  form.innerHTML = '';
+  const exercises = getWorkoutTemplate(2)[0].exercises; // Example: Day 1
+  exercises.forEach(ex => {
+    const div = document.createElement('div');
+    div.className = 'exercise-entry';
+    div.innerHTML = `
+      <div class="exercise-header"><strong>${ex.name}</strong></div>
+      <div class="controls">
+        <div class="control-group">
+          <button class="control-btn" onclick="adjustValue(this,-1)">-</button>
+          <div class="value-display" data-type="reps">10</div>
+          <button class="control-btn" onclick="adjustValue(this,1)">+</button>
+          <div>Reps</div>
+        </div>
+        <div class="control-group">
+          <button class="control-btn" onclick="adjustValue(this,-5)">-</button>
+          <div class="value-display" data-type="weight">${ex.weight}</div>
+          <button class="control-btn" onclick="adjustValue(this,5)">+</button>
+          <div>Weight</div>
+        </div>
+      </div>`;
+    form.appendChild(div);
+  });
 }
 
-window.onload = generateWorkoutPlan;
+function adjustValue(el, change) {
+  const display = el.parentElement.querySelector('.value-display');
+  let val = parseInt(display.textContent);
+  val = Math.max(0, val + change);
+  display.textContent = val;
+}
+
+function saveWorkout() {
+  const exercises = [];
+  document.querySelectorAll('.exercise-entry').forEach(entry => {
+    const name = entry.querySelector('.exercise-header strong').textContent;
+    const reps = entry.querySelector('[data-type="reps"]').textContent;
+    const weight = entry.querySelector('[data-type="weight"]').textContent;
+    exercises.push({ name, reps, weight });
+  });
+  const workout = { date: new Date().toISOString(), exercises };
+  const tx = db.transaction('workouts','readwrite');
+  tx.objectStore('workouts').add(workout);
+  document.getElementById('logStatus').textContent = "✅ Saved locally!";
+  loadLastWorkout();
+}
+
+/* Last Workout Stats */
+function loadLastWorkout() {
+  const tx = db.transaction('workouts','readonly');
+  tx.objectStore('workouts').getAll().onsuccess = e => {
+    const workouts = e.target.result;
+    if (workouts.length > 0) {
+      const lastDate = new Date(workouts[workouts.length-1].date);
+      const daysAgo = Math.floor((Date.now()-lastDate.getTime())/(1000*60*60*24));
+      document.getElementById('lastWorkoutText').textContent = `Your last workout was ${daysAgo} day(s) ago`;
+    } else {
+      document.getElementById('lastWorkoutText').textContent = "No workouts logged yet.";
+    }
+  };
+}
+
+/* Google Sign-In Callback */
+function handleCredentialResponse(response) {
+  console.log("Google Sign-In Token:", response.credential);
+  // TODO: Send token to Apps Script for sync
+}
+
+/* Init */
+window.onload = () => {
+  generateWorkoutPlan();
+  loadLoggingUI();
+};
 </script>
 </body>
 </html>
-
