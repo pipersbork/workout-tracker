@@ -199,13 +199,13 @@ textarea {
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 .goal-card {
-    flex: 0 0 auto; /* Prevent shrinking */
+    flex: 0 0 auto;
     background: #1c1c1e;
     border: 2px solid #333;
     border-radius: 12px;
     padding: 20px 15px;
     text-align: center;
-    width: 120px; /* Consistent size for all cards */
+    width: 140px; /* Increased from 120px for better text fit */
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.3s ease;
     color: #fff;
@@ -215,9 +215,10 @@ textarea {
     margin-bottom: 8px;
 }
 .goal-card h3 {
-    font-size: 1rem;
-    font-weight: bold;
-    margin-bottom: 4px;
+    font-size: clamp(0.9rem, 3vw, 1rem); /* Responsive text scaling */
+    word-break: break-word;
+    white-space: normal; /* Allows wrapping if necessary */
+    line-height: 1.2;
 }
 .goal-card p {
     font-size: 0.8rem;
