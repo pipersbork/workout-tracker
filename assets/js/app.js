@@ -6,7 +6,7 @@ const userSelections = {
     experience: "",
     style: "",
     days: "",
-    frequency: 2 // Default, or calculate based on days
+    frequency: 2 // Default
 };
 
 /* Update progress bar */
@@ -30,7 +30,7 @@ function nextStep() {
     }, 200);
 }
 
-/* Validate selection for a specific field */
+/* Validate selection */
 function validateStep(field) {
     if (!userSelections[field]) {
         alert("Please select an option before continuing.");
@@ -39,13 +39,11 @@ function validateStep(field) {
     return true;
 }
 
-/* Select a card option */
+/* Select option card */
 function selectCard(element, field, value) {
     userSelections[field] = value;
-
     const group = element.parentElement.querySelectorAll('.goal-card');
     group.forEach(card => card.classList.remove('active'));
-
     element.classList.add('active');
 }
 
@@ -54,14 +52,12 @@ async function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
-    // Generate initial plan using progression engine
     const plan = await generatePlan(userSelections);
     await savePlanToDB(plan);
-
     renderDashboard(plan);
 }
 
-/* Render dashboard with plan details */
+/* Render dashboard */
 async function renderDashboard(plan = null) {
     if (!plan) {
         plan = await getPlanFromDB();
@@ -107,7 +103,85 @@ async function renderDashboard(plan = null) {
     `;
 }
 
-/* Helper: Capitalize text */
+/* Log workout UI */
+function logWorkout() {
+    const container = document.querySelector('.container');
+    container.innerHTML = `
+        <div class="log-workout">
+            <h2>Log Your Workout</h2>
+            <textarea id="workoutNotes" placeholder="Optional notes"></textarea>
+            <label for="fatigueScore">Fatigue Score (1–10):</label>
+            <input type="number" id="fatigueScore" min="1" max="10">
+            <button class="cta-button" onclick="submitWorkout()">Submit</button>
+            <button class="cta-button" onclick="renderDashboard()">Cancel</button>
+        </div>
+    `;
+}
+
+/* Submit workout */
+async function submitWorkout() {
+    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
+    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
+        alert("Please enter a valid fatigue score (1–10).");
+        return;
+    }
+
+    const notes = document.getElementById('workoutNotes').value;
+    let currentPlan = await getPlanFromDB();
+
+    currentPlan = applyProgression(currentPlan, []);
+    currentPlan = checkFatigue(fatigueScore, currentPlan);
+
+    await savePlanToDB(currentPlan);
+    await saveWorkoutToDB({ date: new Date().toISOString(), fatigue: fatigueScore, notes });
+
+    renderDashboard(currentPlan);
+}
+
+/* Manual adjustments */
+async function manualAdjust() {
+    const plan = await getPlanFromDB();
+
+    const container = document.querySelector('.container');
+    container.innerHTML = `
+        <div class="manual-adjust">
+            <h2>Custom Adjustments</h2>
+            ${plan.sessions.map((session, sIndex) => `
+                <div class="session-edit">
+                    <h3>${session.name}</h3>
+                    ${session.exercises.map((ex, eIndex) => `
+                        <div>
+                            <p>${ex.name}</p>
+                            <label>Sets:</label>
+                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}">
+                            <label>RIR:</label>
+                            <input type="number" id="rir-${sIndex}-${eIndex}" value="${ex.rir}">
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
+            <button class="cta-button" onclick="saveManualAdjust()">Save Changes</button>
+            <button class="cta-button" onclick="renderDashboard()">Cancel</button>
+        </div>
+    `;
+}
+
+/* Save adjustments */
+async function saveManualAdjust() {
+    const plan = await getPlanFromDB();
+
+    plan.sessions.forEach((session, sIndex) => {
+        session.exercises.forEach((ex, eIndex) => {
+            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
+            ex.rir = parseInt(document.getElementById(`rir-${sIndex}-${eIndex}`).value);
+        });
+    });
+
+    await savePlanToDB(plan);
+    renderDashboard(plan);
+}
+
+/* Helper */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
