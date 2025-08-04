@@ -1,48 +1,125 @@
 /* ===========================
-   RESET & BASE STYLES
+   RESET & GLOBAL STYLES
 =========================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-body {
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
-    background-size: 400% 400%;
-    animation: gradientBG 8s ease infinite;
+    background: #121212;
     color: #fff;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
-@keyframes gradientBG {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
+
+body {
+    display: flex;
+    flex-direction: column;
 }
 
 /* ===========================
-   CONTAINER & LAYOUT
+   CONTAINER
 =========================== */
 .container {
     width: 100%;
     max-width: 500px;
+    margin: 0 auto;
     padding: 20px;
     text-align: center;
-    position: relative;
 }
+
+.hidden {
+    display: none !important;
+}
+
+/* ===========================
+   ONBOARDING STEPS
+=========================== */
 .step {
     display: none;
-    animation: fadeIn 0.5s ease;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    min-height: 100vh;
+    text-align: center;
 }
+
 .step.active {
-    display: block;
+    display: flex;
 }
-@keyframes fadeIn {
-    0% { opacity: 0; transform: translateY(20px);}
-    100% { opacity: 1; transform: translateY(0);}
+
+.main-title {
+    font-size: 2.4rem;
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: #fff;
+}
+
+.divider {
+    width: 80px;
+    height: 3px;
+    background: #ff6b35;
+    margin: 10px auto;
+}
+
+.tagline {
+    font-size: 1rem;
+    color: #ff6b35;
+}
+
+.card-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 15px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.goal-card {
+    background: #1f1f1f;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.goal-card:hover {
+    border-color: #ff6b35;
+}
+
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #2c2c2c;
+}
+
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.cta-button {
+    display: inline-block;
+    width: 90%;
+    max-width: 320px;
+    padding: 14px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #ff6b35, #ff914d);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.cta-button:hover {
+    background: linear-gradient(45deg, #ff914d, #ff6b35);
 }
 
 /* ===========================
@@ -53,9 +130,9 @@ body {
     background: #333;
     height: 8px;
     border-radius: 5px;
-    overflow: hidden;
-    margin: 20px auto;
+    margin-bottom: 20px;
 }
+
 .progress {
     width: 0%;
     height: 100%;
@@ -64,144 +141,84 @@ body {
 }
 
 /* ===========================
-   TITLES & TEXT
-=========================== */
-.main-title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    letter-spacing: 4px;
-    margin-bottom: 10px;
-}
-.divider {
-    width: 80px;
-    height: 3px;
-    background: #ff6b35;
-    margin: 15px auto;
-}
-.tagline {
-    font-size: 1rem;
-    margin-bottom: 30px;
-    color: #ff914d;
-}
-
-/* ===========================
-   BUTTONS
-=========================== */
-.cta-button {
-    display: inline-block;
-    width: 80%;
-    padding: 14px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(45deg, #ff6b35, #ff914d);
-    border: none;
-    border-radius: 10px;
-    margin-top: 20px;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-.cta-button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(45deg, #ff914d, #ff6b35);
-}
-
-/* ===========================
-   CARD GROUP
-=========================== */
-.card-group {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin: 20px 0;
-}
-.goal-card {
-    background: #1c1c1e;
-    padding: 18px;
-    border-radius: 12px;
-    border: 2px solid #333;
-    text-align: center;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.goal-card .icon {
-    font-size: 2rem;
-    margin-bottom: 8px;
-}
-.goal-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: 5px;
-}
-.goal-card p {
-    font-size: 0.9rem;
-    color: #bbb;
-}
-.goal-card:hover, .goal-card.active {
-    border-color: #ff6b35;
-    background: #2a2a2d;
-}
-
-/* ===========================
    DASHBOARD
 =========================== */
-.dashboard {
-    padding: 20px;
+#dashboard {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+}
+
+.summary-card {
+    background: #1c1c1e;
+    border-radius: 10px;
+    padding: 12px;
     text-align: center;
+    font-size: 0.9rem;
     color: #fff;
 }
-.summary-grid {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.summary-card {
-    flex: 1;
-    background: #1c1c1e;
-    padding: 15px;
-    border-radius: 10px;
+
+.progress-wrapper {
     text-align: center;
 }
-.summary-card h3 {
-    font-size: 1rem;
-    margin-bottom: 5px;
-    color: #ff914d;
-}
-.summary-card p {
-    font-size: 1.1rem;
-    font-weight: bold;
-}
 
-/* ===========================
-   CHARTS & PROGRESS
-=========================== */
-.progress-wrapper h3 {
-    margin-bottom: 10px;
-    color: #ff914d;
-}
 .chart-container {
     background: #1c1c1e;
-    border-radius: 12px;
-    padding: 15px;
-    margin-top: 15px;
+    padding: 10px;
+    border-radius: 10px;
 }
 
-/* ===========================
-   WORKOUT HISTORY
-=========================== */
 .workout-history {
-    margin-top: 20px;
-    text-align: left;
+    background: #1c1c1e;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
 }
+
 .workout-history ul {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
+
 .workout-history li {
-    padding: 10px;
+    padding: 8px;
     border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #ccc;
+}
+
+/* ===========================
+   NAVIGATION BUTTONS
+=========================== */
+.bottom-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    position: sticky;
+    bottom: 10px;
+    background: #121212;
+    padding: 10px;
+}
+
+.bottom-nav button {
+    flex: 1;
+    background: #ff6b35;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 /* ===========================
@@ -212,19 +229,24 @@ body {
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.7);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
 }
-.modal.hidden { display: none; }
+
+.modal.hidden {
+    display: none;
+}
+
 .modal-content {
-    background: #1c1c1e;
+    background: #1f1f1f;
     padding: 20px;
     border-radius: 10px;
     width: 90%;
     max-width: 450px;
     color: #fff;
 }
+
 .close-btn {
     float: right;
     font-size: 1.5rem;
@@ -232,45 +254,18 @@ body {
 }
 
 /* ===========================
-   BOTTOM NAVIGATION
-=========================== */
-.bottom-nav {
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    justify-content: space-around;
-    background: #1c1c1e;
-    padding: 10px;
-    border-top: 2px solid #333;
-}
-.bottom-nav button {
-    flex: 1;
-    padding: 12px;
-    margin: 0 5px;
-    background: #ff6b35;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.bottom-nav button:hover {
-    background: #ff914d;
-}
-
-/* ===========================
-   RESPONSIVE DESIGN
+   RESPONSIVE FIXES
 =========================== */
 @media screen and (max-width: 480px) {
-    .summary-grid {
-        flex-direction: column;
-        gap: 15px;
+    .main-title {
+        font-size: 1.8rem;
     }
-    .cta-button {
-        width: 100%;
-    }
+
     .goal-card {
-        width: 100%;
+        padding: 12px;
+    }
+
+    .cta-button {
+        font-size: 1rem;
     }
 }
