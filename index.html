@@ -113,40 +113,53 @@
     <!-- STEP 5: Complete -->
     <div class="step" id="step5">
         <h2>✅ All Set!</h2>
-        <p>Name your plan:</p>
-        <input type="text" id="planName" placeholder="e.g., Push-Pull-Legs">
-        <button class="cta-button" onclick="finishOnboarding()">Save Plan & Go to Dashboard</button>
+        <p>Your preferences have been saved.</p>
+        <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
     </div>
 </div>
 
-<!-- Dashboard -->
+<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
     <div class="dashboard">
         <!-- Plan Selector -->
-        <div class="plan-header">
-            <select id="planSelector" onchange="switchPlan()"></select>
-            <button class="cta-button small" onclick="openModal('newPlan')">+ New Plan</button>
+        <div class="plan-header" style="margin-bottom: 15px; text-align:center;">
+            <!-- Dropdown + New Plan Button dynamically added -->
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Grid -->
         <div class="summary-grid">
-            <div class="summary-card"><h3>Goal</h3><p id="summaryGoal">-</p></div>
-            <div class="summary-card"><h3>Experience</h3><p id="summaryExperience">-</p></div>
-            <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays">-</p></div>
+            <div class="summary-card">
+                <h3>Goal</h3>
+                <p id="summaryGoal">-</p>
+            </div>
+            <div class="summary-card">
+                <h3>Experience</h3>
+                <p id="summaryExperience">-</p>
+            </div>
+            <div class="summary-card">
+                <h3>Days/Week</h3>
+                <p id="summaryDays">-</p>
+            </div>
         </div>
 
-        <!-- Progress -->
+        <!-- Progress Bar -->
         <div class="progress-wrapper">
             <h3>Volume Progress</h3>
-            <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
+            <div class="progress-bar">
+                <div class="progress" id="volumeProgress"></div>
+            </div>
             <p id="volumeSummary">0 / 0 sets</p>
         </div>
 
         <!-- Charts -->
         <div class="charts-section">
             <h3>Progress Trends</h3>
-            <div class="chart-container"><canvas id="volumeChart"></canvas></div>
-            <div class="chart-container"><canvas id="loadChart"></canvas></div>
+            <div class="chart-container">
+                <canvas id="volumeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="loadChart"></canvas>
+            </div>
         </div>
 
         <!-- Workout History -->
@@ -156,7 +169,7 @@
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Sticky Bottom Navigation -->
     <div class="bottom-nav">
         <button onclick="openModal('logWorkout')">Log Workout</button>
         <button onclick="openModal('planner')">Planner</button>
@@ -164,7 +177,7 @@
     </div>
 </div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
