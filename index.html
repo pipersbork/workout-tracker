@@ -127,6 +127,12 @@
         <div class="step" id="step6">
             <h2>Personal Details (Optional)</h2>
             <p>This information is not required but can help with future features like calorie tracking.</p>
+            
+            <div class="card-group" data-field="gender">
+                <div class="goal-card" data-value="male" role="button" tabindex="0"><h3>Male</h3></div>
+                <div class="goal-card" data-value="female" role="button" tabindex="0"><h3>Female</h3></div>
+                <div class="goal-card" data-value="pnts" role="button" tabindex="0"><h3>Prefer Not to Say</h3></div>
+            </div>
 
             <div class="details-inputs">
                 <div class="input-group">
@@ -166,19 +172,32 @@
         </div>
     </div>
 
-    <div id="dashboard" class="hidden">
-        <div class="dashboard-content">
-            <div class="summary-grid">
-                <div class="summary-card"><h3>Goal</h3><p id="summaryGoal">-</p></div>
-                <div class="summary-card"><h3>Experience</h3><p id="summaryExperience">-</p></div>
-                <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays">-</p></div>
+    <div id="builder-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
+            <h2>Mesocycle Builder</h2>
+        </div>
+        <div class="builder-container">
+            <div class="exercise-library">
+                <h3>Exercise Library</h3>
+                <div class="library-filters" id="library-filters-container">
+                    </div>
+                <div class="library-list" id="library-list-container">
+                    </div>
             </div>
-            <div class="workout-history">
-                <h3>Workout History</h3>
-                <ul id="workoutList"></ul>
+            <div class="plan-editor">
+                <h3>My Plan</h3>
+                <div class="plan-details" id="plan-details-container">
+                    <p class="placeholder-text">Add exercises from the library to get started.</p>
+                </div>
+                <div class="workout-actions">
+                    <button class="cta-button" id="save-plan-btn">Save Mesocycle</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="dashboard" class="hidden"></div>
 
     <div id="daily-workout-view" class="hidden">
         <div class="workout-header">
@@ -187,18 +206,13 @@
             <p id="workout-date"></p>
         </div>
         <div id="exercise-list-container">
-            </div>
+        </div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
         </div>
     </div>
 
-    <div id="modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-btn" id="closeModalBtn">&times;</span>
-            <div id="modal-body"></div>
-        </div>
-    </div>
+    <div id="modal" class="modal hidden"></div>
 
     <script defer src="app.js"></script>
 
