@@ -29,7 +29,7 @@ body {
    CORE FUNCTIONAL STYLES
 =========================== */
 .hidden {
-    display: none !important; /* Use important to ensure it overrides other display properties */
+    display: none !important;
 }
 
 .step {
@@ -53,7 +53,7 @@ body {
 }
 
 #daily-workout-view {
-    padding-bottom: 100px; /* Space for the bottom nav bar */
+    padding-bottom: 100px;
 }
 
 
@@ -188,6 +188,7 @@ p {
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 1.5rem;
+    position: relative;
 }
 
 .workout-header h2 {
@@ -306,8 +307,46 @@ p {
 }
 
 .cta-button:hover {
-    background-color: #e65c2e; /* Darker orange */
+    background-color: #e65c2e;
     transform: translateY(-2px);
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.secondary-button {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted-color);
+}
+
+.secondary-button:hover {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+}
+
+.back-btn {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    background: none;
+    border: none;
+    color: var(--text-muted-color);
+    font-size: 1rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background-color: var(--surface-color);
+    color: var(--text-color);
 }
 
 /* ===========================
@@ -328,5 +367,9 @@ p {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+    .back-btn {
+        top: 1rem;
+        left: 1rem;
     }
 }
