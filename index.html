@@ -122,27 +122,28 @@
 <div id="dashboard" class="hidden">
     <div class="dashboard">
         <!-- Plan Selector -->
-        <div class="plan-header" style="margin-bottom: 15px; text-align:center;">
-            <!-- Dropdown + New Plan Button dynamically added -->
+        <div class="plan-selector-wrapper">
+            <h3>Your Saved Plans</h3>
+            <div class="plan-selector"></div>
         </div>
 
-        <!-- Summary Grid -->
+        <!-- Summary -->
         <div class="summary-grid">
             <div class="summary-card">
                 <h3>Goal</h3>
-                <p id="summaryGoal">-</p>
+                <p id="summaryGoal">Muscle</p>
             </div>
             <div class="summary-card">
                 <h3>Experience</h3>
-                <p id="summaryExperience">-</p>
+                <p id="summaryExperience">Beginner</p>
             </div>
             <div class="summary-card">
                 <h3>Days/Week</h3>
-                <p id="summaryDays">-</p>
+                <p id="summaryDays">3</p>
             </div>
         </div>
 
-        <!-- Progress Bar -->
+        <!-- Progress -->
         <div class="progress-wrapper">
             <h3>Volume Progress</h3>
             <div class="progress-bar">
@@ -154,12 +155,8 @@
         <!-- Charts -->
         <div class="charts-section">
             <h3>Progress Trends</h3>
-            <div class="chart-container">
-                <canvas id="volumeChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="loadChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+            <div class="chart-container"><canvas id="loadChart"></canvas></div>
         </div>
 
         <!-- Workout History -->
@@ -172,7 +169,6 @@
     <!-- Sticky Bottom Navigation -->
     <div class="bottom-nav">
         <button onclick="openModal('logWorkout')">Log Workout</button>
-        <button onclick="openModal('planner')">Planner</button>
         <button onclick="openModal('settings')">Settings</button>
     </div>
 </div>
