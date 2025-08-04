@@ -239,28 +239,27 @@ function openModal(type) {
         body.innerHTML = `
             <h2>Log Workout</h2>
             <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
-            <label>Fatigue Score (1–10):</label>
+            <label for="fatigueScore">Fatigue Score (1–10):</label>
             <input type="number" id="fatigueScore" min="1" max="10">
-            <button onclick="submitWorkout()">Submit</button>
+            <button class="cta-button" onclick="submitWorkout()">Submit</button>
         `;
     } else if (type === 'planner') {
         body.innerHTML = `
-            <h2>Customize Plan</h2>
-            <input type="text" id="exerciseSearch" placeholder="Search exercises...">
-            <select id="muscleFilter">
-                <option value="">All Muscles</option>
-                <option value="Chest">Chest</option>
-                <option value="Back">Back</option>
-                <option value="Legs">Legs</option>
-                <option value="Shoulders">Shoulders</option>
-                <option value="Biceps">Biceps</option>
-                <option value="Triceps">Triceps</option>
-                <option value="Glutes">Glutes</option>
-            </select>
-            <div id="exerciseList" style="max-height:200px;overflow-y:auto;"></div>
-            <button onclick="renderExerciseOptions()">Apply Filter</button>
+            <h2>Customize Your Plan</h2>
+            <div class="planner-form">
+                ${plan.sessions.map((session, sIndex) => `
+                    <h3>${session.name}</h3>
+                    ${session.exercises.map((ex, eIndex) => `
+                        <div class="exercise-row">
+                            <input type="text" value="${ex.name}" readonly>
+                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}" min="1">
+                            <input type="text" id="reps-${sIndex}-${eIndex}" value="${ex.reps}">
+                        </div>
+                    `).join('')}
+                `).join('')}
+                <button onclick="saveManualAdjust()">Save Changes</button>
+            </div>
         `;
-        renderExerciseOptions();
     } else {
         body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
     }
