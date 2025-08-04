@@ -11,32 +11,26 @@ const userSelections = {
     days: ""
 };
 
+let currentPlanName = "Default Plan";
+let plans = {}; // Stores multiple workout plans
 let plan = null;
 
 /* ===========================
-   EXERCISE DATABASE (Expanded)
+   EXERCISE DATABASE (Short Sample)
+   Expand to 250+ in future
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
     { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
+    { name: "Chest Fly", muscle: "Chest", equipment: "Machine" },
     { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
     { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
-    { name: "Lat Pulldown", muscle: "Back", equipment: "Cable" },
     { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
-    { name: "Dumbbell Row", muscle: "Back", equipment: "Dumbbell" },
     { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
     { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
-    { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
-    { name: "Back Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Lunge", muscle: "Quads", equipment: "Dumbbell" },
+    { name: "Squat", muscle: "Quads", equipment: "Barbell" },
     { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
     { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
-    { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
-    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" }
-    // Expand to 250+ as needed
 ];
 
 /* ===========================
@@ -81,11 +75,15 @@ function finishOnboarding() {
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
     plan = generatePlan(userSelections);
+    currentPlanName = "Default Plan";
+    plans[currentPlanName] = plan;
+    savePlans();
+
     renderDashboard(plan);
 }
 
 /* ===========================
-   PLAN GENERATION (Trainer Logic)
+   PLAN GENERATION
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
     const baseSets = experience === 'beginner' ? 8 :
@@ -152,12 +150,58 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
+   MULTIPLE PLAN MANAGEMENT
+=========================== */
+function savePlans() {
+    localStorage.setItem("userPlans", JSON.stringify(plans));
+}
+
+function loadPlans() {
+    const saved = localStorage.getItem("userPlans");
+    if (saved) {
+        plans = JSON.parse(saved);
+        const keys = Object.keys(plans);
+        if (keys.length > 0) {
+            currentPlanName = keys[0];
+            plan = plans[currentPlanName];
+        }
+    }
+}
+
+function switchPlan(name) {
+    if (plans[name]) {
+        currentPlanName = name;
+        plan = plans[name];
+        renderDashboard(plan);
+    }
+}
+
+function addNewPlan() {
+    const name = prompt("Enter a name for the new plan:");
+    if (name && !plans[name]) {
+        plans[name] = generatePlan(userSelections);
+        currentPlanName = name;
+        savePlans();
+        renderDashboard(plans[name]);
+    }
+}
+
+/* ===========================
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
     document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
     dashboard.classList.remove('hidden');
+
+    // Populate dropdown for plans
+    let planSelector = `<select id="planSelector" onchange="switchPlan(this.value)">`;
+    for (const name in plans) {
+        planSelector += `<option value="${name}" ${name === currentPlanName ? "selected" : ""}>${name}</option>`;
+    }
+    planSelector += `</select> <button class="cta-button small" onclick="addNewPlan()">+ New Plan</button>`;
+
+    document.querySelector('.plan-header').innerHTML = planSelector;
 
     document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
     document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
@@ -207,7 +251,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODALS
+   MODALS (Log Workout + Planner)
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -248,9 +292,6 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-/* ===========================
-   PLANNER & LOGIC
-=========================== */
 function saveManualAdjust() {
     plan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
@@ -258,8 +299,8 @@ function saveManualAdjust() {
             ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
         });
     });
-
-    localStorage.setItem("userPlan", JSON.stringify(plan));
+    plans[currentPlanName] = plan;
+    savePlans();
     closeModal();
     renderDashboard(plan);
 }
@@ -277,16 +318,13 @@ async function submitWorkout() {
     }
 
     const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    let workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
-    workouts.push(workout);
-    localStorage.setItem("workouts", JSON.stringify(workouts));
-
+    saveWorkoutToDB(workout);
     closeModal();
     loadWorkouts();
 }
 
-function loadWorkouts() {
-    const workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
+async function loadWorkouts() {
+    const workouts = await getAllWorkoutsFromDB();
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
     workouts.forEach(w => {
@@ -307,9 +345,8 @@ function capitalize(str) {
    PAGE LOAD
 =========================== */
 window.onload = () => {
-    if (localStorage.getItem("onboardingCompleted") === "true") {
-        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
-        plan = generatePlan(userSelections);
+    loadPlans();
+    if (localStorage.getItem("onboardingCompleted") === "true" && plan) {
         renderDashboard(plan);
     } else {
         document.querySelector('#step1').classList.add('active');
