@@ -1,220 +1,489 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progression - Workout Tracker</title>
+document.addEventListener('DOMContentLoaded', () => {
 
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    const app = {
+        state: {
+            currentStep: 1,
+            totalSteps: 7,
+            userSelections: { 
+                goal: "", 
+                experience: "", 
+                style: "", 
+                days: "", 
+                mesoLength: "",
+                gender: "",
+                height: "",
+                weight: ""
+            },
+            plan: null,
+            currentView: { week: 1, day: 1 },
+            libraryFilter: 'all',
+            allPlans: [],
+            exercises: [],
+        },
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+        elements: {
+            onboardingContainer: document.getElementById('onboarding-container'),
+            homeScreen: document.getElementById('home-screen'),
+            dashboard: document.getElementById('dashboard'),
+            progress: document.querySelector('.progress'),
+            workoutView: document.getElementById('daily-workout-view'),
+            builderView: document.getElementById('builder-view'),
+        },
 
-    <div class="container" id="onboarding-container">
+        async init() {
+            await this.loadExercises();
+            this.loadStateFromStorage();
+            this.addEventListeners();
 
-        <div class="progress-bar"><div class="progress"></div></div>
+            if (localStorage.getItem("onboardingCompleted") === "true") {
+                this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
+                const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
+                if (savedPlans && savedPlans.length > 0) {
+                    this.state.plan = savedPlans[0];
+                    this.state.allPlans = savedPlans;
+                } else { 
+                    this.finishOnboarding();
+                    return;
+                }
+                this.showView('home');
+            } else {
+                this.showView('onboarding');
+            }
+        },
 
-        <div class="step active" id="step1">
-            <div class="main-title">PROGRESSION</div>
-            <div class="divider"></div>
-            <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-            <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
-        </div>
+        async loadExercises() {
+            try {
+                const response = await fetch('exercises.json');
+                if (!response.ok) throw new Error('Network response was not ok.');
+                this.state.exercises = await response.json();
+            } catch (error) {
+                console.error("Failed to load exercises:", error);
+                this.state.exercises = [];
+            }
+        },
 
-        <div class="step" id="step2">
-            <h2>Your Goal</h2>
-            <p>Select your training focus:</p>
-            <div class="card-group" data-field="goal">
-                <div class="goal-card" data-value="muscle" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Muscle Building Icon">💪</div>
-                    <h3>Muscle Building</h3>
-                    <p>Strength & Hypertrophy</p>
-                </div>
-                <div class="goal-card" data-value="cardio" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Cardio Icon">🏃</div>
-                    <h3>Cardio</h3>
-                    <p>Endurance Training</p>
-                </div>
-                <div class="goal-card" data-value="combined" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Combined Training Icon">🔥</div>
-                    <h3>Combined</h3>
-                    <p>Balance Both</p>
-                </div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="goalNextBtn">Next</button>
-            </div>
-        </div>
+        loadStateFromStorage() {
+            const completed = localStorage.getItem("onboardingCompleted");
+            if (completed === "true") {
+                this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
+                this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
+            }
+        },
 
-        <div class="step" id="step3">
-            <h2>Experience Level</h2>
-            <p>Choose your fitness level:</p>
-            <div class="card-group" data-field="experience">
-                <div class="goal-card" data-value="beginner" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Beginner Icon">🌱</div>
-                    <h3>Beginner</h3>
-                    <p>New to training</p>
-                </div>
-                <div class="goal-card" data-value="experienced" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Experienced Icon">⚡</div>
-                    <h3>Experienced</h3>
-                    <p>6–18 months</p>
-                </div>
-                <div class="goal-card" data-value="advanced" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Advanced Icon">🔥</div>
-                    <h3>Advanced</h3>
-                    <p>18+ months</p>
-                </div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="experienceNextBtn">Next</button>
-            </div>
-        </div>
+        saveStateToStorage() {
+            localStorage.setItem("onboardingCompleted", "true");
+            localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
+            localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
+        },
 
-        <div class="step" id="step4">
-            <h2>Workout Preferences</h2>
-            <p>Select your preferred style:</p>
-            <div class="card-group" data-field="style">
-                <div class="goal-card" data-value="gym" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Gym Icon">🏋️</div>
-                    <h3>Gym</h3>
-                    <p>Heavy Lifts</p>
-                </div>
-                <div class="goal-card" data-value="home" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Home Icon">🏠</div>
-                    <h3>Home</h3>
-                    <p>Minimal Equipment</p>
-                </div>
-                <div class="goal-card" data-value="hybrid" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Hybrid Icon">🔥</div>
-                    <h3>Hybrid</h3>
-                    <p>Mix of Both</p>
-                </div>
-            </div>
-
-            <p>How many days per week?</p>
-            <div class="card-group" data-field="days">
-                <div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
-                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Balanced</p></div>
-                <div class="goal-card" data-value="5" role="button" tabindex="0"><h3>5</h3><p>Intense</p></div>
-                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Max Effort</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="prefsNextBtn">Next</button>
-            </div>
-        </div>
-
-        <div class="step" id="step5">
-            <h2>Mesocycle Length</h2>
-            <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
-            <div class="card-group" data-field="mesoLength">
-                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Short</p></div>
-                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Standard</p></div>
-                <div class="goal-card" data-value="8" role="button" tabindex="0"><h3>8</h3><p>Long</p></div>
-                <div class="goal-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="mesoLengthNextBtn">Next</button>
-            </div>
-        </div>
-
-        <div class="step" id="step6">
-            <h2>Personal Details (Optional)</h2>
-            <p>This information is not required but can help with future features like calorie tracking.</p>
+        addEventListeners() {
+            // Onboarding Buttons
+            document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
+            document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
+            document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
+            document.getElementById('prefsNextBtn')?.addEventListener('click', () => {
+                if (this.validateStep('style') && this.validateStep('days')) {
+                    this.nextStep();
+                }
+            });
+            document.getElementById('mesoLengthNextBtn')?.addEventListener('click', () => this.validateAndProceed('mesoLength'));
+            document.getElementById('skipDetailsBtn')?.addEventListener('click', () => this.nextStep());
+            document.getElementById('detailsNextBtn')?.addEventListener('click', () => {
+                this.savePersonalDetails();
+                this.nextStep();
+            });
+            document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => this.finishOnboarding());
             
-            <div class="card-group" data-field="gender">
-                <div class="goal-card" data-value="male" role="button" tabindex="0"><h3>Male</h3></div>
-                <div class="goal-card" data-value="female" role="button" tabindex="0"><h3>Female</h3></div>
-                <div class="goal-card" data-value="pnts" role="button" tabindex="0"><h3>Prefer Not to Say</h3></div>
-            </div>
+            // Home Screen Buttons
+            document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
+            document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
+            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
 
-            <div class="details-inputs">
-                <div class="input-group">
-                    <label for="heightInput">Height (cm)</label>
-                    <input type="number" id="heightInput" placeholder="e.g., 180">
-                </div>
-                <div class="input-group">
-                    <label for="weightInput">Weight (kg)</label>
-                    <input type="number" id="weightInput" placeholder="e.g., 85">
-                </div>
-            </div>
+            // Back Buttons
+            document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
+            document.getElementById('backToHomeFromBuilder')?.addEventListener('click', () => this.showView('home'));
+            document.querySelectorAll('.back-btn-onboarding').forEach(button => {
+                button.addEventListener('click', () => this.previousStep());
+            });
 
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button secondary-button" id="skipDetailsBtn">Skip</button>
-                <button class="cta-button" id="detailsNextBtn">Save & Continue</button>
-            </div>
-        </div>
+            // Builder Filters
+            document.getElementById('library-filters-container').addEventListener('click', (e) => {
+                if (e.target.matches('.filter-btn')) {
+                    this.state.libraryFilter = e.target.dataset.filter;
+                    this.renderExerciseLibrary();
+                }
+            });
 
-        <div class="step" id="step7">
-            <h2>✅ All Set!</h2>
-            <p>Your preferences have been saved.</p>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="finishOnboardingBtn">Go to Home Screen</button>
-            </div>
-        </div>
-    </div>
+            // Onboarding Card Selections
+            document.querySelectorAll('.card-group .goal-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const field = card.parentElement.dataset.field;
+                    const value = card.dataset.value;
+                    this.selectCard(card, field, value);
+                });
+            });
 
-    <div id="home-screen" class="container hidden">
-        <div class="main-title">PROGRESSION</div>
-        <div class="divider"></div>
-        <div class="home-nav-buttons">
-            <button class="cta-button home-btn" id="planMesoBtn">Plan Mesocycle</button>
-            <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
-            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Review Previous Workouts</button>
-        </div>
-    </div>
+            // Workout View Listeners
+            this.elements.workoutView.addEventListener('click', (e) => {
+                 if (e.target.matches('.add-set-btn')) { this.addSet(e.target.dataset.exerciseIndex); }
+                if (e.target.matches('#complete-workout-btn')) { this.completeWorkout(); }
+            });
+            this.elements.workoutView.addEventListener('input', (e) => {
+                if(e.target.matches('.weight-input, .reps-input, .rir-input')) { this.handleSetInput(e.target); }
+            });
+        },
 
-    <div id="builder-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
-            <h2>Mesocycle Builder</h2>
-        </div>
-        <div class="builder-container">
-            <div class="exercise-library">
-                <h3>Exercise Library</h3>
-                <div class="library-filters" id="library-filters-container">
+        showView(viewName) {
+            this.elements.onboardingContainer.classList.add('hidden');
+            this.elements.homeScreen.classList.add('hidden');
+            this.elements.workoutView.classList.add('hidden');
+            this.elements.builderView.classList.add('hidden');
+            this.elements.dashboard.classList.add('hidden');
+
+            if (viewName === 'onboarding') {
+                this.elements.onboardingContainer.classList.remove('hidden');
+                this.showStep(this.state.currentStep);
+            } else if (viewName === 'home') {
+                this.elements.homeScreen.classList.remove('hidden');
+            } else if (viewName === 'workout') {
+                this.elements.workoutView.classList.remove('hidden');
+                this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
+            } else if (viewName === 'builder') {
+                this.elements.builderView.classList.remove('hidden');
+                this.renderExerciseLibrary();
+            }
+        },
+
+        renderExerciseLibrary() {
+            const exercises = this.state.exercises;
+            const filter = this.state.libraryFilter;
+            
+            const filtersContainer = document.getElementById('library-filters-container');
+            const listContainer = document.getElementById('library-list-container');
+
+            const muscleGroups = ['all', ...new Set(exercises.map(ex => ex.muscle))];
+
+            filtersContainer.innerHTML = muscleGroups.map(group => `
+                <button class="filter-btn ${filter === group ? 'active' : ''}" data-filter="${group}">
+                    ${this.capitalize(group)}
+                </button>
+            `).join('');
+
+            const filteredExercises = filter === 'all' 
+                ? exercises 
+                : exercises.filter(ex => ex.muscle === filter);
+
+            if (filteredExercises.length === 0) {
+                listContainer.innerHTML = `<p class="placeholder-text">No exercises found for this filter.</p>`;
+                return;
+            }
+
+            listContainer.innerHTML = filteredExercises.map(ex => `
+                <div class="library-item">
+                    <div>
+                        <div class="library-item-name">${ex.name}</div>
+                        <div class="library-item-muscle">${ex.muscle}</div>
                     </div>
-                <div class="library-list" id="library-list-container">
+                    <button class="add-exercise-btn" data-exercise-name="${ex.name}">+</button>
+                </div>
+            `).join('');
+        },
+        
+        savePersonalDetails() {
+            const genderCard = document.querySelector('.card-group[data-field="gender"] .goal-card.active');
+            this.state.userSelections.gender = genderCard ? genderCard.dataset.value : "";
+            this.state.userSelections.height = document.getElementById('heightInput').value;
+            this.state.userSelections.weight = document.getElementById('weightInput').value;
+        },
+
+        showStep(stepNumber) {
+            document.querySelectorAll('.step.active').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step${stepNumber}`)?.classList.add('active');
+            this.updateProgress();
+        },
+
+        updateProgress() {
+            const percentage = ((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100;
+            this.elements.progress.style.width = `${percentage}%`;
+        },
+
+        nextStep() {
+            if (this.state.currentStep < this.state.totalSteps) {
+                this.state.currentStep++;
+                this.showStep(this.state.currentStep);
+            }
+        },
+
+        previousStep() {
+            if (this.state.currentStep > 1) {
+                this.state.currentStep--;
+                this.showStep(this.state.currentStep);
+            }
+        },
+
+        validateStep(field) {
+            if (!this.state.userSelections[field]) {
+                alert("Please select an option before continuing.");
+                return false;
+            }
+            return true;
+        },
+
+        validateAndProceed(field) {
+            if (this.validateStep(field)) {
+                this.nextStep();
+            }
+        },
+
+        selectCard(element, field, value) {
+            this.state.userSelections[field] = value;
+            element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+        },
+
+        finishOnboarding() {
+            this.state.plan = this.generateMesocycle(
+                this.state.userSelections.goal,
+                this.state.userSelections.experience,
+                this.state.userSelections.days,
+                this.state.userSelections.mesoLength
+            );
+            this.state.allPlans.push(this.state.plan);
+            this.saveStateToStorage();
+            this.showView('home');
+        },
+
+        generateMesocycle(goal = 'Hypertrophy', experience = 'beginner', daysPerWeek = 4, mesoLength = 6) {
+            const mevSets = {
+                beginner: { chest: 8, back: 10, quads: 8, hamstrings: 6, shoulders: 6, arms: 4 },
+                experienced: { chest: 10, back: 12, quads: 10, hamstrings: 8, shoulders: 8, arms: 6 },
+                advanced: { chest: 12, back: 14, quads: 12, hamstrings: 10, shoulders: 10, arms: 8 }
+            };
+            const currentMev = mevSets[experience];
+            const exerciseDatabase = {
+                'Barbell Bench Press': { type: goal === 'Strength' ? 'PrimaryStrength' : 'PrimaryHypertrophy', muscle: 'chest' },
+                'Incline Dumbbell Press': { type: 'SecondaryHypertrophy', muscle: 'chest' },
+                'Barbell Squat': { type: 'PrimaryStrength', muscle: 'quads' },
+                'Leg Press': { type: 'SecondaryHypertrophy', muscle: 'quads' },
+                'Romanian Deadlift': { type: 'PrimaryHypertrophy', muscle: 'hamstrings' },
+                'Leg Curl': { type: 'SecondaryHypertrophy', muscle: 'hamstrings' },
+                'Pull-Up': { type: 'PrimaryHypertrophy', muscle: 'back' },
+                'Barbell Row': { type: 'SecondaryHypertrophy', muscle: 'back' },
+                'Overhead Press': { type: 'PrimaryHypertrophy', muscle: 'shoulders' },
+                'Lateral Raise': { type: 'SecondaryHypertrophy', muscle: 'shoulders' },
+                'Barbell Curl': { type: 'SecondaryHypertrophy', muscle: 'arms' },
+                'Triceps Pushdown': { type: 'SecondaryHypertrophy', muscle: 'arms' }
+            };
+            const split = {
+                '1': { name: 'Upper Body Strength', muscles: ['chest', 'back', 'shoulders', 'arms'] },
+                '2': { name: 'Lower Body Strength', muscles: ['quads', 'hamstrings'] },
+                '3': { name: 'Upper Body Hypertrophy', muscles: ['chest', 'back', 'shoulders', 'arms'] },
+                '4': { name: 'Lower Body Hypertrophy', muscles: ['quads', 'hamstrings'] },
+                '5': { name: 'Full Body', muscles: ['chest', 'back', 'quads', 'shoulders'] },
+                '6': { name: 'Full Body', muscles: ['chest', 'back', 'quads', 'shoulders', 'arms'] }
+            };
+            const mesocycle = {
+                id: `meso_${Date.now()}`,
+                startDate: new Date().toISOString(),
+                durationWeeks: parseInt(mesoLength) || 6,
+                goal: goal,
+                experience: experience,
+                weeklyFeedback: {},
+                weeks: {}
+            };
+            for (let i = 1; i <= mesocycle.durationWeeks; i++) {
+                mesocycle.weeks[i] = {};
+                const isDeload = (i === mesocycle.durationWeeks);
+                const dps = parseInt(daysPerWeek) || 4;
+                for (let j = 1; j <= dps; j++) {
+                    const dayInfo = split[j];
+                    if(!dayInfo) continue;
+                    mesocycle.weeks[i][j] = { name: dayInfo.name, completed: false, exercises: [] };
+                    for (const muscle of dayInfo.muscles) {
+                        const exercisesForMuscle = Object.entries(exerciseDatabase).filter(([_, details]) => details.muscle === muscle);
+                        const primaryExercise = exercisesForMuscle.find(([_, details]) => details.type.includes('Primary'));
+                        if (primaryExercise) {
+                            const [exerciseName, exerciseDetails] = primaryExercise;
+                            mesocycle.weeks[i][j].exercises.push({
+                                exerciseId: `ex_${exerciseName.replace(/\s+/g, '_')}`,
+                                name: exerciseName,
+                                type: exerciseDetails.type,
+                                targetSets: isDeload ? Math.ceil((currentMev[muscle] || 8) / 2 / 2) : Math.ceil((currentMev[muscle] || 8) / 2),
+                                targetReps: exerciseDetails.type.includes('Strength') ? 5 : 10,
+                                targetRIR: isDeload ? 4 : (exerciseDetails.type.includes('Strength') ? 3 : 2),
+                                targetLoad: null,
+                                sets: []
+                            });
+                        }
+                    }
+                }
+            }
+            return mesocycle;
+        },
+
+        renderDailyWorkout(weekNumber, dayNumber) {
+            const plan = this.state.plan;
+            if (!plan || !plan.weeks[weekNumber] || !plan.weeks[weekNumber][dayNumber]) {
+                document.getElementById('exercise-list-container').innerHTML = `<p>Workout plan not available for this day.</p>`;
+                return;
+            }
+            const dayData = plan.weeks[weekNumber][dayNumber];
+            const container = document.getElementById('exercise-list-container');
+            document.getElementById('workout-day-title').textContent = `Week ${weekNumber}, Day ${dayNumber}: ${dayData.name}`;
+            document.getElementById('workout-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            container.innerHTML = '';
+            dayData.exercises.forEach((exercise, exerciseIndex) => {
+                const exerciseCard = document.createElement('div');
+                exerciseCard.className = 'exercise-card';
+                let lastTimeText = '';
+                if (weekNumber > 1) {
+                    const prevWeekData = plan.weeks[weekNumber - 1]?.[dayNumber];
+                    const prevExercise = prevWeekData?.exercises.find(ex => ex.exerciseId === exercise.exerciseId);
+                    const lastSet = prevExercise?.sets.filter(s => s.load && s.reps).pop();
+                    if (lastSet) {
+                        lastTimeText = `Last Time: ${lastSet.load} lbs for ${lastSet.reps} reps`;
+                    } else {
+                        lastTimeText = "No performance data from last week.";
+                    }
+                }
+                let setsHTML = '';
+                const setsToRenderCount = Math.max(exercise.sets.length, exercise.targetSets);
+                for (let setIndex = 0; setIndex < setsToRenderCount; setIndex++) {
+                    const set = exercise.sets[setIndex] || {};
+                     setsHTML += `
+                        <div class="set-row">
+                            <span class="set-number">Set ${setIndex + 1}</span>
+                            <div class="set-inputs">
+                                <input type="number" placeholder="lbs" class="weight-input" value="${set.load || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                                <input type="number" placeholder="reps" class="reps-input" value="${set.reps || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                                <input type="number" placeholder="RIR" class="rir-input" value="${set.rir || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                            </div>
+                        </div>
+                    `;
+                }
+                exerciseCard.innerHTML = `
+                    <div class="exercise-card-header">
+                        <h3>${exercise.name}</h3>
+                        <span class="exercise-target">Target: ${exercise.targetLoad ? `${exercise.targetLoad}lbs for` : ''} ${exercise.targetReps} reps @ ${exercise.targetRIR} RIR</span>
                     </div>
-            </div>
-            <div class="plan-editor">
-                <h3>My Plan</h3>
-                <div class="plan-details" id="plan-details-container">
-                    <p class="placeholder-text">Add exercises from the library to get started.</p>
-                </div>
-                <div class="workout-actions">
-                    <button class="cta-button" id="save-plan-btn">Save Mesocycle</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                    ${lastTimeText ? `<div class="last-time-info">${lastTimeText}</div>` : ''}
+                    <div class="sets-container">
+                        <div class="set-row header">
+                            <span></span>
+                            <div class="set-inputs">
+                                <span>Weight</span>
+                                <span>Reps</span>
+                                <span>RIR</span>
+                            </div>
+                        </div>
+                        ${setsHTML}
+                    </div>
+                    <button class="add-set-btn" data-exercise-index="${exerciseIndex}">+ Add Set</button>
+                `;
+                container.appendChild(exerciseCard);
+            });
+        },
+        
+        handleSetInput(inputElement) {
+            const { week, day, exercise, set } = inputElement.dataset;
+            const value = parseFloat(inputElement.value) || 0;
+            const property = inputElement.classList.contains('weight-input') ? 'load' : 
+                             inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
+            const exerciseData = this.state.plan.weeks[week][day].exercises[exercise];
+            while (exerciseData.sets.length <= set) {
+                exerciseData.sets.push({});
+            }
+            exerciseData.sets[set][property] = value;
+        },
+        
+        addSet(exerciseIndex) {
+            const { week, day } = this.state.currentView;
+            const exerciseData = this.state.plan.weeks[week][day].exercises[exerciseIndex];
+            const lastSet = exerciseData.sets[exerciseData.sets.length - 1] || {};
+            exerciseData.sets.push({ ...lastSet, rir: '' }); 
+            this.renderDailyWorkout(week, day);
+        },
+        
+        completeWorkout() {
+            const { week, day } = this.state.currentView;
+            const plan = this.state.plan;
+            if (!plan || !plan.weeks[week] || !plan.weeks[week][day]) {
+                alert("Could not find workout to complete.");
+                return;
+            }
+            plan.weeks[week][day].completed = true;
+            const planIndex = this.state.allPlans.findIndex(p => p.id === plan.id);
+            if (planIndex > -1) { this.state.allPlans[planIndex] = plan; } 
+            else { this.state.allPlans.push(plan); }
+            this.saveStateToStorage();
+            alert(`Workout for Week ${week}, Day ${day} saved!`);
+            const daysPerWeek = parseInt(this.state.userSelections.days);
+            if (day === daysPerWeek) {
+                this.calculateNextWeekProgression(week);
+                alert(`Week ${week} complete! Your plan for next week has been updated based on your performance.`);
+            }
+            let nextDay = day + 1;
+            let nextWeek = week;
+            if (nextDay > daysPerWeek) {
+                nextDay = 1;
+                nextWeek++;
+            }
+            if (nextWeek > plan.durationWeeks) {
+                alert("Mesocycle complete! Well done!");
+            } else {
+                this.state.currentView = { week: nextWeek, day: nextDay };
+                this.showView('workout');
+            }
+        },
 
-    <div id="dashboard" class="hidden"></div>
+        calculateNextWeekProgression(completedWeekNumber) {
+            const plan = this.state.plan;
+            const nextWeekNumber = completedWeekNumber + 1;
+            if (!plan.weeks[nextWeekNumber]) { return; }
+            for (const day in plan.weeks[completedWeekNumber]) {
+                const completedDayData = plan.weeks[completedWeekNumber][day];
+                const nextWeekDayData = plan.weeks[nextWeekNumber][day];
+                if (!nextWeekDayData) continue;
+                completedDayData.exercises.forEach((completedExercise, exerciseIndex) => {
+                    const nextWeekExercise = nextWeekDayData.exercises[exerciseIndex];
+                    if (!nextWeekExercise) return;
+                    const lastSet = completedExercise.sets.filter(s => s.load && s.reps).pop();
+                    if (!lastSet) {
+                        nextWeekExercise.targetLoad = completedExercise.targetLoad || 135;
+                        return;
+                    }
+                    const { load, reps, rir } = lastSet;
+                    const { targetReps, targetRIR } = completedExercise;
+                    let newTargetLoad = load;
+                    let newTargetReps = targetReps;
+                    if (reps >= targetReps && rir >= targetRIR) {
+                        newTargetLoad = load + 5;
+                        newTargetReps = targetReps;
+                    } else if (reps >= targetReps && rir < targetRIR) {
+                        newTargetLoad = load;
+                        newTargetReps = targetReps + 1;
+                    } else {
+                        newTargetLoad = load;
+                        newTargetReps = targetReps;
+                    }
+                    nextWeekExercise.targetLoad = newTargetLoad;
+                    nextWeekExercise.targetReps = newTargetReps;
+                    nextWeekExercise.targetSets = completedExercise.targetSets + 1;
+                });
+            }
+            this.saveStateToStorage();
+        },
 
-    <div id="daily-workout-view" class="hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
-            <h2 id="workout-day-title"></h2>
-            <p id="workout-date"></p>
-        </div>
-        <div id="exercise-list-container">
-        </div>
-        <div class="workout-actions">
-            <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
-        </div>
-    </div>
+        capitalize(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+        }
+    };
 
-    <div id="modal" class="modal hidden"></div>
-
-    <script defer src="app.js"></script>
-
-</body>
-</html>
+    for (const key in app) {
+        if (typeof app[key] === 'function') {
+            app[key] = app[key].bind(app);
+        }
+    }
+    
+    app.init();
+});
