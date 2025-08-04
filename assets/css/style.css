@@ -6,14 +6,17 @@
     padding: 0;
     box-sizing: border-box;
 }
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+}
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
     background-size: 400% 400%;
     animation: gradientBG 8s ease infinite;
     color: #ff6b35;
-    height: 100vh;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -28,12 +31,11 @@ body {
    CONTAINER & LAYOUT
 =========================== */
 .container {
-    text-align: center;
     width: 100%;
-    height: 100%;
+    max-width: 600px;
+    padding: 20px;
+    text-align: center;
     position: relative;
-    overflow-y: auto;
-    padding-bottom: 30px;
 }
 
 /* ===========================
@@ -58,20 +60,14 @@ body {
    ONBOARDING STEPS
 =========================== */
 .step {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
-    width: 90%;
-    max-width: 400px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
 }
 .step.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) scale(1);
+    display: flex;
 }
 
 /* Cinematic intro */
@@ -80,24 +76,17 @@ body {
     font-weight: bold;
     letter-spacing: 6px;
     margin-bottom: 10px;
-    opacity: 0;
-    animation: fadeInScale 1.2s ease forwards;
 }
 .divider {
     width: 80px;
     height: 2px;
     background-color: #ff6b35;
     margin: 10px auto 20px auto;
-    opacity: 0;
-    animation: fadeIn 1s ease forwards 1.2s, dividerGlow 1.5s ease 2.2s;
 }
 .tagline {
     font-size: 1rem;
     color: #ff6b35;
     margin-bottom: 35px;
-    opacity: 0;
-    animation: slideUp 1s ease forwards;
-    animation-delay: 1.6s;
 }
 
 /* ===========================
@@ -115,9 +104,6 @@ body {
     text-decoration: none;
     margin-top: 15px;
     transition: transform 0.2s ease, background 0.3s ease;
-    opacity: 0;
-    animation: slideUpButton 1.2s ease forwards, pulseGlow 2s infinite ease-in-out;
-    animation-delay: 2s, 3.2s;
 }
 .cta-button:hover {
     transform: scale(1.05);
@@ -131,13 +117,6 @@ body {
     padding: 20px;
     text-align: center;
     color: #fff;
-}
-.dashboard h1 {
-    margin-bottom: 10px;
-}
-.dashboard .progress-bar {
-    margin-top: 10px;
-    margin-bottom: 15px;
 }
 
 /* ===========================
@@ -162,43 +141,54 @@ body {
 }
 
 /* ===========================
-   CHARTS
+   ONBOARDING CARD GROUP
 =========================== */
-.chart-container {
-    width: 100%;
-    max-width: 650px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
+.card-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+.goal-card {
+    background: #1c1c1e;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px 10px;
+    text-align: center;
+    cursor: pointer;
+    width: calc(50% - 20px); /* 2 per row on mobile */
+    max-width: 160px;
+    transition: transform 0.2s ease, border-color 0.3s ease;
+    color: #fff;
+}
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+.goal-card:hover {
+    transform: scale(1.05);
+    border-color: #ff6b35;
+}
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #2a2a2d;
+}
+
+/* Responsive Adjustments */
+@media screen and (min-width: 768px) {
+    .goal-card {
+        width: calc(33.333% - 20px); /* 3 per row on tablet+ */
+    }
+}
+@media screen and (max-width: 400px) {
+    .goal-card {
+        width: 100%; /* Single column on very small screens */
+    }
 }
 
 /* ===========================
-   WORKOUT HISTORY
-=========================== */
-.workout-history {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    margin: 15px auto;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 500px;
-}
-.workout-history ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-align: left;
-}
-.workout-history li {
-    padding: 8px;
-    border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #ddd;
-}
-
-/* ===========================
-   MODAL
+   MODALS & OTHER
 =========================== */
 .modal {
     position: fixed;
@@ -225,120 +215,13 @@ body {
 }
 
 /* ===========================
-   ONBOARDING CARD GROUPS
+   CHARTS
 =========================== */
-.card-group {
-    display: flex;
-    flex-wrap: wrap; /* Wrap for multiple rows */
-    justify-content: center;
-    gap: 15px;
-    margin-top: 15px;
-}
-.goal-card {
-    flex: 1 1 calc(33.333% - 20px); /* 3 per row on large screens */
-    max-width: 140px;
-    background: #1c1c1e;
-    border: 2px solid #333;
-    border-radius: 12px;
-    padding: 20px 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.3s ease;
-    color: #fff;
-}
-.goal-card .icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-}
-.goal-card:hover {
-    transform: scale(1.05);
-    border-color: #ff6b35;
-}
-.goal-card.active {
-    border-color: #ff6b35;
-    background: #2a2a2d;
-}
-
-/* Responsive Fix */
-@media screen and (max-width: 600px) {
-    .goal-card {
-        flex: 1 1 calc(50% - 10px); /* 2 per row on small screens */
-    }
-}
-
-/* ===========================
-   PLANNER MODAL STYLES
-=========================== */
-.planner-form {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 10px;
-    width: 95%;
-    max-width: 600px;
-    margin: auto;
-    text-align: left;
-}
-.planner-form h3 {
-    margin-bottom: 10px;
-    color: #ff6b35;
-}
-.exercise-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-.exercise-row input {
-    flex: 1;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #333;
-    background: #222;
-    color: #fff;
-    font-size: 0.9rem;
-}
-.planner-form button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 12px 18px;
-    background: #ff6b35;
-    color: #111;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
+.chart-container {
     width: 100%;
-}
-.planner-form button:hover {
-    background: #ff914d;
-}
-
-/* ===========================
-   ANIMATIONS
-=========================== */
-@keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
-@keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-}
-@keyframes slideUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideUpButton {
-    0% { opacity: 0; transform: translateY(50px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-    50% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 145, 77, 0.6);}
-    100% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-}
-@keyframes dividerGlow {
-    0% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
-    50% { box-shadow: 0 0 12px rgba(255, 107, 53, 0.8);}
-    100% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
+    max-width: 650px;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
 }
