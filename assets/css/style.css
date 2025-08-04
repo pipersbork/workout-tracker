@@ -13,7 +13,6 @@ body {
     animation: gradientBG 8s ease infinite;
     color: #fff;
     height: 100vh;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -24,9 +23,7 @@ body {
     100% {background-position: 0% 50%;}
 }
 
-/* ===========================
-   CONTAINER & LAYOUT
-=========================== */
+/* Container */
 .container {
     text-align: center;
     width: 100%;
@@ -55,7 +52,7 @@ body {
 }
 
 /* ===========================
-   ONBOARDING STEPS
+   STEPS
 =========================== */
 .step {
     display: none;
@@ -73,13 +70,13 @@ body {
 }
 .divider {
     width: 80px;
-    height: 3px;
+    height: 2px;
     background-color: #ff6b35;
     margin: 10px auto 20px auto;
 }
 .tagline {
     font-size: 1rem;
-    color: #ff914d;
+    color: #ff6b35;
     margin-bottom: 35px;
     line-height: 1.4;
 }
@@ -90,7 +87,6 @@ body {
 .cta-button {
     display: block;
     width: 80%;
-    max-width: 300px;
     margin: 20px auto;
     padding: 14px;
     font-size: 1.2rem;
@@ -98,120 +94,117 @@ body {
     color: #fff;
     background: linear-gradient(45deg, #ff6b35, #ff914d);
     border: none;
-    border-radius: 12px;
-    text-decoration: none;
-    transition: transform 0.2s ease, background 0.3s ease;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 .cta-button:hover {
     transform: scale(1.05);
-    background: linear-gradient(45deg, #ff914d, #ff6b35);
 }
 
 /* ===========================
-   CARD GROUP (ONBOARDING)
+   CARD GROUPS (VERTICAL)
 =========================== */
-.card-group {
+.card-group.vertical {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 15px;
-    margin: 15px 0;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 400px;
 }
 .goal-card {
     background: #1c1c1e;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     border: 2px solid #333;
-    width: 140px;
     text-align: center;
-    font-size: 1.1rem;
     cursor: pointer;
     transition: 0.3s;
-    color: #fff;
 }
-.goal-card:hover, .goal-card.active {
+.goal-card:hover,
+.goal-card.active {
     border-color: #ff6b35;
     background: #2a2a2d;
 }
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
 
 /* ===========================
-   DASHBOARD LAYOUT
+   DASHBOARD
 =========================== */
 #dashboard {
-    display: none;
-    padding: 20px;
     width: 100%;
-    max-width: 900px;
-    margin: auto;
-}
-.dashboard {
-    text-align: center;
+    padding: 20px;
 }
 .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 15px;
+    display: flex;
+    justify-content: space-around;
     margin-bottom: 20px;
 }
 .summary-card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
+    background: #222;
+    padding: 12px;
+    border-radius: 8px;
+    width: 30%;
     text-align: center;
-    font-size: 1rem;
+    color: #fff;
 }
 .progress-wrapper {
-    margin: 20px 0;
+    margin: 20px auto;
+    width: 90%;
 }
 .charts-section {
-    margin: 20px auto;
+    margin: 20px 0;
 }
 .chart-container {
-    width: 100%;
-    max-width: 650px;
-    margin: 15px auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    margin: 10px auto;
     border-radius: 10px;
+    width: 95%;
+    max-width: 600px;
 }
 .workout-history {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255,255,255,0.05);
     padding: 15px;
-    margin: 15px auto;
-    border-radius: 10px;
+    border-radius: 8px;
+    width: 90%;
+    margin: auto;
 }
 .workout-history ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    text-align: left;
 }
 .workout-history li {
     padding: 8px;
     border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-    color: #ddd;
 }
 
 /* ===========================
    BOTTOM NAV
 =========================== */
 .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #1a1a1a;
     display: flex;
     justify-content: space-around;
-    background: #1c1c1e;
-    padding: 12px;
-    border-radius: 10px;
-    position: sticky;
-    bottom: 0;
+    padding: 10px;
+    border-top: 2px solid #333;
 }
 .bottom-nav button {
     background: #ff6b35;
-    color: #111;
     border: none;
-    border-radius: 6px;
-    padding: 10px 15px;
-    font-size: 1rem;
+    padding: 12px 15px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
     cursor: pointer;
 }
 .bottom-nav button:hover {
@@ -224,13 +217,15 @@ body {
 .modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0,0,0,0.7);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
 }
-.modal.hidden { display: none; }
+.modal.hidden {
+    display: none;
+}
 .modal-content {
     background: #1c1c1e;
     padding: 20px;
@@ -246,20 +241,16 @@ body {
 }
 
 /* ===========================
-   PLANNER MODAL
+   PLANNER FORM
 =========================== */
 .planner-form {
     background: rgba(255,255,255,0.05);
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
-    width: 95%;
-    max-width: 600px;
-    margin: auto;
-    text-align: left;
 }
 .planner-form h3 {
-    margin-bottom: 10px;
     color: #ff6b35;
+    margin-bottom: 10px;
 }
 .exercise-row {
     display: flex;
@@ -274,30 +265,32 @@ body {
     border: 1px solid #333;
     background: #222;
     color: #fff;
-    font-size: 0.9rem;
 }
 .planner-form button {
-    display: inline-block;
+    display: block;
+    width: 100%;
     margin-top: 10px;
-    padding: 12px 18px;
+    padding: 12px;
     background: #ff6b35;
     color: #111;
     border: none;
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    width: 100%;
 }
 .planner-form button:hover {
     background: #ff914d;
 }
 
 /* ===========================
-   RESPONSIVE DESIGN
+   RESPONSIVE
 =========================== */
-@media screen and (max-width: 480px) {
-    .main-title { font-size: 2rem; }
-    .divider { width: 50px; }
-    .goal-card { width: 100px; font-size: 0.9rem; padding: 12px; }
-    .summary-grid { grid-template-columns: 1fr 1fr; }
+@media (max-width: 768px) {
+    .summary-grid {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .summary-card {
+        width: 100%;
+    }
 }
