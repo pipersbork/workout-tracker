@@ -88,25 +88,6 @@
         </div>
 
         <div class="step" id="step6">
-            <h2>Personal Details (Optional)</h2>
-            <p>This information is not required but can help with future features like calorie tracking.</p>
-            <div class="card-group" data-field="gender">
-                <div class="goal-card" data-value="male" role="button" tabindex="0"><h3>Male</h3></div>
-                <div class="goal-card" data-value="female" role="button" tabindex="0"><h3>Female</h3></div>
-                <div class="goal-card" data-value="pnts" role="button" tabindex="0"><h3>Prefer Not to Say</h3></div>
-            </div>
-            <div class="details-inputs">
-                <div class="input-group"><label for="heightInput">Height (cm)</label><input type="number" id="heightInput" placeholder="e.g., 180"></div>
-                <div class="input-group"><label for="weightInput">Weight (kg)</label><input type="number" id="weightInput" placeholder="e.g., 85"></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button secondary-button" id="skipDetailsBtn">Skip</button>
-                <button class="cta-button" id="detailsNextBtn">Save & Continue</button>
-            </div>
-        </div>
-
-        <div class="step" id="step7">
             <h2>✅ All Set!</h2>
             <p>Your preferences have been saved.</p>
             <div class="button-group">
@@ -147,6 +128,13 @@
         <div id="exercise-list-container"></div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
+            <div id="modal-body"></div>
         </div>
     </div>
 
