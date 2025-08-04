@@ -143,8 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
             this.elements.builderView.classList.add('hidden');
-            this.elements.dashboard.classList.add('hidden');
-
+            
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
@@ -153,12 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderBuilder() {
             const container = this.elements.scheduleContainer;
-            container.innerHTML = '';
+            container.innerHTML = ''; 
             if (this.state.builderPlan.days.length === 0) {
                 container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
                 return;
             }
-
+            
             const muscleOptions = ['Select a Muscle', ...new Set(this.state.exercises.map(ex => ex.muscle))]
                 .map(m => `<option value="${m.toLowerCase()}">${this.capitalize(m)}</option>`).join('');
 
