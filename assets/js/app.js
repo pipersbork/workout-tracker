@@ -12,35 +12,52 @@ const userSelections = {
 };
 
 let currentPlan = null;
-let savedPlans = []; // Holds multiple plans
+let savedPlans = [];
 
 /* ===========================
-   EXERCISE DATABASE (Sample)
+   EXERCISE DATABASE
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
     { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
+    { name: "Chest Fly", muscle: "Chest", equipment: "Machine" },
     { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
     { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
     { name: "Lat Pulldown", muscle: "Back", equipment: "Cable" },
     { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
     { name: "Dumbbell Row", muscle: "Back", equipment: "Dumbbell" },
+    { name: "Seated Row", muscle: "Back", equipment: "Machine" },
     { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
+    { name: "Dumbbell Shoulder Press", muscle: "Shoulders", equipment: "Dumbbell" },
     { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
+    { name: "Front Raise", muscle: "Shoulders", equipment: "Dumbbell" },
+    { name: "Rear Delt Fly", muscle: "Shoulders", equipment: "Machine" },
     { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
     { name: "Dumbbell Curl", muscle: "Biceps", equipment: "Dumbbell" },
+    { name: "Hammer Curl", muscle: "Biceps", equipment: "Dumbbell" },
+    { name: "Preacher Curl", muscle: "Biceps", equipment: "Machine" },
     { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
     { name: "Overhead Triceps Extension", muscle: "Triceps", equipment: "Dumbbell" },
+    { name: "Close-Grip Bench Press", muscle: "Triceps", equipment: "Barbell" },
+    { name: "Skull Crusher", muscle: "Triceps", equipment: "Barbell" },
     { name: "Squat", muscle: "Quads", equipment: "Barbell" },
+    { name: "Front Squat", muscle: "Quads", equipment: "Barbell" },
     { name: "Leg Press", muscle: "Quads", equipment: "Machine" },
     { name: "Lunge", muscle: "Quads", equipment: "Dumbbell" },
+    { name: "Bulgarian Split Squat", muscle: "Quads", equipment: "Dumbbell" },
     { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
     { name: "Leg Curl", muscle: "Hamstrings", equipment: "Machine" },
+    { name: "Glute Bridge", muscle: "Glutes", equipment: "Bodyweight" },
     { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
     { name: "Step-Up", muscle: "Glutes", equipment: "Dumbbell" },
+    { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
+    { name: "Seated Calf Raise", muscle: "Calves", equipment: "Machine" },
+    { name: "Standing Calf Raise", muscle: "Calves", equipment: "Bodyweight" },
     { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
     { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
-    // Expand to 250 later
+    { name: "Hanging Leg Raise", muscle: "Core", equipment: "Bodyweight" },
+    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" },
+    // Expand further for final version
 ];
 
 /* ===========================
@@ -81,12 +98,31 @@ function selectCard(element, field, value) {
 }
 
 function finishOnboarding() {
-    localStorage.setItem("onboardingCompleted", "true");
-    localStorage.setItem("userSelections", JSON.stringify(userSelections));
+    const plan = generatePlan(userSelections);
+    savePlan(plan);
+    renderDashboard(plan);
+}
 
-    currentPlan = generatePlan(userSelections);
-    savePlan(currentPlan);
-    renderDashboard();
+/* ===========================
+   MULTIPLE PLAN MANAGEMENT
+=========================== */
+function savePlan(plan) {
+    savedPlans.push(plan);
+    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
+    currentPlan = plan;
+}
+
+function loadPlans() {
+    const stored = localStorage.getItem("savedPlans");
+    if (stored) {
+        savedPlans = JSON.parse(stored);
+        if (savedPlans.length > 0) currentPlan = savedPlans[0];
+    }
+}
+
+function switchPlan(index) {
+    currentPlan = savedPlans[index];
+    renderDashboard(currentPlan);
 }
 
 /* ===========================
@@ -129,6 +165,7 @@ function generatePlan({ goal, experience, style, days }) {
 
     return {
         id: Date.now(),
+        name: `Plan ${savedPlans.length + 1}`,
         goal,
         experience,
         style,
@@ -158,49 +195,21 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
-   MULTIPLE PLAN STORAGE
-=========================== */
-function savePlan(plan) {
-    savedPlans.push(plan);
-    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
-}
-
-function loadPlans() {
-    const stored = JSON.parse(localStorage.getItem("savedPlans")) || [];
-    savedPlans = stored;
-}
-
-/* ===========================
    DASHBOARD RENDER
 =========================== */
-function renderDashboard() {
+function renderDashboard(plan) {
     document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
     dashboard.classList.remove('hidden');
 
-    renderPlanSelector();
-    updateDashboardUI(currentPlan);
-}
-
-function renderPlanSelector() {
-    const wrapper = document.getElementById('planSelector');
-    wrapper.innerHTML = savedPlans.map(plan => `
-        <div class="plan-card ${plan.id === currentPlan.id ? 'active' : ''}" onclick="switchPlan(${plan.id})">
-            ${capitalize(plan.goal)} (${plan.days}d)
-        </div>
-    `).join('');
-}
-
-function switchPlan(id) {
-    const plan = savedPlans.find(p => p.id === id);
-    if (plan) {
-        currentPlan = plan;
-        updateDashboardUI(plan);
-        renderPlanSelector();
+    // Populate Plan Selector
+    const selector = document.getElementById('planSelector');
+    if (selector) {
+        selector.innerHTML = savedPlans.map((p, i) =>
+            `<div class="plan-card ${p.id === plan.id ? 'active' : ''}" onclick="switchPlan(${i})">${p.name}</div>`
+        ).join('');
     }
-}
 
-function updateDashboardUI(plan) {
     document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
     document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
     document.getElementById('summaryDays').textContent = plan.days;
@@ -249,7 +258,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODAL: LOG WORKOUT + PLANNER
+   MODALS
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -266,7 +275,7 @@ function openModal(type) {
         `;
     } else if (type === 'planner') {
         body.innerHTML = `
-            <h2>Customize Your Plan</h2>
+            <h2>Edit Plan: ${currentPlan.name}</h2>
             <div class="planner-form">
                 ${currentPlan.sessions.map((session, sIndex) => `
                     <h3>${session.name}</h3>
@@ -290,6 +299,9 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
+/* ===========================
+   SAVE MANUAL ADJUSTMENTS
+=========================== */
 function saveManualAdjust() {
     currentPlan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
@@ -297,35 +309,32 @@ function saveManualAdjust() {
             ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
         });
     });
-
     localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
     closeModal();
-    updateDashboardUI(currentPlan);
+    renderDashboard(currentPlan);
 }
 
 /* ===========================
    WORKOUT LOGGING
 =========================== */
-async function submitWorkout() {
+function submitWorkout() {
     const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
     const notes = document.getElementById('workoutNotes').value;
-
     if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
+        alert("Enter a valid fatigue score (1–10).");
         return;
     }
 
-    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    const workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
-    workouts.push(workout);
-    localStorage.setItem("workoutHistory", JSON.stringify(workouts));
+    const workouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
+    workouts.push({ date: new Date().toISOString(), fatigue: fatigueScore, notes });
+    localStorage.setItem("workoutLogs", JSON.stringify(workouts));
 
     closeModal();
     loadWorkouts();
 }
 
 function loadWorkouts() {
-    const workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
+    const workouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
     workouts.forEach(w => {
@@ -336,7 +345,7 @@ function loadWorkouts() {
 }
 
 /* ===========================
-   UTILITY
+   UTILITIES
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -347,9 +356,8 @@ function capitalize(str) {
 =========================== */
 window.onload = () => {
     loadPlans();
-    if (localStorage.getItem("onboardingCompleted") === "true" && savedPlans.length > 0) {
-        currentPlan = savedPlans[0];
-        renderDashboard();
+    if (savedPlans.length > 0) {
+        renderDashboard(savedPlans[0]);
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
