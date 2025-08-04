@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (savedPlans && savedPlans.length > 0) {
                     this.state.plan = savedPlans[0];
                     this.state.allPlans = savedPlans;
-                } else {
-                    this.finishOnboarding(); // This will generate a plan and save it
-                    return; // Exit init early, finishOnboarding will show the correct view
+                } else { 
+                    this.finishOnboarding();
+                    return;
                 }
                 this.showView('home');
             } else {
@@ -83,6 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('planMesoBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
             document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
 
+            // Back Buttons
+            document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
+            document.querySelectorAll('.back-btn-onboarding').forEach(button => {
+                button.addEventListener('click', () => this.previousStep());
+            });
+
             // Onboarding Card Selections
             document.querySelectorAll('.card-group .goal-card').forEach(card => {
                 card.addEventListener('click', () => {
@@ -107,12 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.onboardingContainer.classList.add('hidden');
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
-            this.elements.dashboard.classList.add('hidden'); // Also hide old dashboard
+            this.elements.dashboard.classList.add('hidden');
 
             // Show the requested container
             if (viewName === 'onboarding') {
                 this.elements.onboardingContainer.classList.remove('hidden');
-                this.showStep(1);
+                this.showStep(this.state.currentStep);
             } else if (viewName === 'home') {
                 this.elements.homeScreen.classList.remove('hidden');
             } else if (viewName === 'workout') {
@@ -135,6 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStep() {
             if (this.state.currentStep < this.state.totalSteps) {
                 this.state.currentStep++;
+                this.showStep(this.state.currentStep);
+            }
+        },
+
+        previousStep() {
+            if (this.state.currentStep > 1) {
+                this.state.currentStep--;
                 this.showStep(this.state.currentStep);
             }
         },
