@@ -12,16 +12,12 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Google Sign-In -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
 <!-- App Scripts -->
 <script defer src="./assets/js/app.js"></script>
-<script defer src="./assets/js/auth.js"></script>
 <script defer src="./assets/js/db.js"></script>
 </head>
 <body>
-<div class="container" id="onboarding">
+<div class="container">
 
     <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
@@ -114,40 +110,25 @@
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5: Sign-In -->
+    <!-- STEP 5: Complete -->
     <div class="step" id="step5">
-        <h2>🔐 Sign in to Sync</h2>
-        <div id="g_id_onload"
-            data-client_id="YOUR_GOOGLE_CLIENT_ID"
-            data-context="signup"
-            data-callback="handleCredentialResponse"
-            data-auto_select="false">
-        </div>
-        <div class="g_id_signin" data-type="standard"></div>
-        <button class="cta-button" onclick="nextStep()">Skip for Now</button>
-    </div>
-
-    <!-- STEP 6: Complete -->
-    <div class="step" id="step6">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
         <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
     </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- Dashboard -->
 <div id="dashboard" class="hidden">
     <div class="dashboard">
         <h1>🏋️ Your Training Dashboard</h1>
         <p id="userSummary"></p>
 
-        <!-- Progress Indicator -->
         <div class="progress-bar">
             <div class="progress" id="volumeProgress"></div>
         </div>
         <p id="volumeSummary"></p>
 
-        <!-- Charts -->
         <div class="chart-container">
             <canvas id="volumeChart"></canvas>
         </div>
@@ -155,28 +136,24 @@
             <canvas id="loadChart"></canvas>
         </div>
 
-        <!-- Workout History -->
         <div class="workout-history">
             <h2>Workout History</h2>
             <ul id="workoutList"></ul>
         </div>
 
-        <!-- Sticky Bottom Nav -->
         <div class="bottom-nav">
             <button onclick="openModal('logWorkout')">Log Workout</button>
-            <button onclick="openModal('planner')">Planner</button>
             <button onclick="openModal('settings')">Settings</button>
         </div>
     </div>
 </div>
 
-<!-- MODAL -->
+<!-- Modal -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div id="modal-body"></div>
     </div>
 </div>
-
 </body>
 </html>
