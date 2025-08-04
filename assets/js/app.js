@@ -1,3 +1,10 @@
+Of course. I have integrated all the necessary JavaScript changes into the `app.js` file you provided.
+
+This updated code replaces the old dashboard rendering logic with the new functions required to display the "Daily Workout View". It also includes the necessary event listeners to prepare for making the new UI interactive.
+
+Here is your complete, updated `app.js` file.
+
+```javascript
 document.addEventListener('DOMContentLoaded', () => {
 
     // ===========================
@@ -5,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===========================
     const app = {
         state: {
-            // Unchanged from your file
             currentStep: 1,
             totalSteps: 5,
             userSelections: {
@@ -14,26 +20,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 style: "",
                 days: ""
             },
-            plan: null, // This will now hold the entire mesocycle object
+            plan: null,
+            // We will track the current view state
+            currentView: {
+                week: 1,
+                day: 1,
+            },
             allPlans: [],
             exercises: [],
-            charts: {
-                volume: null,
-                load: null
-            }
         },
 
         // ===========================
         //  DOM ELEMENTS
         // ===========================
         elements: {
-            // Unchanged from your file
             onboardingContainer: document.getElementById('onboarding-container'),
             dashboard: document.getElementById('dashboard'),
             progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
             modalBody: document.getElementById('modal-body'),
             workoutList: document.getElementById('workoutList'),
+            // +++ ADDED reference to the new view +++
+            workoutView: document.getElementById('daily-workout-view'),
         },
 
         // ===========================
@@ -45,15 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
             this.addEventListeners();
 
             if (localStorage.getItem("onboardingCompleted") === "true") {
-                // --- UPDATED to use the new mesocycle generation ---
-                // We generate the plan from saved selections if it doesn't exist.
-                // Note: In the future, we will save and load the plan itself to preserve progress.
+                // Generate the plan from saved selections
                 this.state.plan = this.generateMesocycle(
                     this.state.userSelections.goal,
                     this.state.userSelections.experience,
                     this.state.userSelections.days
                 );
-                this.renderDashboard();
+                // --- UPDATED to call the new render function ---
+                this.showWorkoutView();
             } else {
                 this.showStep(1);
             }
@@ -62,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // ===========================
         //  DATA HANDLING
         // ===========================
-        // Unchanged from your file
         async loadExercises() {
             try {
                 const response = await fetch('exercises.json');
@@ -78,22 +84,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const completed = localStorage.getItem("onboardingCompleted");
             if (completed === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
-                // Note: We'll add loading the mesocycle itself later to preserve state
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
+                // In the future, we will load the current state of the active plan here
             }
         },
 
         saveStateToStorage() {
             localStorage.setItem("onboardingCompleted", "true");
             localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
-            // We now save the entire mesocycle plan
             localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
         },
 
         // ===========================
         //  EVENT LISTENERS
         // ===========================
-        // Unchanged from your file
         addEventListeners() {
             // Onboarding Buttons
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
@@ -106,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => this.finishOnboarding());
 
-            // Card Selections
+            // Onboarding Card Selections
             document.querySelectorAll('.card-group .goal-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const field = card.parentElement.dataset.field;
@@ -115,22 +119,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Modal Controls
-            document.getElementById('closeModalBtn').addEventListener('click', () => this.closeModal());
-            document.getElementById('openLogWorkoutModalBtn').addEventListener('click', () => this.openModal('logWorkout'));
-            document.getElementById('openPlannerModalBtn').addEventListener('click', () => this.openModal('planner'));
-            document.getElementById('openSettingsModalBtn').addEventListener('click', () => this.openModal('settings'));
-            
-            this.elements.modalBody.addEventListener('click', (e) => {
-                if(e.target.id === 'submitWorkoutBtn') this.submitWorkout();
-                if(e.target.id === 'saveManualAdjustBtn') this.saveManualAdjust();
+            // +++ ADDED Listeners for the new workout view +++
+            // Using event delegation for dynamically created elements
+            this.elements.workoutView.addEventListener('click', (e) => {
+                 if (e.target.matches('.add-set-btn')) {
+                    // We'll add this functionality next
+                    console.log('Add set for exercise:', e.target.dataset.exerciseIndex);
+                }
+                if (e.target.matches('#complete-workout-btn')) {
+                     // We'll add this functionality later
+                    console.log('Completing workout...');
+                }
             });
         },
 
         // ===========================
         //  ONBOARDING LOGIC
         // ===========================
-        // Onboarding logic is unchanged...
         showStep(stepNumber) {
             document.querySelectorAll('.step.active').forEach(step => step.classList.remove('active'));
             document.getElementById(`step${stepNumber}`)?.classList.add('active');
@@ -164,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             element.classList.add('active');
         },
 
-        // --- UPDATED finishOnboarding to call the new function ---
         finishOnboarding() {
             this.state.plan = this.generateMesocycle(
                 this.state.userSelections.goal,
@@ -173,20 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             this.state.allPlans.push(this.state.plan);
             this.saveStateToStorage();
-            this.renderDashboard();
+            // --- UPDATED to call the new render function ---
+            this.showWorkoutView();
         },
 
         // ===========================
-        //  PLAN GENERATION (NEW)
+        //  PLAN GENERATION
         // ===========================
-
-        // --- REMOVED old `generatePlan` and `getExercisesByMuscle` functions ---
-
-        // +++ NEW MESOCYCLE GENERATION LOGIC +++
-        /**
-         * Generates a complete, multi-week mesocycle plan based on user goals and experience.
-         * This structure is designed to support week-over-week auto-regulation.
-         */
         generateMesocycle(goal = 'Hypertrophy', experience = 'beginner', daysPerWeek = 4) {
             const mevSets = {
                 beginner: { chest: 8, back: 10, quads: 8, hamstrings: 6, shoulders: 6, arms: 4 },
@@ -226,8 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 1; i <= mesocycle.durationWeeks; i++) {
                 mesocycle.weeks[i] = {};
                 const isDeload = (i === mesocycle.durationWeeks);
-                for (let j = 1; j <= daysPerWeek; j++) {
+                const dps = parseInt(daysPerWeek)
+                for (let j = 1; j <= dps; j++) {
                     const dayInfo = split[j];
+                    if(!dayInfo) continue;
                     mesocycle.weeks[i][j] = { name: dayInfo.name, completed: false, exercises: [] };
                     for (const muscle of dayInfo.muscles) {
                         const exercisesForMuscle = Object.entries(exerciseDatabase).filter(([_, details]) => details.muscle === muscle);
@@ -251,50 +250,90 @@ document.addEventListener('DOMContentLoaded', () => {
             return mesocycle;
         },
 
-        // ===========================
-        //  DASHBOARD & RENDERING (NEEDS REFACTORING)
-        // ===========================
-        // The functions below WILL NOT WORK correctly with the new mesocycle data structure.
-        // They are left here as placeholders for our next phase of development.
-        renderDashboard() {
+        // ==============================================
+        //  NEW: DAILY WORKOUT VIEW & RENDERING LOGIC
+        // ==============================================
+
+        /**
+         * The main rendering function after onboarding is complete.
+         * It hides other views and displays the current day's workout.
+         */
+        showWorkoutView() {
             this.elements.onboardingContainer.style.display = "none";
-            this.elements.dashboard.classList.remove('hidden');
-            const plan = this.state.plan;
+            this.elements.dashboard.style.display = 'none'; // Hide the old dashboard
+            this.elements.workoutView.classList.remove('hidden');
 
-            // This will no longer work as intended.
-            document.getElementById('summaryGoal').textContent = this.capitalize(plan.goal);
-            document.getElementById('summaryExperience').textContent = this.capitalize(plan.experience);
-            document.getElementById('summaryDays').textContent = plan.daysPerWeek || plan.days; // Adjust for new structure
-
-            // These lines will need to be completely re-thought
-            document.getElementById('volumeSummary').textContent = `Mesocycle Ready!`;
-            document.getElementById('volumeProgress').style.width = `0%`;
-            
-            // Charts will also need new data sources
-            this.renderCharts();
-            this.loadWorkouts();
+            // Use the state to determine which day to render
+            this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
         },
 
-        renderCharts() { /* This function needs to be updated to parse mesocycle data */ },
-        loadWorkouts() { /* This function is still okay for now */
-            const history = JSON.parse(localStorage.getItem('workoutHistory')) || [];
-            this.elements.workoutList.innerHTML = "";
-            history.forEach(w => {
-                const li = document.createElement('li');
-                li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
-                this.elements.workoutList.appendChild(li);
+        /**
+         * Renders the exercises for a specific day into the UI.
+         * @param {number} weekNumber The week to render.
+         * @param {number} dayNumber The day to render.
+         */
+        renderDailyWorkout(weekNumber, dayNumber) {
+            const plan = this.state.plan;
+            if (!plan || !plan.weeks[weekNumber] || !plan.weeks[weekNumber][dayNumber]) {
+                console.error(`Plan data not found for Week ${weekNumber}, Day ${dayNumber}.`);
+                document.getElementById('exercise-list-container').innerHTML = `<p>Workout plan not available for this day.</p>`;
+                return;
+            }
+
+            const dayData = plan.weeks[weekNumber][dayNumber];
+            const container = document.getElementById('exercise-list-container');
+
+            // Set Header
+            document.getElementById('workout-day-title').textContent = `Week ${weekNumber}, Day ${dayNumber}: ${dayData.name}`;
+            document.getElementById('workout-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Clear previous exercises
+            container.innerHTML = '';
+
+            // Render each exercise card
+            dayData.exercises.forEach((exercise, exerciseIndex) => {
+                const exerciseCard = document.createElement('div');
+                exerciseCard.className = 'exercise-card'; // Add a class for styling
+
+                // Create HTML for sets that are already logged
+                let setsHTML = '';
+                const setsToRender = exercise.sets.length > 0 ? exercise.sets : [{}]; // Render at least one empty set if none are logged
+
+                setsToRender.forEach((set, setIndex) => {
+                     setsHTML += `
+                        <div class="set-row">
+                            <span class="set-number">Set ${setIndex + 1}</span>
+                            <div class="set-inputs">
+                                <input type="number" placeholder="lbs" class="weight-input" value="${set.load || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                                <input type="number" placeholder="reps" class="reps-input" value="${set.reps || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                                <input type="number" placeholder="RIR" class="rir-input" value="${set.rir || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+                            </div>
+                        </div>
+                    `;
+                });
+
+                exerciseCard.innerHTML = `
+                    <div class="exercise-card-header">
+                        <h3>${exercise.name}</h3>
+                        <span class="exercise-target">Target: ${exercise.targetReps} reps @ ${exercise.targetRIR} RIR</span>
+                    </div>
+                    <div class="sets-container">
+                        <div class="set-row header">
+                            <span></span>
+                            <div class="set-inputs">
+                                <span>Weight</span>
+                                <span>Reps</span>
+                                <span>RIR</span>
+                            </div>
+                        </div>
+                        ${setsHTML}
+                    </div>
+                    <button class="add-set-btn" data-exercise-index="${exerciseIndex}">+ Add Set</button>
+                `;
+                container.appendChild(exerciseCard);
             });
         },
-
-        // ===========================
-        //  MODAL LOGIC (NEEDS REFACTORING)
-        // ===========================
-        // The 'planner' modal is now incompatible with the mesocycle data structure.
-        openModal(type) { /* ... as before, but 'planner' part is broken ... */ },
-        closeModal() { /* ... as before ... */ },
-        submitWorkout() { /* ... as before ... */ },
-        saveManualAdjust() { /* This function is broken and needs to be replaced */ },
-
+        
         // ===========================
         //  UTILITY
         // ===========================
@@ -305,3 +344,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     app.init();
 });
+```
