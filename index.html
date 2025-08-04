@@ -13,89 +13,46 @@
 <body>
 
     <div class="container" id="onboarding-container">
-
-        <div class="progress-bar"><div class="progress"></div></div>
-
         <div class="step active" id="step1">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
             <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
             <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
         </div>
-
         <div class="step" id="step2">
             <h2>Your Goal</h2>
             <p>Select your training focus:</p>
             <div class="card-group" data-field="goal">
-                <div class="goal-card" data-value="muscle" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Muscle Building Icon">💪</div>
-                    <h3>Muscle Building</h3>
-                    <p>Strength & Hypertrophy</p>
-                </div>
-                <div class="goal-card" data-value="cardio" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Cardio Icon">🏃</div>
-                    <h3>Cardio</h3>
-                    <p>Endurance Training</p>
-                </div>
-                <div class="goal-card" data-value="combined" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Combined Training Icon">🔥</div>
-                    <h3>Combined</h3>
-                    <p>Balance Both</p>
-                </div>
+                <div class="goal-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3><p>Strength & Hypertrophy</p></div>
+                <div class="goal-card" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3><p>Endurance Training</p></div>
+                <div class="goal-card" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3><p>Balance Both</p></div>
             </div>
             <div class="button-group">
                 <button class="cta-button secondary-button back-btn-onboarding">Back</button>
                 <button class="cta-button" id="goalNextBtn">Next</button>
             </div>
         </div>
-
         <div class="step" id="step3">
             <h2>Experience Level</h2>
             <p>Choose your fitness level:</p>
             <div class="card-group" data-field="experience">
-                <div class="goal-card" data-value="beginner" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Beginner Icon">🌱</div>
-                    <h3>Beginner</h3>
-                    <p>New to training</p>
-                </div>
-                <div class="goal-card" data-value="experienced" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Experienced Icon">⚡</div>
-                    <h3>Experienced</h3>
-                    <p>6–18 months</p>
-                </div>
-                <div class="goal-card" data-value="advanced" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Advanced Icon">🔥</div>
-                    <h3>Advanced</h3>
-                    <p>18+ months</p>
-                </div>
+                <div class="goal-card" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3><p>New to training</p></div>
+                <div class="goal-card" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3><p>6–18 months</p></div>
+                <div class="goal-card" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3><p>18+ months</p></div>
             </div>
             <div class="button-group">
                 <button class="cta-button secondary-button back-btn-onboarding">Back</button>
                 <button class="cta-button" id="experienceNextBtn">Next</button>
             </div>
         </div>
-
         <div class="step" id="step4">
             <h2>Workout Preferences</h2>
             <p>Select your preferred style:</p>
             <div class="card-group" data-field="style">
-                <div class="goal-card" data-value="gym" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Gym Icon">🏋️</div>
-                    <h3>Gym</h3>
-                    <p>Heavy Lifts</p>
-                </div>
-                <div class="goal-card" data-value="home" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Home Icon">🏠</div>
-                    <h3>Home</h3>
-                    <p>Minimal Equipment</p>
-                </div>
-                <div class="goal-card" data-value="hybrid" role="button" tabindex="0">
-                    <div class="icon" role="img" aria-label="Hybrid Icon">🔥</div>
-                    <h3>Hybrid</h3>
-                    <p>Mix of Both</p>
-                </div>
+                <div class="goal-card" data-value="gym" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Gym</h3><p>Heavy Lifts</p></div>
+                <div class="goal-card" data-value="home" role="button" tabindex="0"><div class="icon">🏠</div><h3>Home</h3><p>Minimal Equipment</p></div>
+                <div class="goal-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3><p>Mix of Both</p></div>
             </div>
-
             <p>How many days per week?</p>
             <div class="card-group" data-field="days">
                 <div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
@@ -108,7 +65,6 @@
                 <button class="cta-button" id="prefsNextBtn">Next</button>
             </div>
         </div>
-
         <div class="step" id="step5">
             <h2>Mesocycle Length</h2>
             <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
@@ -123,35 +79,24 @@
                 <button class="cta-button" id="mesoLengthNextBtn">Next</button>
             </div>
         </div>
-
         <div class="step" id="step6">
             <h2>Personal Details (Optional)</h2>
             <p>This information is not required but can help with future features like calorie tracking.</p>
-            
             <div class="card-group" data-field="gender">
                 <div class="goal-card" data-value="male" role="button" tabindex="0"><h3>Male</h3></div>
                 <div class="goal-card" data-value="female" role="button" tabindex="0"><h3>Female</h3></div>
                 <div class="goal-card" data-value="pnts" role="button" tabindex="0"><h3>Prefer Not to Say</h3></div>
             </div>
-
             <div class="details-inputs">
-                <div class="input-group">
-                    <label for="heightInput">Height (cm)</label>
-                    <input type="number" id="heightInput" placeholder="e.g., 180">
-                </div>
-                <div class="input-group">
-                    <label for="weightInput">Weight (kg)</label>
-                    <input type="number" id="weightInput" placeholder="e.g., 85">
-                </div>
+                <div class="input-group"><label for="heightInput">Height (cm)</label><input type="number" id="heightInput" placeholder="e.g., 180"></div>
+                <div class="input-group"><label for="weightInput">Weight (kg)</label><input type="number" id="weightInput" placeholder="e.g., 85"></div>
             </div>
-
             <div class="button-group">
                 <button class="cta-button secondary-button back-btn-onboarding">Back</button>
                 <button class="cta-button secondary-button" id="skipDetailsBtn">Skip</button>
                 <button class="cta-button" id="detailsNextBtn">Save & Continue</button>
             </div>
         </div>
-
         <div class="step" id="step7">
             <h2>✅ All Set!</h2>
             <p>Your preferences have been saved.</p>
@@ -177,16 +122,11 @@
             <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
             <h2>Mesocycle Builder</h2>
         </div>
-        
-        <div class="schedule-container" id="schedule-container">
-            </div>
-
+        <div class="schedule-container" id="schedule-container"></div>
         <div class="builder-actions">
             <button class="cta-button" id="add-day-btn">+ Add a Day</button>
         </div>
     </div>
-
-    <div id="dashboard" class="hidden"></div>
 
     <div id="daily-workout-view" class="hidden">
         <div class="workout-header">
@@ -194,14 +134,11 @@
             <h2 id="workout-day-title"></h2>
             <p id="workout-date"></p>
         </div>
-        <div id="exercise-list-container">
-        </div>
+        <div id="exercise-list-container"></div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
         </div>
     </div>
-
-    <div id="modal" class="modal hidden"></div>
 
     <script defer src="app.js"></script>
 
