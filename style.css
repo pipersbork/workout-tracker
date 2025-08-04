@@ -411,13 +411,11 @@ p, .placeholder-text {
     gap: 1.5rem;
     margin-top: 1.5rem;
 }
-
 .day-card {
     background-color: var(--surface-color);
     border-radius: 12px;
     padding: 1.5rem;
 }
-
 .day-header {
     display: flex;
     justify-content: space-between;
@@ -426,19 +424,20 @@ p, .placeholder-text {
     padding-bottom: 1rem;
     margin-bottom: 1rem;
 }
-
-.day-label-selector {
+select.builder-select {
     background-color: var(--background-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 0.5rem 1rem;
     font-family: var(--font-family);
+    font-size: 1rem;
+}
+.day-label-selector {
     font-size: 1.2rem;
     font-weight: 600;
 }
-
-.delete-day-btn {
+.delete-btn {
     background: none;
     border: none;
     color: var(--text-muted-color);
@@ -446,59 +445,36 @@ p, .placeholder-text {
     cursor: pointer;
     transition: color 0.2s ease;
 }
-.delete-day-btn:hover {
+.delete-btn:hover {
     color: var(--primary-color);
 }
-
 .muscle-group-block {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1rem;
 }
-
 .muscle-group-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1rem;
 }
-
-.muscle-group-label {
-    background-color: #A43820; /* A darker red for the label */
-    color: #fff;
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 0.9rem;
+.muscle-group-selectors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
 }
-
-.delete-muscle-group-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted-color);
-    cursor: pointer;
-}
-
-.exercise-placeholder {
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
-    color: var(--text-muted-color);
-    cursor: pointer;
+.exercise-selection-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     margin-top: 1rem;
-    transition: background-color 0.2s ease;
 }
-
-.exercise-placeholder:hover {
-    background-color: var(--border-color);
-}
-
 .add-muscle-group-btn {
     width: 100%;
     margin-top: 1rem;
 }
-
 .builder-actions {
     margin-top: 2rem;
     text-align: center;
@@ -517,7 +493,6 @@ p, .placeholder-text {
         margin: 1rem auto;
         padding: 1rem;
     }
-    
     .exercise-card-header {
         flex-direction: column;
         align-items: flex-start;
