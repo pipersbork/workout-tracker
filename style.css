@@ -62,7 +62,7 @@ h2, h3 {
     font-weight: 600;
 }
 
-p {
+p, .placeholder-text {
     margin-bottom: 1.5rem;
     color: var(--text-muted-color);
 }
@@ -405,93 +405,103 @@ p {
 /* ===========================
    WORKOUT BUILDER STYLES
 =========================== */
-.builder-container {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 2rem;
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     margin-top: 1.5rem;
 }
 
-.exercise-library, .plan-editor {
+.day-card {
     background-color: var(--surface-color);
     border-radius: 12px;
     padding: 1.5rem;
-    height: 60vh;
-    display: flex;
-    flex-direction: column;
 }
 
-.library-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-}
-
-.filter-btn {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted-color);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.filter-btn:hover {
-    background-color: var(--border-color);
-    color: var(--text-color);
-}
-
-.filter-btn.active {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: #fff;
-}
-
-.library-list {
-    overflow-y: auto;
-}
-
-.library-item {
+.day-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
     border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
-.library-item:last-child {
-    border-bottom: none;
-}
-
-.library-item-name {
-    font-weight: 500;
-}
-
-.library-item-muscle {
-    font-size: 0.8rem;
-    color: var(--text-muted-color);
-}
-
-.add-exercise-btn {
-    background-color: var(--primary-color);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
+.day-label-selector {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-family);
     font-size: 1.2rem;
-    cursor: pointer;
-    line-height: 30px;
-    text-align: center;
+    font-weight: 600;
 }
 
-.plan-editor .placeholder-text {
+.delete-day-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.delete-day-btn:hover {
+    color: var(--primary-color);
+}
+
+.muscle-group-block {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.muscle-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.muscle-group-label {
+    background-color: #A43820; /* A darker red for the label */
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.delete-muscle-group-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted-color);
+    cursor: pointer;
+}
+
+.exercise-placeholder {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
     text-align: center;
-    margin-top: 4rem;
+    color: var(--text-muted-color);
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.exercise-placeholder:hover {
+    background-color: var(--border-color);
+}
+
+.add-muscle-group-btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.builder-actions {
+    margin-top: 2rem;
+    text-align: center;
 }
 
 /* ===========================
@@ -500,16 +510,6 @@ p {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 900px) {
-    .builder-container {
-        grid-template-columns: 1fr;
-    }
-    .exercise-library, .plan-editor {
-        height: auto;
-        min-height: 40vh;
-    }
 }
 
 @media (max-width: 768px) {
