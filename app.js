@@ -227,12 +227,16 @@ document.addEventListener('DOMContentLoaded', () => {
         updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
 
         finalizeAndStartPlan() {
+            if (this.state.builderPlan.days.length === 0) {
+                alert("Please add at least one day to your plan before saving.");
+                return;
+            }
             const newMeso = {
                 id: `meso_${Date.now()}`,
                 startDate: new Date().toISOString(),
                 durationWeeks: 5, 
                 goal: 'custom',
-                experience: this.state.userSelections.experience, // Carry over experience
+                experience: this.state.userSelections.experience,
                 weeks: {}
             };
             const focusSetMap = { 'Primary': 4, 'Secondary': 3, 'Maintenance': 2 };
@@ -241,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isDeload = (i === newMeso.durationWeeks);
                 this.state.builderPlan.days.forEach((day, dayIndex) => {
                     newMeso.weeks[i][dayIndex + 1] = {
-                        name: day.label,
+                        name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
                         completed: false,
                         exercises: day.muscleGroups.flatMap(mg => 
                             mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
@@ -544,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
         }
     };
-
+    
     for (const key in app) {
         if (typeof app[key] === 'function') {
             app[key] = app[key].bind(app);
