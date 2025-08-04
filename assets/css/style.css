@@ -1,52 +1,33 @@
-/* ===========================
-   BASE STYLES
-=========================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden;
-}
+/* Global */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
-    background-size: 400% 400%;
-    animation: gradientBG 8s ease infinite;
-    color: #ff6b35;
+    background: #121212;
+    color: #fff;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-@keyframes gradientBG {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
+    overflow: hidden;
 }
 
-/* ===========================
-   CONTAINER & LAYOUT
-=========================== */
-.container {
+/* Containers */
+.container, #dashboard {
     width: 100%;
-    max-width: 600px;
+    max-width: 500px;
+    margin: auto;
     padding: 20px;
-    text-align: center;
-    position: relative;
 }
 
-/* ===========================
-   PROGRESS BAR
-=========================== */
+/* Hide inactive sections */
+.hidden { display: none; }
+
+/* Progress bar */
 .progress-bar {
-    width: 80%;
+    width: 100%;
     background: #333;
     height: 8px;
     border-radius: 5px;
-    overflow: hidden;
     margin: 20px auto;
 }
 .progress {
@@ -56,172 +37,101 @@ body {
     transition: width 0.4s ease;
 }
 
-/* ===========================
-   ONBOARDING STEPS
-=========================== */
+/* Onboarding Steps */
 .step {
     display: none;
-    flex-direction: column;
-    align-items: center;
     text-align: center;
-    width: 100%;
 }
-.step.active {
-    display: flex;
-}
+.step.active { display: block; }
+.main-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
+.divider { width: 80px; height: 2px; background: #ff6b35; margin: 10px auto; }
+.tagline { font-size: 1rem; margin-bottom: 25px; color: #ff6b35; }
 
-/* Cinematic intro */
-.main-title {
-    font-size: 3rem;
-    font-weight: bold;
-    letter-spacing: 6px;
-    margin-bottom: 10px;
-}
-.divider {
-    width: 80px;
-    height: 2px;
-    background-color: #ff6b35;
-    margin: 10px auto 20px auto;
-}
-.tagline {
-    font-size: 1rem;
-    color: #ff6b35;
-    margin-bottom: 35px;
-}
-
-/* ===========================
-   BUTTONS
-=========================== */
+/* Buttons */
 .cta-button {
-    display: inline-block;
-    padding: 16px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff;
+    padding: 14px 20px;
     background: linear-gradient(45deg, #ff6b35, #ff914d);
-    border: none;
-    border-radius: 12px;
-    text-decoration: none;
-    margin-top: 15px;
-    transition: transform 0.2s ease, background 0.3s ease;
-}
-.cta-button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(45deg, #ff914d, #ff6b35);
-}
-
-/* ===========================
-   DASHBOARD
-=========================== */
-.dashboard {
-    padding: 20px;
-    text-align: center;
     color: #fff;
-}
-
-/* ===========================
-   SUMMARY GRID
-=========================== */
-.summary-grid {
-    display: flex;
-    justify-content: space-around;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.summary-card {
-    flex: 1;
-    background: #1c1c1e;
+    font-size: 1.2rem;
+    border: none;
     border-radius: 10px;
-    padding: 10px;
-    text-align: center;
+    margin-top: 15px;
+    width: 80%;
+    cursor: pointer;
 }
-.summary-card h3 {
-    color: #ff6b35;
-    margin-bottom: 5px;
-}
+.cta-button:hover { opacity: 0.9; }
 
-/* ===========================
-   ONBOARDING CARD GROUP
-=========================== */
+/* Card Groups */
 .card-group {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 15px;
-    margin-top: 15px;
+    gap: 10px;
+    margin: 15px 0;
 }
 .goal-card {
-    background: #1c1c1e;
+    flex: 1 1 45%;
+    padding: 15px;
+    background: #1e1e1e;
     border: 2px solid #333;
-    border-radius: 12px;
-    padding: 20px 10px;
+    border-radius: 10px;
     text-align: center;
     cursor: pointer;
-    width: calc(50% - 20px); /* 2 per row on mobile */
-    max-width: 160px;
-    transition: transform 0.2s ease, border-color 0.3s ease;
-    color: #fff;
+    font-size: 1rem;
 }
-.goal-card .icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-}
-.goal-card:hover {
-    transform: scale(1.05);
+.goal-card:hover, .goal-card.active {
     border-color: #ff6b35;
-}
-.goal-card.active {
-    border-color: #ff6b35;
-    background: #2a2a2d;
+    background: #292929;
 }
 
-/* Responsive Adjustments */
-@media screen and (min-width: 768px) {
-    .goal-card {
-        width: calc(33.333% - 20px); /* 3 per row on tablet+ */
-    }
-}
-@media screen and (max-width: 400px) {
-    .goal-card {
-        width: 100%; /* Single column on very small screens */
-    }
-}
-
-/* ===========================
-   MODALS & OTHER
-=========================== */
-.modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+/* Dashboard */
+.dashboard { text-align: center; }
+.summary-grid {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 15px;
 }
-.modal.hidden { display: none; }
-.modal-content {
-    background: #1c1c1e;
-    padding: 20px;
+.summary-card {
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 10px;
+    flex: 1;
+}
+.progress-wrapper { margin-bottom: 20px; }
+.chart-container {
+    background: #1e1e1e;
+    padding: 10px;
     border-radius: 10px;
-    width: 90%;
-    max-width: 450px;
-    color: #fff;
+    margin-bottom: 15px;
 }
-.close-btn {
-    float: right;
-    font-size: 1.5rem;
-    cursor: pointer;
+.workout-history ul { list-style: none; padding: 0; }
+
+/* Bottom nav */
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    position: sticky;
+    bottom: 10px;
+    background: #121212;
+    padding: 10px;
+}
+.bottom-nav button {
+    padding: 10px;
+    background: #ff6b35;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
 }
 
-/* ===========================
-   CHARTS
-=========================== */
-.chart-container {
-    width: 100%;
-    max-width: 650px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
+/* Modal */
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal-content { background: #1e1e1e; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+.close-btn { float: right; font-size: 1.5rem; cursor: pointer; }
+
+/* Mobile */
+@media (max-width: 480px) {
+    .summary-grid { flex-direction: column; }
+    .goal-card { flex: 1 1 100%; }
 }
