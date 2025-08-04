@@ -30,7 +30,7 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2: Goal -->
+    <!-- STEP 2 -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
@@ -54,7 +54,7 @@
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3: Experience -->
+    <!-- STEP 3 -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
@@ -78,7 +78,7 @@
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4: Preferences -->
+    <!-- STEP 4 -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
@@ -110,7 +110,7 @@
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5: Complete -->
+    <!-- STEP 5 -->
     <div class="step" id="step5">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
@@ -121,20 +121,19 @@
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
     <div class="dashboard">
-
-        <!-- Summary Cards -->
+        <!-- Top Summary Cards -->
         <div class="summary-grid">
             <div class="summary-card">
                 <h3>Goal</h3>
-                <p id="summaryGoal"></p>
+                <p id="summaryGoal">-</p>
             </div>
             <div class="summary-card">
                 <h3>Experience</h3>
-                <p id="summaryExperience"></p>
+                <p id="summaryExperience">-</p>
             </div>
             <div class="summary-card">
                 <h3>Days/Week</h3>
-                <p id="summaryDays"></p>
+                <p id="summaryDays">-</p>
             </div>
         </div>
 
@@ -165,7 +164,7 @@
         </div>
     </div>
 
-    <!-- Sticky Bottom Nav -->
+    <!-- Sticky Bottom Navigation -->
     <div class="bottom-nav">
         <button onclick="openModal('logWorkout')">Log Workout</button>
         <button onclick="openModal('planner')">Planner</button>
@@ -173,7 +172,7 @@
     </div>
 </div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
