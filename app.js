@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             plan: null,
             currentView: { week: 1, day: 1 },
-            libraryFilter: 'all',
+            builderPlan: {
+                days: [] 
+            },
             allPlans: [],
             exercises: [],
         },
@@ -28,13 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
             progress: document.querySelector('.progress'),
             workoutView: document.getElementById('daily-workout-view'),
             builderView: document.getElementById('builder-view'),
+            scheduleContainer: document.getElementById('schedule-container'),
         },
 
         async init() {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
-
             if (localStorage.getItem("onboardingCompleted") === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
                 const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
@@ -106,13 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.addEventListener('click', () => this.previousStep());
             });
 
-            // Builder Filters
-            document.getElementById('library-filters-container').addEventListener('click', (e) => {
-                if (e.target.matches('.filter-btn')) {
-                    this.state.libraryFilter = e.target.dataset.filter;
-                    this.renderExerciseLibrary();
-                }
-            });
+            // Builder Buttons
+            document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
 
             // Onboarding Card Selections
             document.querySelectorAll('.card-group .goal-card').forEach(card => {
@@ -150,43 +147,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
             } else if (viewName === 'builder') {
                 this.elements.builderView.classList.remove('hidden');
-                this.renderExerciseLibrary();
+                this.renderBuilder();
             }
         },
 
-        renderExerciseLibrary() {
-            const exercises = this.state.exercises;
-            const filter = this.state.libraryFilter;
-            
-            const filtersContainer = document.getElementById('library-filters-container');
-            const listContainer = document.getElementById('library-list-container');
-
-            const muscleGroups = ['all', ...new Set(exercises.map(ex => ex.muscle))];
-
-            filtersContainer.innerHTML = muscleGroups.map(group => `
-                <button class="filter-btn ${filter === group ? 'active' : ''}" data-filter="${group}">
-                    ${this.capitalize(group)}
-                </button>
-            `).join('');
-
-            const filteredExercises = filter === 'all' 
-                ? exercises 
-                : exercises.filter(ex => ex.muscle === filter);
-
-            if (filteredExercises.length === 0) {
-                listContainer.innerHTML = `<p class="placeholder-text">No exercises found for this filter.</p>`;
-                return;
+        renderBuilder() {
+            const container = this.elements.scheduleContainer;
+            container.innerHTML = ''; 
+            if (this.state.builderPlan.days.length === 0) {
+                container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
+            } else {
+                this.state.builderPlan.days.forEach((day, index) => {
+                    const dayCard = document.createElement('div');
+                    dayCard.className = 'day-card';
+                    dayCard.innerHTML = `
+                        <div class="day-header">
+                            <select class="day-label-selector" data-day-index="${index}">
+                                <option>Add a label</option>
+                                <option ${day.label === 'Monday' ? 'selected' : ''}>Monday</option>
+                                <option ${day.label === 'Tuesday' ? 'selected' : ''}>Tuesday</option>
+                                <option ${day.label === 'Wednesday' ? 'selected' : ''}>Wednesday</option>
+                                <option ${day.label === 'Thursday' ? 'selected' : ''}>Thursday</option>
+                                <option ${day.label === 'Friday' ? 'selected' : ''}>Friday</option>
+                                <option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option>
+                                <option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
+                            </select>
+                            <button class="delete-day-btn" data-day-index="${index}">🗑️</button>
+                        </div>
+                        <div class="day-content">
+                            <button class="cta-button secondary-button add-muscle-group-btn" data-day-index="${index}">+ Add a Muscle Group</button>
+                        </div>
+                    `;
+                    container.appendChild(dayCard);
+                });
             }
+        },
 
-            listContainer.innerHTML = filteredExercises.map(ex => `
-                <div class="library-item">
-                    <div>
-                        <div class="library-item-name">${ex.name}</div>
-                        <div class="library-item-muscle">${ex.muscle}</div>
-                    </div>
-                    <button class="add-exercise-btn" data-exercise-name="${ex.name}">+</button>
-                </div>
-            `).join('');
+        addDayToBuilder() {
+            this.state.builderPlan.days.push({
+                label: 'Add a label',
+                muscleGroups: []
+            });
+            this.renderBuilder();
         },
         
         savePersonalDetails() {
