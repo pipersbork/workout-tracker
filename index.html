@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Progression - Workout Tracker</title>
 
 <!-- Styles -->
-<link rel="stylesheet" href="./assets/css/style.css">
-<link rel="manifest" href="./assets/manifest.json">
+<link rel="stylesheet" href="./assets/css/style.css" />
+<link rel="manifest" href="./assets/manifest.json" />
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,7 +30,7 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2: Goal -->
+    <!-- STEP 2 -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
@@ -38,23 +38,20 @@
             <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
                 <div class="icon">💪</div>
                 <h3>Muscle Building</h3>
-                <p>Strength & Hypertrophy</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'goal', 'cardio')">
                 <div class="icon">🏃</div>
                 <h3>Cardio</h3>
-                <p>Endurance Training</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'goal', 'combined')">
                 <div class="icon">🔥</div>
                 <h3>Combined</h3>
-                <p>Balance Both</p>
             </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3: Experience -->
+    <!-- STEP 3 -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
@@ -62,23 +59,20 @@
             <div class="goal-card" onclick="selectCard(this, 'experience', 'beginner')">
                 <div class="icon">🌱</div>
                 <h3>Beginner</h3>
-                <p>New to training</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'experience', 'experienced')">
                 <div class="icon">⚡</div>
                 <h3>Experienced</h3>
-                <p>6–18 months</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'experience', 'advanced')">
                 <div class="icon">🔥</div>
                 <h3>Advanced</h3>
-                <p>18+ months</p>
             </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4: Preferences -->
+    <!-- STEP 4 -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
@@ -86,31 +80,28 @@
             <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
                 <div class="icon">🏋️</div>
                 <h3>Gym</h3>
-                <p>Heavy Lifts</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'style', 'home')">
                 <div class="icon">🏠</div>
                 <h3>Home</h3>
-                <p>Minimal Equipment</p>
             </div>
             <div class="goal-card" onclick="selectCard(this, 'style', 'hybrid')">
                 <div class="icon">🔥</div>
                 <h3>Hybrid</h3>
-                <p>Mix of Both</p>
             </div>
         </div>
 
         <p>How many days per week?</p>
         <div class="card-group" data-field="days">
-            <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3><p>Balanced</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3><p>Intense</p></div>
-            <div class="goal-card" onclick="selectCard(this, 'days', '6')"><h3>6</h3><p>Max Effort</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '6')"><h3>6</h3></div>
         </div>
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5: Complete -->
+    <!-- STEP 5 -->
     <div class="step" id="step5">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
@@ -122,39 +113,35 @@
 <div id="dashboard" class="hidden">
     <div class="dashboard">
         <!-- Plan Selector -->
-        <div class="plan-selector-wrapper">
-            <h3>Your Saved Plans</h3>
-            <div class="plan-selector"></div>
-        </div>
+        <div class="plan-selector" id="planSelector"></div>
 
-        <!-- Summary -->
+        <!-- Summary Cards -->
         <div class="summary-grid">
             <div class="summary-card">
                 <h3>Goal</h3>
-                <p id="summaryGoal">Muscle</p>
+                <p id="summaryGoal"></p>
             </div>
             <div class="summary-card">
                 <h3>Experience</h3>
-                <p id="summaryExperience">Beginner</p>
+                <p id="summaryExperience"></p>
             </div>
             <div class="summary-card">
-                <h3>Days/Week</h3>
-                <p id="summaryDays">3</p>
+                <h3>Days</h3>
+                <p id="summaryDays"></p>
             </div>
         </div>
 
-        <!-- Progress -->
+        <!-- Volume Progress -->
         <div class="progress-wrapper">
             <h3>Volume Progress</h3>
             <div class="progress-bar">
                 <div class="progress" id="volumeProgress"></div>
             </div>
-            <p id="volumeSummary">0 / 0 sets</p>
+            <p id="volumeSummary"></p>
         </div>
 
         <!-- Charts -->
         <div class="charts-section">
-            <h3>Progress Trends</h3>
             <div class="chart-container"><canvas id="volumeChart"></canvas></div>
             <div class="chart-container"><canvas id="loadChart"></canvas></div>
         </div>
@@ -164,12 +151,13 @@
             <h3>Workout History</h3>
             <ul id="workoutList"></ul>
         </div>
-    </div>
 
-    <!-- Sticky Bottom Navigation -->
-    <div class="bottom-nav">
-        <button onclick="openModal('logWorkout')">Log Workout</button>
-        <button onclick="openModal('settings')">Settings</button>
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+            <button onclick="openModal('logWorkout')">Log Workout</button>
+            <button onclick="openModal('planner')">Planner</button>
+            <button onclick="openModal('settings')">Settings</button>
+        </div>
     </div>
 </div>
 
