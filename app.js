@@ -559,11 +559,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    for (const key in app) {
-        if (typeof app[key] === 'function') {
-            app[key] = app[key].bind(app);
-        }
-    }
-    
     app.init();
 });
