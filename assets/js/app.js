@@ -48,11 +48,37 @@ function closeModal(){document.getElementById('modal').classList.remove('show');
 /* ===========================
    TRAINER-BASED PLAN
 =========================== */
-function generatePlan({goal,experience,style,days}){
-const baseVolume=experience==='beginner'?8:experience==='experienced'?12:16;
-return{goal,experience,style,days,week:1,rirTarget:3,currentVolume:baseVolume,maxVolume:baseVolume*2,
-sessions:[{name:"Day 1 - Upper",exercises:[{name:"Bench Press",sets:3,reps:10},{name:"Row",sets:3,reps:12}]},{name:"Day 2 - Lower",exercises:[{name:"Squat",sets:3,reps:10},{name:"Leg Curl",sets:3,reps:12}]}]};
+function generatePlan({ goal, experience, style, days }) {
+    // Simple logic for now; later we'll integrate trainer-based progression
+    const baseVolume = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
+    return {
+        goal,
+        experience,
+        style,
+        days,
+        week: 1,
+        rirTarget: 3,
+        currentVolume: baseVolume,
+        maxVolume: baseVolume * 2,
+        sessions: [
+            {
+                name: "Day 1 - Upper Body",
+                exercises: [
+                    { name: "Bench Press", sets: 3, reps: 10, rir: 3 },
+                    { name: "Row", sets: 3, reps: 12, rir: 3 }
+                ]
+            },
+            {
+                name: "Day 2 - Lower Body",
+                exercises: [
+                    { name: "Squat", sets: 3, reps: 10, rir: 3 },
+                    { name: "Leg Curl", sets: 3, reps: 12, rir: 3 }
+                ]
+            }
+        ]
+    };
 }
+
 
 /* ===========================
    UTILITY
