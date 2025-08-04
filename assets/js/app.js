@@ -14,7 +14,7 @@ const userSelections = {
 let plan = null;
 
 /* ===========================
-   EXERCISE DATABASE (250+ EXERCISES)
+   EXERCISE DATABASE (Sample + Expand to 250+)
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
@@ -38,7 +38,6 @@ const EXERCISES = [
     { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
     { name: "Overhead Triceps Extension", muscle: "Triceps", equipment: "Dumbbell" },
     { name: "Close-Grip Bench Press", muscle: "Triceps", equipment: "Barbell" },
-    { name: "Skull Crusher", muscle: "Triceps", equipment: "Barbell" },
     { name: "Squat", muscle: "Quads", equipment: "Barbell" },
     { name: "Front Squat", muscle: "Quads", equipment: "Barbell" },
     { name: "Leg Press", muscle: "Quads", equipment: "Machine" },
@@ -51,14 +50,12 @@ const EXERCISES = [
     { name: "Step-Up", muscle: "Glutes", equipment: "Dumbbell" },
     { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
     { name: "Seated Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Standing Calf Raise", muscle: "Calves", equipment: "Bodyweight" },
     { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
     { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
     { name: "Hanging Leg Raise", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" },
-    // ✅ Expand to 250 by duplicating patterns for all muscle groups with variations
+    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" }
+    // Expand to 250 by adding variations
 ];
-// (In full implementation, we'll append all 250 here)
 
 /* ===========================
    ONBOARDING LOGIC
@@ -106,7 +103,7 @@ function finishOnboarding() {
 }
 
 /* ===========================
-   PLAN GENERATION (Trainer Logic)
+   PLAN GENERATION
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
     const baseSets = experience === 'beginner' ? 8 :
@@ -228,7 +225,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODAL: LOG WORKOUT + PLANNER
+   MODALS (Log Workout, Planner)
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -265,28 +262,24 @@ function openModal(type) {
     }
 }
 
-function renderExerciseOptions() {
-    const list = document.getElementById('exerciseList');
-    const search = document.getElementById('exerciseSearch').value.toLowerCase();
-    const muscle = document.getElementById('muscleFilter').value;
-
-    const filtered = EXERCISES.filter(ex =>
-        (!muscle || ex.muscle === muscle) &&
-        ex.name.toLowerCase().includes(search)
-    );
-
-    list.innerHTML = filtered.map(ex =>
-        `<div>${ex.name} (${ex.muscle}) <button onclick="addExercise('${ex.name}')">Add</button></div>`
-    ).join('');
-}
-
-function addExercise(name) {
-    plan.sessions[0].exercises.push({ name, sets: 3, reps: "8-12", rir: 2 });
-    alert(`${name} added to Day 1`);
-}
-
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
+}
+
+/* ===========================
+   MANUAL ADJUSTMENT
+=========================== */
+function saveManualAdjust() {
+    plan.sessions.forEach((session, sIndex) => {
+        session.exercises.forEach((ex, eIndex) => {
+            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
+            ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
+        });
+    });
+
+    localStorage.setItem("userPlan", JSON.stringify(plan));
+    closeModal();
+    renderDashboard(plan);
 }
 
 /* ===========================
