@@ -11,7 +11,7 @@ const userSelections = {
     days: ""
 };
 
-let plan = null; // Will hold the generated plan after onboarding
+let plan = null; // Generated workout plan after onboarding
 
 /* ===========================
    ONBOARDING LOGIC
@@ -124,12 +124,49 @@ function renderCharts(plan) {
 /* ===========================
    MODAL HANDLING
 =========================== */
-function openModal(type) {
+async function openModal(type) {
     const modal = document.getElementById('modal');
     const body = document.getElementById('modal-body');
     modal.classList.remove('hidden');
 
-    if (type === 'logWorkout') {
+    if (type === 'planner') {
+        const exercises = await loadExercises();
+        body.innerHTML = `
+            <div class="planner-container">
+                <h2>Customize Plan</h2>
+                <div class="planner-header">
+                    <input type="text" id="exerciseSearch" placeholder="Search exercises...">
+                </div>
+                <div class="tabs">
+                    <div class="tab active" data-group="all">All</div>
+                    <div class="tab" data-group="chest">Chest</div>
+                    <div class="tab" data-group="back">Back</div>
+                    <div class="tab" data-group="legs">Legs</div>
+                    <div class="tab" data-group="arms">Arms</div>
+                </div>
+                <div class="exercise-list" id="exerciseList">
+                    ${renderExerciseList(exercises)}
+                </div>
+            </div>
+        `;
+
+        // Search logic
+        document.getElementById('exerciseSearch').addEventListener('input', e => {
+            const filtered = exercises.filter(ex => ex.name.toLowerCase().includes(e.target.value.toLowerCase()));
+            document.getElementById('exerciseList').innerHTML = renderExerciseList(filtered);
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const group = tab.getAttribute('data-group');
+                const filtered = group === 'all' ? exercises : exercises.filter(ex => ex.group === group);
+                document.getElementById('exerciseList').innerHTML = renderExerciseList(filtered);
+            });
+        });
+    } else if (type === 'logWorkout') {
         body.innerHTML = `
             <h2>Log Workout</h2>
             <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
@@ -137,26 +174,27 @@ function openModal(type) {
             <input type="number" id="fatigueScore" min="1" max="10">
             <button class="cta-button" onclick="submitWorkout()">Submit</button>
         `;
-    } else if (type === 'planner') {
-        body.innerHTML = `
-            <h2>Customize Plan</h2>
-            <div class="planner-form">
-                ${plan.sessions.map((session, i) => `
-                    <h3>${session.name}</h3>
-                    ${session.exercises.map((ex, j) => `
-                        <div class="exercise-row">
-                            <input type="text" value="${ex.name}" readonly>
-                            <input type="number" id="sets-${i}-${j}" value="${ex.sets}">
-                            <input type="number" id="reps-${i}-${j}" value="${ex.reps}">
-                        </div>
-                    `).join('')}
-                `).join('')}
-                <button onclick="saveManualAdjust()">Save Changes</button>
-            </div>
-        `;
     } else {
         body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
     }
+}
+
+function renderExerciseList(exercises) {
+    return exercises.map(ex => `
+        <div class="exercise-item">
+            <span>${ex.name}</span>
+            <button onclick="addExercise('${ex.name}')">Add</button>
+        </div>
+    `).join('');
+}
+
+function addExercise(name) {
+    if (!plan || !plan.sessions.length) {
+        alert("No plan found. Finish onboarding first.");
+        return;
+    }
+    plan.sessions[0].exercises.push({ name, sets: 3, reps: 10, rir: 3 });
+    alert(`${name} added to Day 1`);
 }
 
 function closeModal() {
@@ -193,21 +231,7 @@ async function loadWorkouts() {
 }
 
 /* ===========================
-   MANUAL ADJUSTMENT
-=========================== */
-async function saveManualAdjust() {
-    plan.sessions.forEach((session, i) => {
-        session.exercises.forEach((ex, j) => {
-            ex.sets = parseInt(document.getElementById(`sets-${i}-${j}`).value);
-            ex.reps = parseInt(document.getElementById(`reps-${i}-${j}`).value);
-        });
-    });
-    await saveData("plans", plan);
-    closeModal();
-}
-
-/* ===========================
-   PLAN GENERATION (Trainer Logic Placeholder)
+   PLAN GENERATION
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
     const baseVolume = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
@@ -240,7 +264,7 @@ function generatePlan({ goal, experience, style, days }) {
 }
 
 /* ===========================
-   EXERCISE LOADING (For Custom Planner)
+   EXERCISE LOADING
 =========================== */
 async function loadExercises(filter = {}) {
     const exercises = await getAllData("exercises");
