@@ -11,11 +11,10 @@ const userSelections = {
     days: ""
 };
 
-let currentPlan = null;
-let savedPlans = [];
+let plan = null;
 
 /* ===========================
-   EXERCISE DATABASE
+   EXERCISE DATABASE (250+ EXERCISES SAMPLE)
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
@@ -57,7 +56,6 @@ const EXERCISES = [
     { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
     { name: "Hanging Leg Raise", muscle: "Core", equipment: "Bodyweight" },
     { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" },
-    // Expand further for final version
 ];
 
 /* ===========================
@@ -98,31 +96,12 @@ function selectCard(element, field, value) {
 }
 
 function finishOnboarding() {
-    const plan = generatePlan(userSelections);
-    savePlan(plan);
+    localStorage.setItem("onboardingCompleted", "true");
+    localStorage.setItem("userSelections", JSON.stringify(userSelections));
+
+    plan = generatePlan(userSelections);
+    savePlan(plan); // Save current plan
     renderDashboard(plan);
-}
-
-/* ===========================
-   MULTIPLE PLAN MANAGEMENT
-=========================== */
-function savePlan(plan) {
-    savedPlans.push(plan);
-    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
-    currentPlan = plan;
-}
-
-function loadPlans() {
-    const stored = localStorage.getItem("savedPlans");
-    if (stored) {
-        savedPlans = JSON.parse(stored);
-        if (savedPlans.length > 0) currentPlan = savedPlans[0];
-    }
-}
-
-function switchPlan(index) {
-    currentPlan = savedPlans[index];
-    renderDashboard(currentPlan);
 }
 
 /* ===========================
@@ -164,8 +143,6 @@ function generatePlan({ goal, experience, style, days }) {
     }
 
     return {
-        id: Date.now(),
-        name: `Plan ${savedPlans.length + 1}`,
         goal,
         experience,
         style,
@@ -195,20 +172,21 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
+   MULTIPLE PLAN STORAGE
+=========================== */
+function savePlan(plan) {
+    const savedPlans = JSON.parse(localStorage.getItem("savedPlans") || "[]");
+    savedPlans.push(plan);
+    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
+}
+
+/* ===========================
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
     document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-
-    // Populate Plan Selector
-    const selector = document.getElementById('planSelector');
-    if (selector) {
-        selector.innerHTML = savedPlans.map((p, i) =>
-            `<div class="plan-card ${p.id === plan.id ? 'active' : ''}" onclick="switchPlan(${i})">${p.name}</div>`
-        ).join('');
-    }
+    dashboard.style.display = "block";
 
     document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
     document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
@@ -258,7 +236,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODALS
+   MODAL HANDLING
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -275,9 +253,9 @@ function openModal(type) {
         `;
     } else if (type === 'planner') {
         body.innerHTML = `
-            <h2>Edit Plan: ${currentPlan.name}</h2>
+            <h2>Customize Your Plan</h2>
             <div class="planner-form">
-                ${currentPlan.sessions.map((session, sIndex) => `
+                ${plan.sessions.map((session, sIndex) => `
                     <h3>${session.name}</h3>
                     ${session.exercises.map((ex, eIndex) => `
                         <div class="exercise-row">
@@ -300,52 +278,51 @@ function closeModal() {
 }
 
 /* ===========================
-   SAVE MANUAL ADJUSTMENTS
+   PLANNER SAVE
 =========================== */
 function saveManualAdjust() {
-    currentPlan.sessions.forEach((session, sIndex) => {
+    plan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
             ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
             ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
         });
     });
-    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
+    localStorage.setItem("userPlan", JSON.stringify(plan));
     closeModal();
-    renderDashboard(currentPlan);
+    renderDashboard(plan);
 }
 
 /* ===========================
    WORKOUT LOGGING
 =========================== */
-function submitWorkout() {
+async function submitWorkout() {
     const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
     const notes = document.getElementById('workoutNotes').value;
+
     if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Enter a valid fatigue score (1–10).");
+        alert("Please enter a valid fatigue score (1–10).");
         return;
     }
 
-    const workouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
-    workouts.push({ date: new Date().toISOString(), fatigue: fatigueScore, notes });
-    localStorage.setItem("workoutLogs", JSON.stringify(workouts));
-
+    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
+    saveWorkoutToDB(workout);
     closeModal();
     loadWorkouts();
 }
 
-function loadWorkouts() {
-    const workouts = JSON.parse(localStorage.getItem("workoutLogs") || "[]");
+async function loadWorkouts() {
+    const workouts = await getAllWorkoutsFromDB();
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
     workouts.forEach(w => {
         const li = document.createElement('li');
-        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (${new Date(w.date).toLocaleDateString()})`;
+        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
         list.appendChild(li);
     });
 }
 
 /* ===========================
-   UTILITIES
+   UTILITY
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -355,9 +332,10 @@ function capitalize(str) {
    PAGE LOAD
 =========================== */
 window.onload = () => {
-    loadPlans();
-    if (savedPlans.length > 0) {
-        renderDashboard(savedPlans[0]);
+    if (localStorage.getItem("onboardingCompleted") === "true") {
+        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
+        plan = generatePlan(userSelections);
+        renderDashboard(plan);
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
