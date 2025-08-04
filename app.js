@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (savedPlans && savedPlans.length > 0) {
                     this.state.plan = savedPlans[0];
                     this.state.allPlans = savedPlans;
-                } else { 
+                } else {
                     this.finishOnboarding();
                     return;
                 }
@@ -109,13 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         showView(viewName) {
-            // Hide all main containers
             this.elements.onboardingContainer.classList.add('hidden');
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
             this.elements.dashboard.classList.add('hidden');
 
-            // Show the requested container
             if (viewName === 'onboarding') {
                 this.elements.onboardingContainer.classList.remove('hidden');
                 this.showStep(this.state.currentStep);
@@ -168,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectCard(element, field, value) {
             this.state.userSelections[field] = value;
-            element.parentElement.querySelectorAll('.card-group .goal-card').forEach(card => card.classList.remove('active'));
+            element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
         },
 
