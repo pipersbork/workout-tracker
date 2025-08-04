@@ -2,7 +2,7 @@
    GLOBAL VARIABLES
 =========================== */
 let currentStep = 1;
-const totalSteps = 6;
+const totalSteps = 5;
 
 const userSelections = {
     goal: "",
@@ -11,7 +11,7 @@ const userSelections = {
     days: ""
 };
 
-let plan = null; // Generated plan after onboarding
+let plan = null; // Will hold the generated plan after onboarding
 
 /* ===========================
    ONBOARDING LOGIC
@@ -50,7 +50,7 @@ function selectCard(element, field, value) {
     element.classList.add('active');
 }
 
-async function finishOnboarding() {
+function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
@@ -62,22 +62,24 @@ async function finishOnboarding() {
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
-    document.querySelector('.container').style.display = "none";
+    document.querySelector('.container').classList.add('hidden');
     const dashboard = document.getElementById('dashboard');
-    dashboard.style.display = "block";
+    dashboard.classList.remove('hidden');
 
-    document.getElementById('userSummary').innerText = `
-        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
-    `;
+    // Summary
+    document.getElementById('summaryGoal').innerText = capitalize(plan.goal);
+    document.getElementById('summaryExperience').innerText = capitalize(plan.experience);
+    document.getElementById('summaryDays').innerText = plan.days;
 
-    document.getElementById('volumeSummary').innerText = `
-        ${plan.currentVolume} sets / ${plan.maxVolume} max
-    `;
-
+    // Progress bar
+    document.getElementById('volumeSummary').innerText = `${plan.currentVolume} sets / ${plan.maxVolume} max`;
     document.getElementById('volumeProgress').style.width =
         `${(plan.currentVolume / plan.maxVolume) * 100}%`;
 
+    // Charts
     renderCharts(plan);
+
+    // Load workout history
     loadWorkouts();
 }
 
@@ -207,40 +209,89 @@ async function saveManualAdjust() {
 }
 
 /* ===========================
-   PLAN GENERATION (Trainer Logic Placeholder)
+   PLAN GENERATION (Trainer Logic)
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
-    const baseVolume = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
+    // Base sets based on experience
+    const baseSets = experience === 'beginner' ? 8 :
+                     experience === 'experienced' ? 12 : 16;
+    const maxSets = baseSets + 4;
+
+    const repRange = goal === 'muscle' ? [6, 12] :
+                     goal === 'combined' ? [8, 15] : [12, 20];
+    const rir = experience === 'beginner' ? 3 : experience === 'experienced' ? 2 : 1;
+
+    // Select sessions based on days
+    let sessions = [];
+    if (days <= 3) {
+        sessions = [
+            { name: "Full Body A", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) },
+            { name: "Full Body B", exercises: getExercises(["Shoulders","Arms","Glutes"], 5, repRange, rir) },
+            { name: "Full Body C", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) }
+        ];
+    } else if (days === 4) {
+        sessions = [
+            { name: "Upper A", exercises: getExercises(["Chest","Back","Shoulders"], 5, repRange, rir) },
+            { name: "Lower A", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) },
+            { name: "Upper B", exercises: getExercises(["Chest","Back","Arms"], 5, repRange, rir) },
+            { name: "Lower B", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) }
+        ];
+    } else {
+        sessions = [
+            { name: "Push", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
+            { name: "Pull", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
+            { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) },
+            { name: "Push 2", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
+            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
+            { name: "Legs 2", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
+        ];
+    }
+
     return {
         goal,
         experience,
         style,
         days,
         week: 1,
-        rirTarget: 3,
-        currentVolume: baseVolume,
-        maxVolume: baseVolume * 2,
-        sessions: [
-            {
-                name: "Day 1 - Upper Body",
-                exercises: [
-                    { name: "Bench Press", sets: 3, reps: 10, rir: 3 },
-                    { name: "Row", sets: 3, reps: 12, rir: 3 }
-                ]
-            },
-            {
-                name: "Day 2 - Lower Body",
-                exercises: [
-                    { name: "Squat", sets: 3, reps: 10, rir: 3 },
-                    { name: "Leg Curl", sets: 3, reps: 12, rir: 3 }
-                ]
-            }
-        ]
+        rirTarget: rir,
+        currentVolume: baseSets,
+        maxVolume: maxSets,
+        sessions
     };
 }
 
+function getExercises(muscleGroups, count, repRange, rir) {
+    const allExercises = [
+        { name: "Barbell Bench Press", muscle: "Chest" },
+        { name: "Incline DB Press", muscle: "Chest" },
+        { name: "Pull-Up", muscle: "Back" },
+        { name: "Barbell Row", muscle: "Back" },
+        { name: "Shoulder Press", muscle: "Shoulders" },
+        { name: "Lateral Raise", muscle: "Shoulders" },
+        { name: "Barbell Curl", muscle: "Biceps" },
+        { name: "Triceps Pushdown", muscle: "Triceps" },
+        { name: "Back Squat", muscle: "Quads" },
+        { name: "Romanian Deadlift", muscle: "Hamstrings" },
+        { name: "Hip Thrust", muscle: "Glutes" }
+    ];
+
+    const filtered = allExercises.filter(ex => muscleGroups.includes(ex.muscle));
+    const chosen = [];
+    for (let i = 0; i < count && filtered.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * filtered.length);
+        chosen.push({
+            name: filtered[randomIndex].name,
+            sets: 3,
+            reps: `${repRange[0]}-${repRange[1]}`,
+            rir
+        });
+        filtered.splice(randomIndex, 1);
+    }
+    return chosen;
+}
+
 /* ===========================
-   UTILITY
+   UTILITIES
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
