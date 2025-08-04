@@ -119,6 +119,16 @@
         </div>
     </div>
 
+    <div id="home-screen" class="container hidden">
+        <div class="main-title">PROGRESSION</div>
+        <div class="divider"></div>
+        <div class="home-nav-buttons">
+            <button class="cta-button home-btn" id="planMesoBtn">Plan Mesocycle</button>
+            <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
+            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Review Previous Workouts</button>
+        </div>
+    </div>
+
     <div id="dashboard" class="hidden">
         <div class="dashboard-content">
             <div class="summary-grid">
@@ -126,29 +136,10 @@
                 <div class="summary-card"><h3>Experience</h3><p id="summaryExperience">-</p></div>
                 <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays">-</p></div>
             </div>
-
-            <div class="progress-wrapper">
-                <h3>Volume Progress</h3>
-                <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
-                <p id="volumeSummary">0 / 0 sets</p>
-            </div>
-
-            <div class="charts-section">
-                <h3>Progress Trends</h3>
-                <div class="chart-container"><canvas id="volumeChart"></canvas></div>
-                <div class="chart-container"><canvas id="loadChart"></canvas></div>
-            </div>
-
             <div class="workout-history">
                 <h3>Workout History</h3>
                 <ul id="workoutList"></ul>
             </div>
-        </div>
-
-        <div class="bottom-nav">
-            <button id="openLogWorkoutModalBtn">Log Workout</button>
-            <button id="openPlannerModalBtn">Planner</button>
-            <button id="openSettingsModalBtn">Settings</button>
         </div>
     </div>
 
