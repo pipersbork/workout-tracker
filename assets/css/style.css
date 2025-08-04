@@ -1,5 +1,23 @@
-/* ===========================
-   PLACE YOUR ORIGINAL CSS STYLES HERE
-=========================== */
+/* --- Core Functional Styles --- */
 
-/* Example: Body styling, .container, .card-group, .modal, etc. */
+/* Hide all steps by default */
+.step {
+    display: none;
+    /* You can add transition effects here if you like */
+    animation: fadeIn 0.5s;
+}
+
+/* Only show the current, active step */
+.step.active {
+    display: block;
+}
+
+/* A simple fade-in animation for new steps */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
