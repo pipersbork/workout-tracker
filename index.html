@@ -4,20 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progression - Workout Tracker</title>
+
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <div class="container" id="onboarding-container">
+
         <div class="progress-bar"><div class="progress"></div></div>
+
         <div class="step active" id="step1">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
             <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
             <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
         </div>
+
         <div class="step" id="step2">
             <h2>Your Goal</h2>
             <p>Select your training focus:</p>
@@ -43,6 +48,7 @@
                 <button class="cta-button" id="goalNextBtn">Next</button>
             </div>
         </div>
+
         <div class="step" id="step3">
             <h2>Experience Level</h2>
             <p>Choose your fitness level:</p>
@@ -68,6 +74,7 @@
                 <button class="cta-button" id="experienceNextBtn">Next</button>
             </div>
         </div>
+
         <div class="step" id="step4">
             <h2>Workout Preferences</h2>
             <p>Select your preferred style:</p>
@@ -88,6 +95,7 @@
                     <p>Mix of Both</p>
                 </div>
             </div>
+
             <p>How many days per week?</p>
             <div class="card-group" data-field="days">
                 <div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
@@ -100,6 +108,7 @@
                 <button class="cta-button" id="prefsNextBtn">Next</button>
             </div>
         </div>
+
         <div class="step" id="step5">
             <h2>Mesocycle Length</h2>
             <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
@@ -114,6 +123,7 @@
                 <button class="cta-button" id="mesoLengthNextBtn">Next</button>
             </div>
         </div>
+
         <div class="step" id="step6">
             <h2>✅ All Set!</h2>
             <p>Your preferences have been saved.</p>
@@ -134,7 +144,19 @@
         </div>
     </div>
 
-    <div id="dashboard" class="hidden"></div>
+    <div id="dashboard" class="hidden">
+        <div class="dashboard-content">
+            <div class="summary-grid">
+                <div class="summary-card"><h3>Goal</h3><p id="summaryGoal">-</p></div>
+                <div class="summary-card"><h3>Experience</h3><p id="summaryExperience">-</p></div>
+                <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays">-</p></div>
+            </div>
+            <div class="workout-history">
+                <h3>Workout History</h3>
+                <ul id="workoutList"></ul>
+            </div>
+        </div>
+    </div>
 
     <div id="daily-workout-view" class="hidden">
         <div class="workout-header">
@@ -142,13 +164,19 @@
             <h2 id="workout-day-title"></h2>
             <p id="workout-date"></p>
         </div>
-        <div id="exercise-list-container"></div>
+        <div id="exercise-list-container">
+            </div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
         </div>
     </div>
 
-    <div id="modal" class="modal hidden"></div>
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
 
     <script defer src="app.js"></script>
 
