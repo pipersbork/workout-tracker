@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
-
             if (localStorage.getItem("onboardingCompleted") === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
                 const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
@@ -103,19 +102,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.addEventListener('click', () => this.previousStep());
             });
 
-            // Builder Listeners (using event delegation)
+            // Builder Listeners
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
+            document.getElementById('done-planning-btn')?.addEventListener('click', () => {
+                if (confirm('Are you sure you want to proceed with this work routine?')) {
+                    this.finalizeAndStartPlan();
+                }
+            });
+
             this.elements.scheduleContainer.addEventListener('click', (e) => {
-                const { dayIndex, muscleIndex } = e.target.dataset;
+                const { dayIndex, muscleIndex, focus } = e.target.dataset;
                 if (e.target.matches('.add-muscle-group-btn')) { this.addMuscleGroupToDay(dayIndex); }
                 if (e.target.matches('.delete-day-btn')) { this.deleteDayFromBuilder(dayIndex); }
                 if (e.target.matches('.delete-muscle-group-btn')) { this.deleteMuscleGroupFromDay(dayIndex, muscleIndex); }
+                if (e.target.matches('.focus-btn')) { this.updateMuscleFocus(dayIndex, muscleIndex, focus); }
             });
             this.elements.scheduleContainer.addEventListener('change', (e) => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
                 if (e.target.matches('.day-label-selector')) { this.updateDayLabel(dayIndex, e.target.value); }
                 if (e.target.matches('.muscle-select')) { this.updateMuscleGroup(dayIndex, muscleIndex, e.target.value); }
-                if (e.target.matches('.focus-select')) { this.updateMuscleFocus(dayIndex, muscleIndex, e.target.value); }
                 if (e.target.matches('.exercise-select')) { this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value); }
             });
 
@@ -143,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
             this.elements.builderView.classList.add('hidden');
-            
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
@@ -157,25 +161,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
                 return;
             }
-            
-            const muscleOptions = ['Select a Muscle', ...new Set(this.state.exercises.map(ex => ex.muscle))]
-                .map(m => `<option value="${m.toLowerCase()}">${this.capitalize(m)}</option>`).join('');
-
+            const muscleOptions = ['Select a Muscle', ...new Set(this.state.exercises.map(ex => ex.muscle))].map(m => `<option value="${m.toLowerCase()}">${this.capitalize(m)}</option>`).join('');
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card';
-                
                 const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
-                    const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle]
-                        .map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-
+                    const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
                     const exerciseDropdowns = [0, 1, 2].map(exerciseSelectIndex => `
                         <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exerciseSelectIndex}">
                             ${exerciseOptions.replace(`value="${mg.exercises[exerciseSelectIndex]}"`, `value="${mg.exercises[exerciseSelectIndex]}" selected`)}
                         </select>
                     `).join('');
-
+                    const focusButtons = ['Primary', 'Secondary', 'Maintenance'].map(focusLevel => `
+                        <button class="focus-btn ${mg.focus === focusLevel ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="${focusLevel}">
+                            ${focusLevel}
+                        </button>
+                    `).join('');
                     return `
                         <div class="muscle-group-block">
                             <div class="muscle-group-header">
@@ -183,24 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
                                         ${muscleOptions.replace(`value="${mg.muscle}"`, `value="${mg.muscle}" selected`)}
                                     </select>
-                                    <select class="builder-select focus-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
-                                        <option ${mg.focus === 'Primary' ? 'selected' : ''}>Primary</option>
-                                        <option ${mg.focus === 'Secondary' ? 'selected' : ''}>Secondary</option>
-                                        <option ${mg.focus === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
-                                    </select>
+                                    <div class="focus-buttons">
+                                        ${focusButtons}
+                                    </div>
                                 </div>
                                 <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">🗑️</button>
                             </div>
-                            ${mg.muscle !== 'select a muscle' ? `
-                                <div class="exercise-selection-group">
-                                    <label>Exercises:</label>
-                                    ${exerciseDropdowns}
-                                </div>
-                            ` : ''}
+                            ${mg.muscle !== 'select a muscle' ? `<div class="exercise-selection-group"><label>Exercises:</label>${exerciseDropdowns}</div>` : ''}
                         </div>
                     `;
                 }).join('');
-
                 dayCard.innerHTML = `
                     <div class="day-header">
                         <select class="builder-select day-label-selector" data-day-index="${dayIndex}">
@@ -229,9 +223,52 @@ document.addEventListener('DOMContentLoaded', () => {
         addMuscleGroupToDay(dayIndex) { this.state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'select a muscle', focus: 'Primary', exercises: ['', '', ''] }); this.renderBuilder(); },
         deleteMuscleGroupFromDay(dayIndex, muscleIndex) { this.state.builderPlan.days[dayIndex].muscleGroups.splice(muscleIndex, 1); this.renderBuilder(); },
         updateMuscleGroup(dayIndex, muscleIndex, newMuscle) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = newMuscle; this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = ['', '', '']; this.renderBuilder(); },
-        updateMuscleFocus(dayIndex, muscleIndex, newFocus) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; },
+        updateMuscleFocus(dayIndex, muscleIndex, newFocus) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; this.renderBuilder(); },
         updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
 
+        finalizeAndStartPlan() {
+            const newMeso = {
+                id: `meso_${Date.now()}`,
+                startDate: new Date().toISOString(),
+                durationWeeks: 5, 
+                goal: 'custom',
+                experience: this.state.userSelections.experience, // Carry over experience
+                weeks: {}
+            };
+            const focusSetMap = { 'Primary': 4, 'Secondary': 3, 'Maintenance': 2 };
+            for (let i = 1; i <= newMeso.durationWeeks; i++) {
+                newMeso.weeks[i] = {};
+                const isDeload = (i === newMeso.durationWeeks);
+                this.state.builderPlan.days.forEach((day, dayIndex) => {
+                    newMeso.weeks[i][dayIndex + 1] = {
+                        name: day.label,
+                        completed: false,
+                        exercises: day.muscleGroups.flatMap(mg => 
+                            mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
+                                const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
+                                return {
+                                    exerciseId: `ex_${exName.replace(/\s+/g, '_')}`,
+                                    name: exName,
+                                    muscle: exerciseDetails.muscle || 'Unknown',
+                                    type: mg.focus,
+                                    targetSets: isDeload ? Math.ceil(focusSetMap[mg.focus] / 2) : focusSetMap[mg.focus],
+                                    targetReps: 10,
+                                    targetRIR: isDeload ? 4 : 2,
+                                    targetLoad: null,
+                                    sets: []
+                                };
+                            })
+                        )
+                    };
+                });
+            }
+            this.state.plan = newMeso;
+            this.state.allPlans.push(newMeso);
+            this.saveStateToStorage();
+            this.state.currentView = { week: 1, day: 1 };
+            this.showView('workout');
+        },
+        
         savePersonalDetails() {
             const genderCard = document.querySelector('.card-group[data-field="gender"] .goal-card.active');
             this.state.userSelections.gender = genderCard ? genderCard.dataset.value : "";
@@ -507,6 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
         }
     };
+
+    for (const key in app) {
+        if (typeof app[key] === 'function') {
+            app[key] = app[key].bind(app);
+        }
+    }
     
     app.init();
 });
