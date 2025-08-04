@@ -1,5 +1,5 @@
 /* ===========================
-   GLOBAL STYLES
+   BASE STYLES
 =========================== */
 * {
     margin: 0;
@@ -11,7 +11,7 @@ body {
     background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
     background-size: 400% 400%;
     animation: gradientBG 8s ease infinite;
-    color: #fff;
+    color: #ff6b35;
     height: 100vh;
     overflow: hidden;
     display: flex;
@@ -24,9 +24,7 @@ body {
     100% {background-position: 0% 50%;}
 }
 
-/* ===========================
-   CONTAINER & LAYOUT
-=========================== */
+/* Container */
 .container {
     text-align: center;
     width: 100%;
@@ -36,9 +34,7 @@ body {
     padding-bottom: 30px;
 }
 
-/* ===========================
-   PROGRESS BAR
-=========================== */
+/* Progress Bar */
 .progress-bar {
     width: 80%;
     background: #333;
@@ -54,9 +50,7 @@ body {
     transition: width 0.4s ease;
 }
 
-/* ===========================
-   ONBOARDING STEPS
-=========================== */
+/* Onboarding Steps */
 .step {
     position: absolute;
     top: 50%;
@@ -74,35 +68,25 @@ body {
     transform: translate(-50%, -50%) scale(1);
 }
 
-/* Cinematic intro */
 .main-title {
     font-size: 3rem;
     font-weight: bold;
     letter-spacing: 6px;
     margin-bottom: 10px;
-    opacity: 0;
-    animation: fadeInScale 1.2s ease forwards;
 }
 .divider {
     width: 80px;
     height: 2px;
     background-color: #ff6b35;
     margin: 10px auto 20px auto;
-    opacity: 0;
-    animation: fadeIn 1s ease forwards 1.2s, dividerGlow 1.5s ease 2.2s;
 }
 .tagline {
     font-size: 1rem;
     color: #ff6b35;
     margin-bottom: 35px;
-    opacity: 0;
-    animation: slideUp 1s ease forwards;
-    animation-delay: 1.6s;
 }
 
-/* ===========================
-   BUTTONS
-=========================== */
+/* Buttons */
 .cta-button {
     display: inline-block;
     padding: 16px 40px;
@@ -115,68 +99,81 @@ body {
     text-decoration: none;
     margin-top: 15px;
     transition: transform 0.2s ease, background 0.3s ease;
-    opacity: 0;
-    animation: slideUpButton 1.2s ease forwards, pulseGlow 2s infinite ease-in-out;
-    animation-delay: 2s, 3.2s;
 }
 .cta-button:hover {
     transform: scale(1.05);
     background: linear-gradient(45deg, #ff914d, #ff6b35);
 }
 
-/* ===========================
-   DASHBOARD
-=========================== */
+/* Card Groups */
+.card-group {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px;
+}
+.goal-card {
+    flex: 0 0 auto;
+    background: #1c1c1e;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px 15px;
+    text-align: center;
+    width: 140px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.3s ease;
+    color: #fff;
+}
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+.goal-card:hover {
+    transform: scale(1.05);
+    border-color: #ff6b35;
+}
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #2a2a2d;
+}
+
+/* Dashboard */
 .dashboard {
     padding: 20px;
     text-align: center;
     color: #fff;
 }
-
-/* Summary Grid */
 .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    justify-content: space-around;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 .summary-card {
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 10px;
+    background: #1c1c1e;
+    padding: 10px;
+    border-radius: 8px;
+    width: 30%;
+    text-align: center;
 }
-.summary-card h3 {
-    font-size: 1rem;
-    color: #ff6b35;
-    margin-bottom: 5px;
-}
-
-/* Charts */
-.charts-section {
-    margin: 20px 0;
+.progress-wrapper h3 {
+    margin: 10px 0;
 }
 .chart-container {
     width: 100%;
     max-width: 650px;
-    margin: 15px auto;
+    margin: 20px auto;
     background: rgba(255, 255, 255, 0.05);
     padding: 15px;
     border-radius: 10px;
 }
-
-/* Workout History */
 .workout-history {
     background: rgba(255, 255, 255, 0.05);
     padding: 15px;
-    margin: 15px auto;
     border-radius: 10px;
-    width: 90%;
-    max-width: 500px;
-    text-align: left;
-}
-.workout-history h3 {
-    color: #ff6b35;
-    margin-bottom: 10px;
+    margin-top: 20px;
 }
 .workout-history ul {
     list-style: none;
@@ -185,38 +182,29 @@ body {
 .workout-history li {
     padding: 8px;
     border-bottom: 1px solid #333;
-    font-size: 0.95rem;
     color: #ddd;
 }
 
-/* ===========================
-   BOTTOM NAVIGATION
-=========================== */
+/* Bottom Nav */
 .bottom-nav {
-    position: sticky;
-    bottom: 0;
-    background: #111;
-    padding: 10px 0;
     display: flex;
     justify-content: space-around;
-    border-top: 2px solid #333;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #1c1c1e;
+    padding: 10px 0;
 }
 .bottom-nav button {
-    padding: 10px 20px;
     background: #ff6b35;
-    color: #111;
+    color: #fff;
     border: none;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 8px;
+    padding: 10px 15px;
     cursor: pointer;
 }
-.bottom-nav button:hover {
-    background: #ff914d;
-}
 
-/* ===========================
-   MODALS
-=========================== */
+/* Modal */
 .modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -241,9 +229,7 @@ body {
     cursor: pointer;
 }
 
-/* ===========================
-   PLANNER MODAL STYLES
-=========================== */
+/* Planner Modal */
 .planner-form {
     background: rgba(255,255,255,0.05);
     padding: 20px;
@@ -252,10 +238,6 @@ body {
     max-width: 600px;
     margin: auto;
     text-align: left;
-}
-.planner-form h3 {
-    margin-bottom: 10px;
-    color: #ff6b35;
 }
 .exercise-row {
     display: flex;
@@ -270,61 +252,15 @@ body {
     border: 1px solid #333;
     background: #222;
     color: #fff;
-    font-size: 0.9rem;
 }
 .planner-form button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 12px 18px;
+    margin-top: 15px;
+    padding: 12px;
     background: #ff6b35;
-    color: #111;
     border: none;
     border-radius: 8px;
+    color: #111;
     font-weight: bold;
     cursor: pointer;
     width: 100%;
-}
-.planner-form button:hover {
-    background: #ff914d;
-}
-
-/* ===========================
-   ANIMATIONS
-=========================== */
-@keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
-@keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-}
-@keyframes slideUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideUpButton {
-    0% { opacity: 0; transform: translateY(50px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-    50% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 145, 77, 0.6);}
-    100% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);}
-}
-@keyframes dividerGlow {
-    0% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
-    50% { box-shadow: 0 0 12px rgba(255, 107, 53, 0.8);}
-    100% { box-shadow: 0 0 0 rgba(255, 107, 53, 0);}
-}
-
-/* ===========================
-   RESPONSIVE DESIGN
-=========================== */
-@media screen and (max-width: 480px) {
-    .main-title { font-size: 2rem; }
-    .divider { width: 50px; }
-    .goal-card { width: 110px; padding: 15px; }
-    .planner-form { padding: 15px; }
-    .exercise-row { flex-direction: column; }
 }
