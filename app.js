@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
+
             if (localStorage.getItem("onboardingCompleted") === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
                 const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
@@ -68,6 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (completed === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
+
+                // --- ADDED: Load the user's last position ---
+                const savedView = JSON.parse(localStorage.getItem("currentView"));
+                if (savedView) {
+                    this.state.currentView = savedView;
+                }
             }
         },
 
@@ -75,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem("onboardingCompleted", "true");
             localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
             localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
+
+            // --- ADDED: Save the user's current position ---
+            localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
 
         addEventListeners() {
@@ -267,9 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             this.state.plan = newMeso;
-            this.state.allPlans.push(newMeso);
-            this.saveStateToStorage();
+            this.state.allPlans = [newMeso];
             this.state.currentView = { week: 1, day: 1 };
+            this.saveStateToStorage();
             this.showView('workout');
         },
         
