@@ -3,13 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = {
         state: {
             currentStep: 1,
-            totalSteps: 7,
+            totalSteps: 6, // UPDATED
             userSelections: { 
                 goal: "", 
                 experience: "", 
                 style: "", 
                 days: "", 
                 mesoLength: "",
+                // Personal details remain in state for future use in settings
                 gender: "",
                 height: "",
                 weight: ""
@@ -36,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
-
             if (localStorage.getItem("onboardingCompleted") === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
                 const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
@@ -69,8 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (completed === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
-
-                // --- ADDED: Load the user's last position ---
                 const savedView = JSON.parse(localStorage.getItem("currentView"));
                 if (savedView) {
                     this.state.currentView = savedView;
@@ -82,8 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem("onboardingCompleted", "true");
             localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
             localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
-
-            // --- ADDED: Save the user's current position ---
             localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
 
@@ -96,8 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.validateStep('style') && this.validateStep('days')) { this.nextStep(); }
             });
             document.getElementById('mesoLengthNextBtn')?.addEventListener('click', () => this.validateAndProceed('mesoLength'));
-            document.getElementById('skipDetailsBtn')?.addEventListener('click', () => this.nextStep());
-            document.getElementById('detailsNextBtn')?.addEventListener('click', () => { this.savePersonalDetails(); this.nextStep(); });
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => this.finishOnboarding());
             
             // Home Screen Buttons
@@ -158,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
             this.elements.builderView.classList.add('hidden');
+
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
@@ -283,13 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.showView('workout');
         },
         
-        savePersonalDetails() {
-            const genderCard = document.querySelector('.card-group[data-field="gender"] .goal-card.active');
-            this.state.userSelections.gender = genderCard ? genderCard.dataset.value : "";
-            this.state.userSelections.height = document.getElementById('heightInput').value;
-            this.state.userSelections.weight = document.getElementById('weightInput').value;
-        },
-
         showStep(stepNumber) {
             document.querySelectorAll('.step.active').forEach(step => step.classList.remove('active'));
             document.getElementById(`step${stepNumber}`)?.classList.add('active');
@@ -558,6 +546,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
         }
     };
+    
+    // Bind 'this' to all functions for safety
+    for (const key in app) {
+        if (typeof app[key] === 'function') {
+            app[key] = app[key].bind(app);
+        }
+    }
     
     app.init();
 });
