@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Progression - Smart Workout Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progression - Workout Tracker</title>
 
 <!-- Styles -->
-<link rel="stylesheet" href="./assets/css/style.css" />
-<link rel="manifest" href="./assets/manifest.json" />
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="manifest" href="assets/manifest.json">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- App Scripts -->
+<script defer src="assets/js/app.js"></script>
+<script defer src="assets/js/auth.js"></script>
+<script defer src="assets/js/db.js"></script>
 </head>
 <body>
 <div class="container">
+
     <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
 
@@ -28,79 +34,148 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2 -->
+    <!-- STEP 2: Goal -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
+        <p>Select your training focus:</p>
         <div class="card-group" data-field="goal">
-            <div class="goal-card" onclick="selectCard(this,'goal','muscle')"><div class="icon">💪</div><h3>Muscle</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'goal','cardio')"><div class="icon">🏃</div><h3>Cardio</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'goal','combined')"><div class="icon">🔥</div><h3>Combined</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
+                <div class="icon">💪</div>
+                <h3>Muscle Building</h3>
+                <p>Strength & Hypertrophy</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'goal', 'cardio')">
+                <div class="icon">🏃</div>
+                <h3>Cardio</h3>
+                <p>Endurance Training</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'goal', 'combined')">
+                <div class="icon">🔥</div>
+                <h3>Combined</h3>
+                <p>Balance Both</p>
+            </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3 -->
+    <!-- STEP 3: Experience -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
+        <p>Choose your fitness level:</p>
         <div class="card-group" data-field="experience">
-            <div class="goal-card" onclick="selectCard(this,'experience','beginner')"><div class="icon">🌱</div><h3>Beginner</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'experience','experienced')"><div class="icon">⚡</div><h3>Experienced</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'experience','advanced')"><div class="icon">🔥</div><h3>Advanced</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'experience', 'beginner')">
+                <div class="icon">🌱</div>
+                <h3>Beginner</h3>
+                <p>New to training</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'experience', 'experienced')">
+                <div class="icon">⚡</div>
+                <h3>Experienced</h3>
+                <p>6–18 months</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'experience', 'advanced')">
+                <div class="icon">🔥</div>
+                <h3>Advanced</h3>
+                <p>18+ months</p>
+            </div>
         </div>
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4 -->
+    <!-- STEP 4: Preferences -->
     <div class="step" id="step4">
-        <h2>Workout Style</h2>
+        <h2>Workout Preferences</h2>
+        <p>Select your preferred style:</p>
         <div class="card-group" data-field="style">
-            <div class="goal-card" onclick="selectCard(this,'style','gym')"><div class="icon">🏋️</div><h3>Gym</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'style','home')"><div class="icon">🏠</div><h3>Home</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'style','hybrid')"><div class="icon">🔥</div><h3>Hybrid</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
+                <div class="icon">🏋️</div>
+                <h3>Gym</h3>
+                <p>Heavy Lifts</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'style', 'home')">
+                <div class="icon">🏠</div>
+                <h3>Home</h3>
+                <p>Minimal Equipment</p>
+            </div>
+            <div class="goal-card" onclick="selectCard(this, 'style', 'hybrid')">
+                <div class="icon">🔥</div>
+                <h3>Hybrid</h3>
+                <p>Mix of Both</p>
+            </div>
         </div>
-        <h3>Days per Week</h3>
+
+        <p>How many days per week?</p>
         <div class="card-group" data-field="days">
-            <div class="goal-card" onclick="selectCard(this,'days','3')"><h3>3</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'days','4')"><h3>4</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'days','5')"><h3>5</h3></div>
-            <div class="goal-card" onclick="selectCard(this,'days','6')"><h3>6</h3></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3><p>Balanced</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3><p>Intense</p></div>
+            <div class="goal-card" onclick="selectCard(this, 'days', '6')"><h3>6</h3><p>Max Effort</p></div>
         </div>
-        <button class="cta-button" onclick="if(validateStep('style')&&validateStep('days')) nextStep()">Next</button>
+        <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5 -->
+    <!-- STEP 5: Sign-In -->
     <div class="step" id="step5">
-        <h2>Sign In (Optional)</h2>
-        <p>Coming soon...</p>
-        <button class="cta-button" onclick="nextStep()">Skip</button>
+        <h2>🔐 Sign in to Sync</h2>
+        <div id="g_id_onload"
+            data-client_id="YOUR_GOOGLE_CLIENT_ID"
+            data-context="signup"
+            data-callback="handleCredentialResponse"
+            data-auto_select="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+        <button class="cta-button" onclick="nextStep()">Skip for Now</button>
     </div>
 
-    <!-- STEP 6 -->
+    <!-- STEP 6: Complete -->
     <div class="step" id="step6">
-        <h2>All Set!</h2>
-        <p>Ready to see your dashboard?</p>
+        <h2>✅ All Set!</h2>
+        <p>Your preferences have been saved.</p>
         <button class="cta-button" onclick="finishOnboarding()">Go to Dashboard</button>
     </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
-    <h1>🏋️ Your Training Dashboard</h1>
-    <p id="userSummary"></p>
-    <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
-    <p id="volumeSummary"></p>
-    <div class="chart-container"><canvas id="volumeChart"></canvas></div>
-    <div class="chart-container"><canvas id="loadChart"></canvas></div>
-    <div class="dashboard-card"><h2>Workout History</h2><ul id="workoutList"></ul></div>
+<div id="dashboard" class="hidden">
+    <div class="dashboard">
+        <h1>🏋️ Your Training Dashboard</h1>
+        <p id="userSummary"></p>
+
+        <!-- Progress Indicator -->
+        <div class="progress-bar">
+            <div class="progress" id="volumeProgress"></div>
+        </div>
+        <p id="volumeSummary"></p>
+
+        <!-- Charts -->
+        <div class="chart-container">
+            <canvas id="volumeChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="loadChart"></canvas>
+        </div>
+
+        <!-- Workout History -->
+        <div class="workout-history">
+            <h2>Workout History</h2>
+            <ul id="workoutList"></ul>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <button onclick="openModal('logWorkout')">Log Workout</button>
+            <button onclick="openModal('planner')">Planner</button>
+            <button onclick="openModal('settings')">Settings</button>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL -->
-<div id="modal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal()">&times;</span><div id="modal-body"></div></div></div>
-
-<!-- Bottom Nav -->
-<div class="bottom-nav" style="display:none;"><button onclick="openModal('logWorkout')">Log</button><button onclick="openModal('planner')">Planner</button><button onclick="openModal('settings')">Settings</button></div>
-
-<!-- App Scripts -->
-<script defer src="./assets/js/app.js"></script>
+<div id="modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div id="modal-body"></div>
+    </div>
+</div>
 </body>
 </html>
