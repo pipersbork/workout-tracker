@@ -3,15 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = {
         state: {
             currentStep: 1,
-            totalSteps: 7, // UPDATED
+            totalSteps: 7,
             userSelections: { 
                 goal: "", 
                 experience: "", 
                 style: "", 
                 days: "", 
                 mesoLength: "",
-                gender: "", 
-                height: "", 
+                gender: "",
+                height: "",
                 weight: ""
             },
             plan: null,
@@ -277,14 +277,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('exercise-list-container').innerHTML = `<p>Workout plan not available for this day.</p>`;
                 return;
             }
+
             const dayData = plan.weeks[weekNumber][dayNumber];
             const container = document.getElementById('exercise-list-container');
             document.getElementById('workout-day-title').textContent = `Week ${weekNumber}, Day ${dayNumber}: ${dayData.name}`;
             document.getElementById('workout-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             container.innerHTML = '';
+
             dayData.exercises.forEach((exercise, exerciseIndex) => {
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = 'exercise-card';
+                
+                let lastTimeText = '';
+                if (weekNumber > 1) {
+                    const prevWeekData = plan.weeks[weekNumber - 1]?.[dayNumber];
+                    const prevExercise = prevWeekData?.exercises.find(ex => ex.exerciseId === exercise.exerciseId);
+                    const lastSet = prevExercise?.sets.filter(s => s.load && s.reps).pop();
+                    
+                    if (lastSet) {
+                        lastTimeText = `Last Time: ${lastSet.load} lbs for ${lastSet.reps} reps`;
+                    } else {
+                        lastTimeText = "No performance data from last week.";
+                    }
+                }
+
                 let setsHTML = '';
                 const setsToRenderCount = Math.max(exercise.sets.length, exercise.targetSets);
                 for (let setIndex = 0; setIndex < setsToRenderCount; setIndex++) {
@@ -292,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      setsHTML += `
                         <div class="set-row">
                             <span class="set-number">Set ${setIndex + 1}</span>
-                            <div class.set-inputs">
+                            <div class="set-inputs">
                                 <input type="number" placeholder="lbs" class="weight-input" value="${set.load || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
                                 <input type="number" placeholder="reps" class="reps-input" value="${set.reps || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
                                 <input type="number" placeholder="RIR" class="rir-input" value="${set.rir || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
@@ -300,15 +316,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 }
+                
                 exerciseCard.innerHTML = `
-                    <div class.exercise-card-header">
+                    <div class="exercise-card-header">
                         <h3>${exercise.name}</h3>
                         <span class="exercise-target">Target: ${exercise.targetLoad ? `${exercise.targetLoad}lbs for` : ''} ${exercise.targetReps} reps @ ${exercise.targetRIR} RIR</span>
                     </div>
+                    ${lastTimeText ? `<div class="last-time-info">${lastTimeText}</div>` : ''}
                     <div class="sets-container">
                         <div class="set-row header">
                             <span></span>
-                            <div class.set-inputs">
+                            <div class="set-inputs">
                                 <span>Weight</span>
                                 <span>Reps</span>
                                 <span>RIR</span>
