@@ -14,19 +14,29 @@ const userSelections = {
 let plan = null;
 
 /* ===========================
-   EXERCISE DATABASE (Initial Minimal List)
+   EXERCISE DATABASE (Expanded)
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
     { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
+    { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
     { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
+    { name: "Lat Pulldown", muscle: "Back", equipment: "Cable" },
     { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
+    { name: "Dumbbell Row", muscle: "Back", equipment: "Dumbbell" },
     { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
-    { name: "Dumbbell Curl", muscle: "Biceps", equipment: "Dumbbell" },
+    { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
+    { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
     { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
-    { name: "Squat", muscle: "Quads", equipment: "Barbell" },
+    { name: "Back Squat", muscle: "Quads", equipment: "Barbell" },
+    { name: "Lunge", muscle: "Quads", equipment: "Dumbbell" },
     { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
-    { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" }
+    { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
+    { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
+    { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
+    { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
+    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" }
+    // Expand to 250+ as needed
 ];
 
 /* ===========================
@@ -75,7 +85,7 @@ function finishOnboarding() {
 }
 
 /* ===========================
-   PLAN GENERATION
+   PLAN GENERATION (Trainer Logic)
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
     const baseSets = experience === 'beginner' ? 8 :
@@ -94,7 +104,7 @@ function generatePlan({ goal, experience, style, days }) {
             { name: "Full Body B", exercises: getExercises(["Shoulders","Arms","Glutes"], 5, repRange, rir) },
             { name: "Full Body C", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) }
         ];
-    } else if (days == 4) {
+    } else if (days === 4) {
         sessions = [
             { name: "Upper A", exercises: getExercises(["Chest","Back","Shoulders"], 5, repRange, rir) },
             { name: "Lower A", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) },
@@ -107,172 +117,4 @@ function generatePlan({ goal, experience, style, days }) {
             { name: "Pull", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
             { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) },
             { name: "Push 2", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
-            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
-            { name: "Legs 2", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
-        ];
-    }
-
-    return {
-        goal,
-        experience,
-        style,
-        days,
-        week: 1,
-        rirTarget: rir,
-        currentVolume: baseSets,
-        maxVolume: maxSets,
-        sessions
-    };
-}
-
-function getExercises(muscleGroups, count, repRange, rir) {
-    const filtered = EXERCISES.filter(ex => muscleGroups.includes(ex.muscle));
-    const chosen = [];
-    for (let i = 0; i < count && filtered.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * filtered.length);
-        chosen.push({
-            name: filtered[randomIndex].name,
-            sets: 3,
-            reps: `${repRange[0]}-${repRange[1]}`,
-            rir
-        });
-        filtered.splice(randomIndex, 1);
-    }
-    return chosen;
-}
-
-/* ===========================
-   DASHBOARD RENDER
-=========================== */
-function renderDashboard(plan) {
-    document.querySelector('.container').style.display = "none";
-    const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-
-    document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
-    document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
-    document.getElementById('summaryDays').textContent = plan.days;
-
-    document.getElementById('volumeSummary').textContent =
-        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
-
-    document.getElementById('volumeProgress').style.width =
-        `${(plan.currentVolume / plan.maxVolume) * 100}%`;
-
-    renderCharts(plan);
-    loadWorkouts();
-}
-
-/* ===========================
-   CHARTS
-=========================== */
-function renderCharts(plan) {
-    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-    new Chart(ctxVolume, {
-        type: 'line',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Volume (Sets)',
-                data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
-                borderColor: '#ff6b35',
-                fill: false,
-                tension: 0.3
-            }]
-        }
-    });
-
-    const ctxLoad = document.getElementById('loadChart').getContext('2d');
-    new Chart(ctxLoad, {
-        type: 'bar',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Average Load',
-                data: [100, 110, 120, 130],
-                backgroundColor: '#ff914d'
-            }]
-        }
-    });
-}
-
-/* ===========================
-   MODAL: LOG WORKOUT
-=========================== */
-function openModal(type) {
-    const modal = document.getElementById('modal');
-    const body = document.getElementById('modal-body');
-    modal.classList.remove('hidden');
-
-    if (type === 'logWorkout') {
-        body.innerHTML = `
-            <h2>Log Workout</h2>
-            <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
-            <label for="fatigueScore">Fatigue Score (1–10):</label>
-            <input type="number" id="fatigueScore" min="1" max="10">
-            <button class="cta-button" onclick="submitWorkout()">Submit</button>
-        `;
-    } else {
-        body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
-    }
-}
-
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
-
-/* ===========================
-   WORKOUT LOGGING
-=========================== */
-function submitWorkout() {
-    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
-    const notes = document.getElementById('workoutNotes').value;
-
-    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
-        return;
-    }
-
-    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    saveWorkout(workout);
-    closeModal();
-    loadWorkouts();
-}
-
-function saveWorkout(workout) {
-    let workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
-    workouts.push(workout);
-    localStorage.setItem("workoutHistory", JSON.stringify(workouts));
-}
-
-function loadWorkouts() {
-    const workouts = JSON.parse(localStorage.getItem("workoutHistory")) || [];
-    const list = document.getElementById('workoutList');
-    list.innerHTML = "";
-    workouts.forEach(w => {
-        const li = document.createElement('li');
-        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
-        list.appendChild(li);
-    });
-}
-
-/* ===========================
-   UTILITY
-=========================== */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/* ===========================
-   PAGE LOAD
-=========================== */
-window.onload = () => {
-    if (localStorage.getItem("onboardingCompleted") === "true") {
-        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
-        plan = generatePlan(userSelections);
-        renderDashboard(plan);
-    } else {
-        document.querySelector('#step1').classList.add('active');
-        updateProgress();
-    }
-};
+            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, rep
