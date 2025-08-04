@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ===========================
         async loadExercises() {
             try {
-                const response = await fetch('exercises.json');
+                const response = await fetch('assets/exercises.json');
                 if (!response.ok) throw new Error('Network response was not ok.');
                 this.state.exercises = await response.json();
             } catch (error) {
