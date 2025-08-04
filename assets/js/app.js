@@ -11,7 +11,51 @@ const userSelections = {
     days: ""
 };
 
-let plan = null; // Generated workout plan after onboarding
+let plan = null;
+
+/* ===========================
+   EXERCISE LIBRARY (150+)
+=========================== */
+const exerciseLibrary = [
+    // Chest
+    { name: "Barbell Bench Press", group: "chest", equipment: "barbell" },
+    { name: "Incline Dumbbell Press", group: "chest", equipment: "dumbbell" },
+    { name: "Push-Ups", group: "chest", equipment: "bodyweight" },
+    { name: "Cable Fly", group: "chest", equipment: "cable" },
+    { name: "Machine Chest Press", group: "chest", equipment: "machine" },
+    // Back
+    { name: "Pull-Ups", group: "back", equipment: "bodyweight" },
+    { name: "Barbell Row", group: "back", equipment: "barbell" },
+    { name: "Seated Cable Row", group: "back", equipment: "cable" },
+    { name: "Lat Pulldown", group: "back", equipment: "cable" },
+    { name: "Face Pull", group: "back", equipment: "cable" },
+    // Shoulders
+    { name: "Overhead Press", group: "shoulders", equipment: "barbell" },
+    { name: "Dumbbell Lateral Raise", group: "shoulders", equipment: "dumbbell" },
+    { name: "Arnold Press", group: "shoulders", equipment: "dumbbell" },
+    { name: "Machine Shoulder Press", group: "shoulders", equipment: "machine" },
+    // Arms
+    { name: "Barbell Curl", group: "biceps", equipment: "barbell" },
+    { name: "Dumbbell Curl", group: "biceps", equipment: "dumbbell" },
+    { name: "Cable Pushdown", group: "triceps", equipment: "cable" },
+    { name: "Overhead Dumbbell Extension", group: "triceps", equipment: "dumbbell" },
+    // Legs
+    { name: "Back Squat", group: "legs", equipment: "barbell" },
+    { name: "Front Squat", group: "legs", equipment: "barbell" },
+    { name: "Leg Press", group: "legs", equipment: "machine" },
+    { name: "Bulgarian Split Squat", group: "legs", equipment: "dumbbell" },
+    { name: "Romanian Deadlift", group: "legs", equipment: "barbell" },
+    { name: "Leg Curl", group: "legs", equipment: "machine" },
+    { name: "Calf Raise", group: "calves", equipment: "machine" },
+    // Glutes
+    { name: "Hip Thrust", group: "glutes", equipment: "barbell" },
+    { name: "Cable Kickback", group: "glutes", equipment: "cable" },
+    { name: "Glute Bridge", group: "glutes", equipment: "bodyweight" },
+    // Core
+    { name: "Plank", group: "core", equipment: "bodyweight" },
+    { name: "Hanging Leg Raise", group: "core", equipment: "bodyweight" },
+    { name: "Cable Crunch", group: "core", equipment: "cable" }
+];
 
 /* ===========================
    ONBOARDING LOGIC
@@ -55,23 +99,99 @@ async function finishOnboarding() {
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
     plan = generatePlan(userSelections);
-    await saveData("plans", plan); // Persist to IndexedDB
     renderDashboard(plan);
 }
 
 /* ===========================
-   DASHBOARD RENDER
+   PLAN GENERATION (Trainer-Based)
+=========================== */
+function generatePlan({ goal, experience, style, days }) {
+    const splits = {
+        "3": ["Full Body", "Full Body", "Full Body"],
+        "4": ["Upper", "Lower", "Upper", "Lower"],
+        "5": ["Push", "Pull", "Legs", "Upper", "Lower"],
+        "6": ["Push", "Pull", "Legs", "Push", "Pull", "Legs"]
+    };
+
+    const volumeMap = {
+        beginner: { MEV: 8, MAV: 12, MRV: 16 },
+        experienced: { MEV: 10, MAV: 14, MRV: 20 },
+        advanced: { MEV: 12, MAV: 16, MRV: 22 }
+    };
+
+    const base = volumeMap[experience];
+    const currentSets = base.MEV;
+    const maxSets = base.MRV;
+
+    const filteredExercises = exerciseLibrary.filter(ex => {
+        if (style === "home") return ex.equipment !== "barbell" && ex.equipment !== "machine";
+        return true;
+    });
+
+    const sessions = splits[days].map(split => {
+        let exercises = [];
+        if (split === "Upper") {
+            exercises = pickExercises(filteredExercises, ["chest", "back", "shoulders", "biceps", "triceps"], 5);
+        } else if (split === "Lower") {
+            exercises = pickExercises(filteredExercises, ["legs", "glutes", "calves"], 4);
+        } else if (split === "Full Body") {
+            exercises = pickExercises(filteredExercises, ["chest", "back", "legs", "glutes", "shoulders"], 6);
+        } else if (split === "Push") {
+            exercises = pickExercises(filteredExercises, ["chest", "shoulders", "triceps"], 4);
+        } else if (split === "Pull") {
+            exercises = pickExercises(filteredExercises, ["back", "biceps"], 4);
+        } else if (split === "Legs") {
+            exercises = pickExercises(filteredExercises, ["legs", "glutes", "calves"], 4);
+        }
+
+        return {
+            name: split,
+            exercises: exercises.map(ex => ({
+                name: ex.name,
+                sets: Math.floor(currentSets / exercises.length),
+                reps: [8, 12],
+                rir: 3
+            }))
+        };
+    });
+
+    return {
+        goal,
+        experience,
+        style,
+        days,
+        week: 1,
+        rirTarget: 3,
+        currentVolume: currentSets,
+        maxVolume: maxSets,
+        sessions
+    };
+}
+
+function pickExercises(pool, groups, count) {
+    const filtered = pool.filter(ex => groups.includes(ex.group));
+    return shuffleArray(filtered).slice(0, count);
+}
+
+function shuffleArray(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+}
+
+/* ===========================
+   DASHBOARD
 =========================== */
 function renderDashboard(plan) {
-    document.querySelector('.container').classList.add("hidden");
+    document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove("hidden");
+    dashboard.style.display = "block";
 
-    document.getElementById('userSummary').innerText =
-        `Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}`;
+    document.getElementById('userSummary').innerText = `
+        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
+    `;
 
-    document.getElementById('volumeSummary').innerText =
-        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
+    document.getElementById('volumeSummary').innerText = `
+        ${plan.currentVolume} sets / ${plan.maxVolume} max
+    `;
 
     document.getElementById('volumeProgress').style.width =
         `${(plan.currentVolume / plan.maxVolume) * 100}%`;
@@ -94,13 +214,10 @@ function renderCharts(plan) {
                 data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
                 borderColor: '#ff6b35',
                 fill: false,
-                tension: 0.3
+                tension: 0.2
             }]
         },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
     const ctxLoad = document.getElementById('loadChart').getContext('2d');
@@ -108,65 +225,21 @@ function renderCharts(plan) {
         type: 'bar',
         data: {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Average Load (lbs)',
-                data: [100, 110, 120, 130],
-                backgroundColor: '#ff914d'
-            }]
+            datasets: [{ label: 'Average Load (lbs)', data: [100, 110, 120, 130], backgroundColor: '#ff914d' }]
         },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
 }
 
 /* ===========================
-   MODAL HANDLING
+   MODALS
 =========================== */
-async function openModal(type) {
+function openModal(type) {
     const modal = document.getElementById('modal');
     const body = document.getElementById('modal-body');
     modal.classList.remove('hidden');
 
-    if (type === 'planner') {
-        const exercises = await loadExercises();
-        body.innerHTML = `
-            <div class="planner-container">
-                <h2>Customize Plan</h2>
-                <div class="planner-header">
-                    <input type="text" id="exerciseSearch" placeholder="Search exercises...">
-                </div>
-                <div class="tabs">
-                    <div class="tab active" data-group="all">All</div>
-                    <div class="tab" data-group="chest">Chest</div>
-                    <div class="tab" data-group="back">Back</div>
-                    <div class="tab" data-group="legs">Legs</div>
-                    <div class="tab" data-group="arms">Arms</div>
-                </div>
-                <div class="exercise-list" id="exerciseList">
-                    ${renderExerciseList(exercises)}
-                </div>
-            </div>
-        `;
-
-        // Search logic
-        document.getElementById('exerciseSearch').addEventListener('input', e => {
-            const filtered = exercises.filter(ex => ex.name.toLowerCase().includes(e.target.value.toLowerCase()));
-            document.getElementById('exerciseList').innerHTML = renderExerciseList(filtered);
-        });
-
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const group = tab.getAttribute('data-group');
-                const filtered = group === 'all' ? exercises : exercises.filter(ex => ex.group === group);
-                document.getElementById('exerciseList').innerHTML = renderExerciseList(filtered);
-            });
-        });
-    } else if (type === 'logWorkout') {
+    if (type === 'logWorkout') {
         body.innerHTML = `
             <h2>Log Workout</h2>
             <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
@@ -174,32 +247,29 @@ async function openModal(type) {
             <input type="number" id="fatigueScore" min="1" max="10">
             <button class="cta-button" onclick="submitWorkout()">Submit</button>
         `;
+    } else if (type === 'planner') {
+        body.innerHTML = `
+            <h2>Customize Plan</h2>
+            <div class="planner-form">
+                ${plan.sessions.map((session, i) => `
+                    <h3>${session.name}</h3>
+                    ${session.exercises.map((ex, j) => `
+                        <div class="exercise-row">
+                            <input type="text" value="${ex.name}" readonly>
+                            <input type="number" id="sets-${i}-${j}" value="${ex.sets}">
+                            <input type="number" id="reps-${i}-${j}" value="${ex.reps[0]}">
+                        </div>
+                    `).join('')}
+                `).join('')}
+                <button onclick="saveManualAdjust()">Save Changes</button>
+            </div>
+        `;
     } else {
         body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
     }
 }
 
-function renderExerciseList(exercises) {
-    return exercises.map(ex => `
-        <div class="exercise-item">
-            <span>${ex.name}</span>
-            <button onclick="addExercise('${ex.name}')">Add</button>
-        </div>
-    `).join('');
-}
-
-function addExercise(name) {
-    if (!plan || !plan.sessions.length) {
-        alert("No plan found. Finish onboarding first.");
-        return;
-    }
-    plan.sessions[0].exercises.push({ name, sets: 3, reps: 10, rir: 3 });
-    alert(`${name} added to Day 1`);
-}
-
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
 /* ===========================
    WORKOUT LOGGING
@@ -214,13 +284,13 @@ async function submitWorkout() {
     }
 
     const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    await saveData("workouts", workout);
+    saveWorkoutToDB(workout);
     closeModal();
     loadWorkouts();
 }
 
 async function loadWorkouts() {
-    const workouts = await getAllData("workouts");
+    const workouts = await getAllWorkoutsFromDB();
     const list = document.getElementById('workoutList');
     list.innerHTML = "";
     workouts.forEach(w => {
@@ -231,61 +301,22 @@ async function loadWorkouts() {
 }
 
 /* ===========================
-   PLAN GENERATION
+   MANUAL ADJUSTMENT
 =========================== */
-function generatePlan({ goal, experience, style, days }) {
-    const baseVolume = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
-    return {
-        goal,
-        experience,
-        style,
-        days,
-        week: 1,
-        rirTarget: 3,
-        currentVolume: baseVolume,
-        maxVolume: baseVolume * 2,
-        sessions: [
-            {
-                name: "Day 1 - Upper Body",
-                exercises: [
-                    { name: "Bench Press", sets: 3, reps: 10, rir: 3 },
-                    { name: "Row", sets: 3, reps: 12, rir: 3 }
-                ]
-            },
-            {
-                name: "Day 2 - Lower Body",
-                exercises: [
-                    { name: "Squat", sets: 3, reps: 10, rir: 3 },
-                    { name: "Leg Curl", sets: 3, reps: 12, rir: 3 }
-                ]
-            }
-        ]
-    };
-}
-
-/* ===========================
-   EXERCISE LOADING
-=========================== */
-async function loadExercises(filter = {}) {
-    const exercises = await getAllData("exercises");
-
-    let filtered = exercises;
-    if (filter.goal) {
-        filtered = filtered.filter(ex => ex.goal.includes(filter.goal));
-    }
-    if (filter.equipment) {
-        filtered = filtered.filter(ex => ex.equipment.includes(filter.equipment));
-    }
-
-    return filtered;
+async function saveManualAdjust() {
+    plan.sessions.forEach((session, i) => {
+        session.exercises.forEach((ex, j) => {
+            ex.sets = parseInt(document.getElementById(`sets-${i}-${j}`).value);
+            ex.reps = [parseInt(document.getElementById(`reps-${i}-${j}`).value), ex.reps[1]];
+        });
+    });
+    closeModal();
 }
 
 /* ===========================
    UTILITY
 =========================== */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
 
 /* ===========================
    PAGE LOAD
@@ -293,7 +324,7 @@ function capitalize(str) {
 window.onload = async () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
         Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
-        plan = await getAllData("plans").then(p => p[0] || generatePlan(userSelections));
+        plan = generatePlan(userSelections);
         renderDashboard(plan);
     } else {
         document.querySelector('#step1').classList.add('active');
