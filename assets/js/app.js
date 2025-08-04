@@ -11,10 +11,10 @@ const userSelections = {
     days: ""
 };
 
-let plan = null; // Holds the generated plan
+let plan = null; // Will hold generated workout plan
 
 /* ===========================
-   ONBOARDING LOGIC
+   ONBOARDING
 =========================== */
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
@@ -50,7 +50,7 @@ function selectCard(element, field, value) {
     element.classList.add('active');
 }
 
-async function finishOnboarding() {
+function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
@@ -59,20 +59,18 @@ async function finishOnboarding() {
 }
 
 /* ===========================
-   DASHBOARD RENDER
+   DASHBOARD
 =========================== */
 function renderDashboard(plan) {
-    document.querySelector('.container').style.display = "none";
+    document.getElementById('onboarding').style.display = "none";
     const dashboard = document.getElementById('dashboard');
-    dashboard.style.display = "block";
+    dashboard.classList.remove('hidden');
 
-    document.getElementById('userSummary').innerText = `
-        Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}
-    `;
+    document.getElementById('userSummary').innerText =
+        `Goal: ${capitalize(plan.goal)} | Level: ${capitalize(plan.experience)} | Days: ${plan.days}`;
 
-    document.getElementById('volumeSummary').innerText = `
-        ${plan.currentVolume} sets / ${plan.maxVolume} max
-    `;
+    document.getElementById('volumeSummary').innerText =
+        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
 
     document.getElementById('volumeProgress').style.width =
         `${(plan.currentVolume / plan.maxVolume) * 100}%`;
@@ -92,10 +90,10 @@ function renderCharts(plan) {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
             datasets: [{
                 label: 'Training Volume (sets)',
-                data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
+                data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 8, plan.maxVolume],
                 borderColor: '#ff6b35',
                 fill: false,
-                tension: 0.2
+                tension: 0.3
             }]
         },
         options: { responsive: true, plugins: { legend: { display: false } } }
@@ -107,7 +105,7 @@ function renderCharts(plan) {
         data: {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
             datasets: [{
-                label: 'Average Load (lbs)',
+                label: 'Avg Load (lbs)',
                 data: [100, 110, 120, 130],
                 backgroundColor: '#ff914d'
             }]
@@ -117,7 +115,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODAL HANDLING
+   MODALS
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -142,7 +140,7 @@ function openModal(type) {
                         <div class="exercise-row">
                             <input type="text" value="${ex.name}" readonly>
                             <input type="number" id="sets-${i}-${j}" value="${ex.sets}">
-                            <input type="number" id="reps-${i}-${j}" value="${ex.reps}">
+                            <input type="text" id="reps-${i}-${j}" value="${ex.reps}">
                         </div>
                     `).join('')}
                 `).join('')}
@@ -159,7 +157,7 @@ function closeModal() {
 }
 
 /* ===========================
-   WORKOUT LOGGING
+   LOG WORKOUT
 =========================== */
 async function submitWorkout() {
     const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
@@ -188,13 +186,13 @@ async function loadWorkouts() {
 }
 
 /* ===========================
-   MANUAL ADJUSTMENT
+   SAVE MANUAL CHANGES
 =========================== */
 async function saveManualAdjust() {
     plan.sessions.forEach((session, i) => {
         session.exercises.forEach((ex, j) => {
             ex.sets = parseInt(document.getElementById(`sets-${i}-${j}`).value);
-            ex.reps = parseInt(document.getElementById(`reps-${i}-${j}`).value);
+            ex.reps = document.getElementById(`reps-${i}-${j}`).value;
         });
     });
     closeModal();
@@ -206,7 +204,7 @@ async function saveManualAdjust() {
 function generatePlan({ goal, experience, style, days }) {
     const baseSets = experience === 'beginner' ? 8 :
                      experience === 'experienced' ? 12 : 16;
-    const maxSets = baseSets + 4;
+    const maxSets = baseSets + 6;
 
     const repRange = goal === 'muscle' ? [6, 12] : goal === 'combined' ? [8, 15] : [12, 20];
     const rir = experience === 'beginner' ? 3 : experience === 'experienced' ? 2 : 1;
@@ -237,7 +235,10 @@ function generatePlan({ goal, experience, style, days }) {
     }
 
     return {
-        goal, experience, style, days,
+        goal,
+        experience,
+        style,
+        days,
         week: 1,
         rirTarget: rir,
         currentVolume: baseSets,
@@ -249,7 +250,7 @@ function generatePlan({ goal, experience, style, days }) {
 function getExercises(muscleGroups, count, repRange, rir) {
     const allExercises = [
         { name: "Barbell Bench Press", muscle: "Chest" },
-        { name: "Incline DB Press", muscle: "Chest" },
+        { name: "Incline Dumbbell Press", muscle: "Chest" },
         { name: "Pull-Up", muscle: "Back" },
         { name: "Barbell Row", muscle: "Back" },
         { name: "Shoulder Press", muscle: "Shoulders" },
@@ -277,7 +278,7 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
-   UTILITIES
+   UTIL
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -286,7 +287,7 @@ function capitalize(str) {
 /* ===========================
    PAGE LOAD
 =========================== */
-window.onload = () => {
+window.onload = async () => {
     if (localStorage.getItem("onboardingCompleted") === "true") {
         Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
         plan = generatePlan(userSelections);
