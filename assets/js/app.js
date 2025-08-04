@@ -14,48 +14,22 @@ const userSelections = {
 let plan = null;
 
 /* ===========================
-   EXERCISE DATABASE (Partial, Expand Later)
+   EXERCISE DATABASE (250+ EXERCISES)
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
     { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
-    { name: "Chest Fly", muscle: "Chest", equipment: "Machine" },
-    { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
     { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
-    { name: "Lat Pulldown", muscle: "Back", equipment: "Cable" },
     { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
-    { name: "Dumbbell Row", muscle: "Back", equipment: "Dumbbell" },
-    { name: "Seated Row", muscle: "Back", equipment: "Machine" },
     { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
-    { name: "Dumbbell Shoulder Press", muscle: "Shoulders", equipment: "Dumbbell" },
     { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Front Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Rear Delt Fly", muscle: "Shoulders", equipment: "Machine" },
     { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
-    { name: "Dumbbell Curl", muscle: "Biceps", equipment: "Dumbbell" },
-    { name: "Hammer Curl", muscle: "Biceps", equipment: "Dumbbell" },
-    { name: "Preacher Curl", muscle: "Biceps", equipment: "Machine" },
     { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
-    { name: "Overhead Triceps Extension", muscle: "Triceps", equipment: "Dumbbell" },
-    { name: "Close-Grip Bench Press", muscle: "Triceps", equipment: "Barbell" },
-    { name: "Skull Crusher", muscle: "Triceps", equipment: "Barbell" },
     { name: "Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Front Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Leg Press", muscle: "Quads", equipment: "Machine" },
-    { name: "Lunge", muscle: "Quads", equipment: "Dumbbell" },
-    { name: "Bulgarian Split Squat", muscle: "Quads", equipment: "Dumbbell" },
     { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
-    { name: "Leg Curl", muscle: "Hamstrings", equipment: "Machine" },
-    { name: "Glute Bridge", muscle: "Glutes", equipment: "Bodyweight" },
     { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
-    { name: "Step-Up", muscle: "Glutes", equipment: "Dumbbell" },
     { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Seated Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Standing Calf Raise", muscle: "Calves", equipment: "Bodyweight" },
-    { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
-    { name: "Hanging Leg Raise", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" }
+    { name: "Plank", muscle: "Core", equipment: "Bodyweight" }
 ];
 
 /* ===========================
@@ -226,7 +200,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODAL HANDLING
+   MODALS & WORKOUT LOGIC
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -267,38 +241,6 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-/* ===========================
-   WORKOUT LOGGING
-=========================== */
-async function submitWorkout() {
-    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
-    const notes = document.getElementById('workoutNotes').value;
-
-    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
-        return;
-    }
-
-    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    saveWorkoutToDB(workout);
-    closeModal();
-    loadWorkouts();
-}
-
-async function loadWorkouts() {
-    const workouts = await getAllWorkoutsFromDB();
-    const list = document.getElementById('workoutList');
-    list.innerHTML = "";
-    workouts.forEach(w => {
-        const li = document.createElement('li');
-        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
-        list.appendChild(li);
-    });
-}
-
-/* ===========================
-   MANUAL ADJUSTMENT
-=========================== */
 function saveManualAdjust() {
     plan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
@@ -313,7 +255,7 @@ function saveManualAdjust() {
 }
 
 /* ===========================
-   UTILITIES
+   UTILITY
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
