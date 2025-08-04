@@ -32,4 +32,101 @@ body {
 }
 
 /* Onboarding Steps */
-.step { display: none; text-align: center; animation: fadeIn 0.6s
+.step { display: none; text-align: center; animation: fadeIn 0.6s ease; }
+.step.active { display: block; }
+.main-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
+.divider { width: 80px; height: 2px; background: #ff6b35; margin: 10px auto; }
+.tagline { font-size: 1rem; margin-bottom: 25px; color: #ff6b35; }
+
+/* Buttons */
+.cta-button {
+    padding: 14px 20px;
+    background: linear-gradient(45deg, #ff6b35, #ff914d);
+    color: #fff;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 10px;
+    margin-top: 15px;
+    width: 80%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.cta-button:hover { transform: scale(1.05); }
+
+/* Card Groups */
+.card-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+}
+.goal-card {
+    flex: 1 1 45%;
+    padding: 15px;
+    background: #1e1e1e;
+    border: 2px solid #333;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.goal-card:hover, .goal-card.active {
+    border-color: #ff6b35;
+    background: #292929;
+}
+
+/* Dashboard */
+.dashboard { text-align: center; }
+.summary-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.summary-card {
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 10px;
+    flex: 1;
+}
+.progress-wrapper { margin-bottom: 20px; }
+.chart-container {
+    background: #1e1e1e;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+.workout-history ul { list-style: none; padding: 0; }
+
+/* Bottom nav */
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    background: #121212;
+}
+.bottom-nav button {
+    padding: 12px;
+    background: linear-gradient(45deg, #ff6b35, #ff914d);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+/* Modal */
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal-content { background: #1e1e1e; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+.close-btn { float: right; font-size: 1.5rem; cursor: pointer; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Mobile */
+@media (max-width: 480px) {
+    .summary-grid { flex-direction: column; }
+    .goal-card { flex: 1 1 100%; }
+}
