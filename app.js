@@ -3,8 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = {
         state: {
             currentStep: 1,
-            totalSteps: 6,
-            userSelections: { goal: "", experience: "", style: "", days: "", mesoLength: "" },
+            totalSteps: 7, // UPDATED
+            userSelections: { 
+                goal: "", 
+                experience: "", 
+                style: "", 
+                days: "", 
+                mesoLength: "",
+                gender: "", 
+                height: "", 
+                weight: ""
+            },
             plan: null,
             currentView: { week: 1, day: 1 },
             allPlans: [],
@@ -30,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (savedPlans && savedPlans.length > 0) {
                     this.state.plan = savedPlans[0];
                     this.state.allPlans = savedPlans;
-                } else {
+                } else { 
                     this.finishOnboarding();
                     return;
                 }
@@ -76,6 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             document.getElementById('mesoLengthNextBtn')?.addEventListener('click', () => this.validateAndProceed('mesoLength'));
+            document.getElementById('skipDetailsBtn')?.addEventListener('click', () => this.nextStep());
+            document.getElementById('detailsNextBtn')?.addEventListener('click', () => {
+                this.savePersonalDetails();
+                this.nextStep();
+            });
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => this.finishOnboarding());
             
             // Home Screen Buttons
@@ -108,6 +122,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
+        savePersonalDetails() {
+            const genderCard = document.querySelector('.card-group[data-field="gender"] .goal-card.active');
+            this.state.userSelections.gender = genderCard ? genderCard.dataset.value : "";
+            this.state.userSelections.height = document.getElementById('heightInput').value;
+            this.state.userSelections.weight = document.getElementById('weightInput').value;
+        },
+
         showView(viewName) {
             this.elements.onboardingContainer.classList.add('hidden');
             this.elements.homeScreen.classList.add('hidden');
@@ -271,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      setsHTML += `
                         <div class="set-row">
                             <span class="set-number">Set ${setIndex + 1}</span>
-                            <div class="set-inputs">
+                            <div class.set-inputs">
                                 <input type="number" placeholder="lbs" class="weight-input" value="${set.load || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
                                 <input type="number" placeholder="reps" class="reps-input" value="${set.reps || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
                                 <input type="number" placeholder="RIR" class="rir-input" value="${set.rir || ''}" data-week="${weekNumber}" data-day="${dayNumber}" data-exercise="${exerciseIndex}" data-set="${setIndex}">
@@ -280,14 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 }
                 exerciseCard.innerHTML = `
-                    <div class="exercise-card-header">
+                    <div class.exercise-card-header">
                         <h3>${exercise.name}</h3>
                         <span class="exercise-target">Target: ${exercise.targetLoad ? `${exercise.targetLoad}lbs for` : ''} ${exercise.targetReps} reps @ ${exercise.targetRIR} RIR</span>
                     </div>
                     <div class="sets-container">
                         <div class="set-row header">
                             <span></span>
-                            <div class="set-inputs">
+                            <div class.set-inputs">
                                 <span>Weight</span>
                                 <span>Reps</span>
                                 <span>RIR</span>
