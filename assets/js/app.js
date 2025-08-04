@@ -1,310 +1,324 @@
 /* ===========================
-   GLOBAL VARIABLES
+   RESET & BASE
 =========================== */
-let currentStep = 1;
-const totalSteps = 5;
-
-const userSelections = {
-    goal: "",
-    experience: "",
-    style: "",
-    days: ""
-};
-
-let currentPlan = null;
-let allPlans = []; // Stores multiple plans
-
-/* ===========================
-   EXERCISE DATABASE (Sample for now)
-=========================== */
-const EXERCISES = [
-    { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
-    { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
-    { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
-    { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
-    { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
-    { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
-    { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
-    { name: "Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
-    { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
-    { name: "Plank", muscle: "Core", equipment: "Bodyweight" }
-    // ✅ Expand to 250 later
-];
-
-/* ===========================
-   ONBOARDING LOGIC
-=========================== */
-function updateProgress() {
-    const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-    document.querySelector('.progress').style.width = percentage + "%";
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-function nextStep() {
-    const current = document.getElementById('step' + currentStep);
-    current.classList.remove('active');
-
-    setTimeout(() => {
-        currentStep++;
-        const next = document.getElementById('step' + currentStep);
-        if (next) {
-            next.classList.add('active');
-            updateProgress();
-        }
-    }, 200);
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
+    background-size: 400% 400%;
+    animation: gradientBG 8s ease infinite;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-function validateStep(field) {
-    if (!userSelections[field]) {
-        alert("Please select an option before continuing.");
-        return false;
+@keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===========================
+   CONTAINER
+=========================== */
+.container {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    position: relative;
+    overflow-y: auto;
+    padding-bottom: 30px;
+}
+
+/* ===========================
+   PROGRESS BAR
+=========================== */
+.progress-bar {
+    width: 80%;
+    background: #333;
+    height: 8px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 20px auto;
+}
+.progress {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b35, #ff914d);
+    transition: width 0.4s ease;
+}
+
+/* ===========================
+   ONBOARDING STEPS
+=========================== */
+.step {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 400px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.step.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.main-title {
+    font-size: 2.8rem;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+    color: #ff6b35;
+}
+.divider {
+    width: 80px;
+    height: 3px;
+    background-color: #ff6b35;
+    margin: 10px auto 20px auto;
+}
+.tagline {
+    font-size: 1rem;
+    margin-bottom: 30px;
+}
+
+/* ===========================
+   BUTTONS
+=========================== */
+.cta-button {
+    display: inline-block;
+    width: 100%;
+    padding: 14px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #ff6b35, #ff914d);
+    border: none;
+    border-radius: 8px;
+    margin-top: 15px;
+    transition: transform 0.2s ease, background 0.3s ease;
+    cursor: pointer;
+}
+.cta-button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #ff914d, #ff6b35);
+}
+
+/* ===========================
+   CARD GROUP (Horizontal Scroll Removed)
+=========================== */
+.card-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+}
+.goal-card {
+    background: #1c1c1e;
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 20px 10px;
+    text-align: center;
+    color: #fff;
+    transition: transform 0.3s, border-color 0.3s;
+    cursor: pointer;
+}
+.goal-card:hover {
+    transform: scale(1.05);
+    border-color: #ff6b35;
+}
+.goal-card.active {
+    border-color: #ff6b35;
+    background: #292929;
+}
+.goal-card .icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+/* ===========================
+   DASHBOARD
+=========================== */
+#dashboard {
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Summary Grid */
+.summary-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.summary-card {
+    flex: 1;
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    text-align: center;
+}
+.summary-card h3 {
+    color: #ff6b35;
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+/* Plan Selector */
+.plan-selector-wrapper {
+    text-align: left;
+    margin-bottom: 20px;
+}
+.plan-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.plan-card {
+    background: #1c1c1e;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.plan-card.active {
+    border-color: #ff6b35;
+    background: #292929;
+}
+
+/* Charts */
+.charts-section h3 {
+    text-align: left;
+    margin: 15px 0 8px;
+}
+.chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* Workout History */
+.workout-history {
+    text-align: left;
+    margin-top: 15px;
+}
+.workout-history ul {
+    list-style: none;
+    padding: 0;
+}
+.workout-history li {
+    background: #222;
+    margin-bottom: 6px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* ===========================
+   BOTTOM NAV
+=========================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: #111;
+    padding: 10px 0;
+    border-top: 1px solid #333;
+}
+.bottom-nav button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+    background: #ff6b35;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.bottom-nav button:hover {
+    background: #ff914d;
+}
+
+/* ===========================
+   MODAL
+=========================== */
+.modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal.hidden {
+    display: none;
+}
+.modal-content {
+    background: #1c1c1e;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    color: #fff;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.close-btn {
+    float: right;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+=========================== */
+@media screen and (max-width: 768px) {
+    .card-group {
+        grid-template-columns: 1fr 1fr;
     }
-    return true;
-}
-
-function selectCard(element, field, value) {
-    userSelections[field] = value;
-    const group = element.parentElement.querySelectorAll('.goal-card');
-    group.forEach(card => card.classList.remove('active'));
-    element.classList.add('active');
-}
-
-function finishOnboarding() {
-    localStorage.setItem("onboardingCompleted", "true");
-    localStorage.setItem("userSelections", JSON.stringify(userSelections));
-
-    currentPlan = generatePlan(userSelections);
-    allPlans.push(currentPlan);
-    savePlans();
-
-    renderDashboard(currentPlan);
-}
-
-/* ===========================
-   MULTI-PLAN MANAGEMENT
-=========================== */
-function savePlans() {
-    localStorage.setItem("allPlans", JSON.stringify(allPlans));
-}
-
-function loadPlans() {
-    const saved = localStorage.getItem("allPlans");
-    if (saved) {
-        allPlans = JSON.parse(saved);
+    .summary-grid {
+        flex-direction: column;
+    }
+    .bottom-nav button {
+        font-size: 0.9rem;
+        padding: 10px;
     }
 }
 
-function renderPlanSelector() {
-    const selector = document.querySelector(".plan-selector");
-    selector.innerHTML = allPlans.map((plan, index) => `
-        <div class="plan-card ${index === allPlans.indexOf(currentPlan) ? 'active' : ''}" onclick="switchPlan(${index})">
-            ${capitalize(plan.goal)} | ${capitalize(plan.experience)} | ${plan.days} Days
-        </div>
-    `).join('');
-}
-
-function switchPlan(index) {
-    currentPlan = allPlans[index];
-    savePlans();
-    renderDashboard(currentPlan);
-}
-
-/* ===========================
-   PLAN GENERATION
-=========================== */
-function generatePlan({ goal, experience, style, days }) {
-    const baseSets = experience === 'beginner' ? 8 :
-                     experience === 'experienced' ? 12 : 16;
-    const maxSets = baseSets + 4;
-
-    const repRange = goal === 'muscle' ? [6, 12] :
-                     goal === 'combined' ? [8, 15] : [12, 20];
-    const rir = experience === 'beginner' ? 3 :
-                experience === 'experienced' ? 2 : 1;
-
-    let sessions = [];
-    if (days <= 3) {
-        sessions = [
-            { name: "Full Body A", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) },
-            { name: "Full Body B", exercises: getExercises(["Shoulders","Arms","Glutes"], 5, repRange, rir) },
-            { name: "Full Body C", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) }
-        ];
-    } else if (days === 4) {
-        sessions = [
-            { name: "Upper A", exercises: getExercises(["Chest","Back","Shoulders"], 5, repRange, rir) },
-            { name: "Lower A", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) },
-            { name: "Upper B", exercises: getExercises(["Chest","Back","Arms"], 5, repRange, rir) },
-            { name: "Lower B", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) }
-        ];
-    } else {
-        sessions = [
-            { name: "Push", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
-            { name: "Pull", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
-            { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) },
-            { name: "Push 2", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
-            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
-            { name: "Legs 2", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
-        ];
+@media screen and (max-width: 480px) {
+    .card-group {
+        grid-template-columns: 1fr;
     }
-
-    return {
-        goal,
-        experience,
-        style,
-        days,
-        week: 1,
-        rirTarget: rir,
-        currentVolume: baseSets,
-        maxVolume: maxSets,
-        sessions
-    };
-}
-
-function getExercises(muscleGroups, count, repRange, rir) {
-    const filtered = EXERCISES.filter(ex => muscleGroups.includes(ex.muscle));
-    const chosen = [];
-    for (let i = 0; i < count && filtered.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * filtered.length);
-        chosen.push({
-            name: filtered[randomIndex].name,
-            sets: 3,
-            reps: `${repRange[0]}-${repRange[1]}`,
-            rir
-        });
-        filtered.splice(randomIndex, 1);
-    }
-    return chosen;
-}
-
-/* ===========================
-   DASHBOARD RENDER
-=========================== */
-function renderDashboard(plan) {
-    document.querySelector('.container').style.display = "none";
-    const dashboard = document.getElementById('dashboard');
-    dashboard.style.display = "block";
-
-    document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
-    document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
-    document.getElementById('summaryDays').textContent = plan.days;
-
-    document.getElementById('volumeSummary').textContent =
-        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
-
-    document.getElementById('volumeProgress').style.width =
-        `${(plan.currentVolume / plan.maxVolume) * 100}%`;
-
-    renderCharts(plan);
-    renderPlanSelector();
-    loadWorkouts();
-}
-
-/* ===========================
-   CHARTS
-=========================== */
-function renderCharts(plan) {
-    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-    new Chart(ctxVolume, {
-        type: 'line',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Volume (Sets)',
-                data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
-                borderColor: '#ff6b35',
-                fill: false,
-                tension: 0.3
-            }]
-        }
-    });
-
-    const ctxLoad = document.getElementById('loadChart').getContext('2d');
-    new Chart(ctxLoad, {
-        type: 'bar',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Average Load',
-                data: [100, 110, 120, 130],
-                backgroundColor: '#ff914d'
-            }]
-        }
-    });
-}
-
-/* ===========================
-   MODAL: LOG WORKOUT
-=========================== */
-function openModal(type) {
-    const modal = document.getElementById('modal');
-    const body = document.getElementById('modal-body');
-    modal.classList.remove('hidden');
-
-    if (type === 'logWorkout') {
-        body.innerHTML = `
-            <h2>Log Workout</h2>
-            <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
-            <label for="fatigueScore">Fatigue Score (1–10):</label>
-            <input type="number" id="fatigueScore" min="1" max="10">
-            <button class="cta-button" onclick="submitWorkout()">Submit</button>
-        `;
-    } else {
-        body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
+    .main-title {
+        font-size: 2rem;
     }
 }
-
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
-
-/* ===========================
-   WORKOUT LOGGING
-=========================== */
-function submitWorkout() {
-    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
-    const notes = document.getElementById('workoutNotes').value;
-
-    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
-        return;
-    }
-
-    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    saveWorkoutToDB(workout);
-    closeModal();
-    loadWorkouts();
-}
-
-async function loadWorkouts() {
-    const workouts = await getAllWorkoutsFromDB();
-    const list = document.getElementById('workoutList');
-    list.innerHTML = "";
-    workouts.forEach(w => {
-        const li = document.createElement('li');
-        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
-        list.appendChild(li);
-    });
-}
-
-/* ===========================
-   UTILITY
-=========================== */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/* ===========================
-   PAGE LOAD
-=========================== */
-window.onload = () => {
-    loadPlans();
-
-    if (localStorage.getItem("onboardingCompleted") === "true" && allPlans.length > 0) {
-        currentPlan = allPlans[0];
-        renderDashboard(currentPlan);
-    } else {
-        document.querySelector('#step1').classList.add('active');
-        updateProgress();
-    }
-};
