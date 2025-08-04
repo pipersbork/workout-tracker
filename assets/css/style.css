@@ -1,295 +1,320 @@
 /* ===========================
-   RESET & BASE
+   GLOBAL VARIABLES
 =========================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
-    background-size: 400% 400%;
-    animation: gradientBG 8s ease infinite;
-    color: #fff;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-@keyframes gradientBG {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
-}
-.hidden { display: none; }
+let currentStep = 1;
+const totalSteps = 5;
+
+const userSelections = {
+    goal: "",
+    experience: "",
+    style: "",
+    days: ""
+};
+
+let plan = null;
+let allPlans = []; // Multiple saved plans
 
 /* ===========================
-   CONTAINER
+   EXERCISE DATABASE (Partial List)
 =========================== */
-.container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow-y: auto;
-    text-align: center;
-    padding: 20px;
-}
+const EXERCISES = [
+    { name: "Barbell Bench Press", muscle: "Chest" },
+    { name: "Incline Dumbbell Press", muscle: "Chest" },
+    { name: "Push-Up", muscle: "Chest" },
+    { name: "Pull-Up", muscle: "Back" },
+    { name: "Barbell Row", muscle: "Back" },
+    { name: "Lat Pulldown", muscle: "Back" },
+    { name: "Shoulder Press", muscle: "Shoulders" },
+    { name: "Lateral Raise", muscle: "Shoulders" },
+    { name: "Barbell Curl", muscle: "Biceps" },
+    { name: "Hammer Curl", muscle: "Biceps" },
+    { name: "Triceps Pushdown", muscle: "Triceps" },
+    { name: "Overhead Triceps Extension", muscle: "Triceps" },
+    { name: "Back Squat", muscle: "Quads" },
+    { name: "Lunge", muscle: "Quads" },
+    { name: "Romanian Deadlift", muscle: "Hamstrings" },
+    { name: "Leg Curl", muscle: "Hamstrings" },
+    { name: "Hip Thrust", muscle: "Glutes" },
+    { name: "Step-Up", muscle: "Glutes" },
+    { name: "Plank", muscle: "Core" },
+    { name: "Hanging Leg Raise", muscle: "Core" }
+    // ✅ Extend to 250+ later
+];
 
 /* ===========================
-   PROGRESS BAR
+   ONBOARDING LOGIC
 =========================== */
-.progress-bar {
-    width: 90%;
-    background: #333;
-    height: 8px;
-    border-radius: 5px;
-    margin: 15px auto 25px auto;
-    overflow: hidden;
-}
-.progress {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #ff6b35, #ff914d);
-    transition: width 0.4s ease;
+function updateProgress() {
+    const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    document.querySelector('.progress').style.width = percentage + "%";
 }
 
-/* ===========================
-   ONBOARDING STEPS
-=========================== */
-.step {
-    display: none;
-    animation: fadeIn 0.4s ease;
-}
-.step.active {
-    display: block;
-}
-.main-title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    letter-spacing: 4px;
-    color: #ff6b35;
-}
-.divider {
-    width: 80px;
-    height: 2px;
-    background-color: #ff6b35;
-    margin: 10px auto 20px auto;
-}
-.tagline {
-    font-size: 1rem;
-    color: #ff914d;
-    margin-bottom: 30px;
-    line-height: 1.4;
+function nextStep() {
+    const current = document.getElementById('step' + currentStep);
+    current.classList.remove('active');
+
+    setTimeout(() => {
+        currentStep++;
+        const next = document.getElementById('step' + currentStep);
+        if (next) {
+            next.classList.add('active');
+            updateProgress();
+        }
+    }, 200);
 }
 
-/* ===========================
-   BUTTONS
-=========================== */
-.cta-button {
-    display: block;
-    width: 90%;
-    margin: 20px auto 0 auto;
-    padding: 14px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(45deg, #ff6b35, #ff914d);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.3s ease;
+function validateStep(field) {
+    if (!userSelections[field]) {
+        alert("Please select an option before continuing.");
+        return false;
+    }
+    return true;
 }
-.cta-button:hover {
-    transform: scale(1.05);
+
+function selectCard(element, field, value) {
+    userSelections[field] = value;
+    const group = element.parentElement.querySelectorAll('.goal-card');
+    group.forEach(card => card.classList.remove('active'));
+    element.classList.add('active');
+}
+
+function finishOnboarding() {
+    localStorage.setItem("onboardingCompleted", "true");
+    localStorage.setItem("userSelections", JSON.stringify(userSelections));
+
+    plan = generatePlan(userSelections);
+    allPlans.push(plan);
+    localStorage.setItem("savedPlans", JSON.stringify(allPlans));
+
+    renderDashboard(plan);
 }
 
 /* ===========================
-   CARD GROUP (Fixed Mobile)
+   PLAN GENERATION
 =========================== */
-.card-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    margin: 15px 0;
+function generatePlan({ goal, experience, style, days }) {
+    const baseSets = experience === 'beginner' ? 8 :
+                     experience === 'experienced' ? 12 : 16;
+    const maxSets = baseSets + 4;
+
+    const repRange = goal === 'muscle' ? [6, 12] :
+                     goal === 'combined' ? [8, 15] : [12, 20];
+    const rir = experience === 'beginner' ? 3 :
+                experience === 'experienced' ? 2 : 1;
+
+    let sessions = [];
+    if (days <= 3) {
+        sessions = [
+            { name: "Full Body A", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) },
+            { name: "Full Body B", exercises: getExercises(["Shoulders","Arms","Glutes"], 5, repRange, rir) },
+            { name: "Full Body C", exercises: getExercises(["Chest","Back","Legs"], 5, repRange, rir) }
+        ];
+    } else if (days === 4) {
+        sessions = [
+            { name: "Upper A", exercises: getExercises(["Chest","Back","Shoulders"], 5, repRange, rir) },
+            { name: "Lower A", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) },
+            { name: "Upper B", exercises: getExercises(["Chest","Back","Arms"], 5, repRange, rir) },
+            { name: "Lower B", exercises: getExercises(["Quads","Hamstrings","Glutes"], 5, repRange, rir) }
+        ];
+    } else {
+        sessions = [
+            { name: "Push", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
+            { name: "Pull", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
+            { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) },
+            { name: "Push 2", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
+            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
+            { name: "Legs 2", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
+        ];
+    }
+
+    return {
+        goal,
+        experience,
+        style,
+        days,
+        week: 1,
+        rirTarget: rir,
+        currentVolume: baseSets,
+        maxVolume: maxSets,
+        sessions
+    };
 }
-.goal-card {
-    background: #1c1c1e;
-    border: 2px solid #333;
-    border-radius: 12px;
-    padding: 20px 10px;
-    text-align: center;
-    color: #fff;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.3s ease;
-}
-.goal-card .icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-}
-.goal-card h3 {
-    font-size: 1rem;
-    margin-bottom: 4px;
-}
-.goal-card p {
-    font-size: 0.85rem;
-    color: #ccc;
-}
-.goal-card:hover {
-    transform: scale(1.05);
-    border-color: #ff6b35;
-}
-.goal-card.active {
-    border-color: #ff6b35;
-    background: #2a2a2d;
+
+function getExercises(muscleGroups, count, repRange, rir) {
+    const filtered = EXERCISES.filter(ex => muscleGroups.includes(ex.muscle));
+    const chosen = [];
+    for (let i = 0; i < count && filtered.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * filtered.length);
+        chosen.push({
+            name: filtered[randomIndex].name,
+            sets: 3,
+            reps: `${repRange[0]}-${repRange[1]}`,
+            rir
+        });
+        filtered.splice(randomIndex, 1);
+    }
+    return chosen;
 }
 
 /* ===========================
-   DASHBOARD
+   DASHBOARD RENDER
 =========================== */
-.dashboard {
-    padding: 15px;
-    text-align: center;
-    color: #fff;
-}
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.summary-card {
-    background: #1c1c1e;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-}
-.progress-wrapper {
-    margin-bottom: 20px;
-}
-.charts-section {
-    margin-bottom: 25px;
-}
-.chart-container {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-.workout-history ul {
-    list-style: none;
-    text-align: left;
-    padding: 0;
-    font-size: 0.9rem;
-}
-.workout-history li {
-    padding: 8px;
-    border-bottom: 1px solid #333;
-}
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #1c1c1e;
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    border-top: 2px solid #333;
-}
-.bottom-nav button {
-    background: #ff6b35;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: bold;
-    cursor: pointer;
+function renderDashboard(plan) {
+    document.querySelector('.container').style.display = "none";
+    const dashboard = document.getElementById('dashboard');
+    dashboard.classList.remove('hidden');
+
+    document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
+    document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
+    document.getElementById('summaryDays').textContent = plan.days;
+
+    document.getElementById('volumeSummary').textContent =
+        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
+
+    document.getElementById('volumeProgress').style.width =
+        `${(plan.currentVolume / plan.maxVolume) * 100}%`;
+
+    renderCharts(plan);
+    loadWorkouts();
 }
 
 /* ===========================
-   MODAL
+   CHARTS
 =========================== */
-.modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.modal.hidden { display: none; }
-.modal-content {
-    background: #1c1c1e;
-    padding: 20px;
-    border-radius: 10px;
-    width: 95%;
-    max-width: 500px;
-    color: #fff;
-}
-.close-btn {
-    float: right;
-    font-size: 1.5rem;
-    cursor: pointer;
+function renderCharts(plan) {
+    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
+    new Chart(ctxVolume, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Volume (Sets)',
+                data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
+                borderColor: '#ff6b35',
+                fill: false,
+                tension: 0.3
+            }]
+        }
+    });
+
+    const ctxLoad = document.getElementById('loadChart').getContext('2d');
+    new Chart(ctxLoad, {
+        type: 'bar',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Average Load',
+                data: [100, 110, 120, 130],
+                backgroundColor: '#ff914d'
+            }]
+        }
+    });
 }
 
 /* ===========================
-   PLANNER MODAL
+   MODAL: LOG WORKOUT + PLANNER
 =========================== */
-.planner-form h3 {
-    margin-bottom: 10px;
-    color: #ff6b35;
+function openModal(type) {
+    const modal = document.getElementById('modal');
+    const body = document.getElementById('modal-body');
+    modal.classList.remove('hidden');
+
+    if (type === 'logWorkout') {
+        body.innerHTML = `
+            <h2>Log Workout</h2>
+            <textarea id="workoutNotes" placeholder="Workout details..."></textarea>
+            <label for="fatigueScore">Fatigue Score (1–10):</label>
+            <input type="number" id="fatigueScore" min="1" max="10">
+            <button class="cta-button" onclick="submitWorkout()">Submit</button>
+        `;
+    } else if (type === 'planner') {
+        body.innerHTML = `
+            <h2>Customize Your Plan</h2>
+            <div class="planner-form">
+                ${plan.sessions.map((session, sIndex) => `
+                    <h3>${session.name}</h3>
+                    ${session.exercises.map((ex, eIndex) => `
+                        <div class="exercise-row">
+                            <input type="text" value="${ex.name}" readonly>
+                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}" min="1">
+                            <input type="text" id="reps-${sIndex}-${eIndex}" value="${ex.reps}">
+                        </div>
+                    `).join('')}
+                `).join('')}
+                <button onclick="saveManualAdjust()">Save Changes</button>
+            </div>
+        `;
+    } else {
+        body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
+    }
 }
-.exercise-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
+
+function saveManualAdjust() {
+    plan.sessions.forEach((session, sIndex) => {
+        session.exercises.forEach((ex, eIndex) => {
+            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
+            ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
+        });
+    });
+    localStorage.setItem("userPlan", JSON.stringify(plan));
+    closeModal();
+    renderDashboard(plan);
 }
-.exercise-row input {
-    flex: 1;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #333;
-    background: #222;
-    color: #fff;
-    font-size: 0.9rem;
-}
-.planner-form button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 12px 18px;
-    background: #ff6b35;
-    color: #111;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-}
-.planner-form button:hover {
-    background: #ff914d;
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
 }
 
 /* ===========================
-   ANIMATIONS
+   WORKOUT LOGGING
 =========================== */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+async function submitWorkout() {
+    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
+    const notes = document.getElementById('workoutNotes').value;
+
+    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
+        alert("Please enter a valid fatigue score (1–10).");
+        return;
+    }
+
+    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
+
+    let history = JSON.parse(localStorage.getItem('workoutHistory')) || [];
+    history.push(workout);
+    localStorage.setItem('workoutHistory', JSON.stringify(history));
+
+    closeModal();
+    loadWorkouts();
+}
+
+function loadWorkouts() {
+    const workouts = JSON.parse(localStorage.getItem('workoutHistory')) || [];
+    const list = document.getElementById('workoutList');
+    list.innerHTML = "";
+    workouts.forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
+        list.appendChild(li);
+    });
 }
 
 /* ===========================
-   RESPONSIVE
+   UTILITY
 =========================== */
-@media screen and (max-width: 480px) {
-    .main-title { font-size: 2rem; }
-    .goal-card h3 { font-size: 0.95rem; }
-    .goal-card p { font-size: 0.8rem; }
-    .summary-grid { grid-template-columns: 1fr; }
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+/* ===========================
+   PAGE LOAD
+=========================== */
+window.onload = () => {
+    if (localStorage.getItem("onboardingCompleted") === "true") {
+        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
+        plan = generatePlan(userSelections);
+        renderDashboard(plan);
+    } else {
+        document.querySelector('#step1').classList.add('active');
+        updateProgress();
+    }
+};
