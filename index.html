@@ -17,8 +17,8 @@
 <script defer src="./assets/js/db.js"></script>
 </head>
 <body>
-<div class="container">
-
+<!-- Onboarding Container -->
+<div class="container" id="onboarding">
     <!-- Progress Bar -->
     <div class="progress-bar"><div class="progress"></div></div>
 
@@ -34,7 +34,7 @@
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
-        <div class="card-group vertical">
+        <div class="card-group" data-field="goal">
             <div class="goal-card" onclick="selectCard(this, 'goal', 'muscle')">
                 <div class="icon">💪</div>
                 <h3>Muscle Building</h3>
@@ -58,7 +58,7 @@
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
-        <div class="card-group vertical">
+        <div class="card-group" data-field="experience">
             <div class="goal-card" onclick="selectCard(this, 'experience', 'beginner')">
                 <div class="icon">🌱</div>
                 <h3>Beginner</h3>
@@ -82,7 +82,7 @@
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
-        <div class="card-group vertical">
+        <div class="card-group" data-field="style">
             <div class="goal-card" onclick="selectCard(this, 'style', 'gym')">
                 <div class="icon">🏋️</div>
                 <h3>Gym</h3>
@@ -101,7 +101,7 @@
         </div>
 
         <p>How many days per week?</p>
-        <div class="card-group vertical">
+        <div class="card-group" data-field="days">
             <div class="goal-card" onclick="selectCard(this, 'days', '3')"><h3>3</h3><p>Light</p></div>
             <div class="goal-card" onclick="selectCard(this, 'days', '4')"><h3>4</h3><p>Balanced</p></div>
             <div class="goal-card" onclick="selectCard(this, 'days', '5')"><h3>5</h3><p>Intense</p></div>
@@ -119,39 +119,26 @@
 </div>
 
 <!-- Dashboard -->
-<div id="dashboard" class="hidden">
+<div id="dashboard" class="hidden dashboard-container">
     <div class="dashboard">
-        <!-- Top Summary Cards -->
         <div class="summary-grid">
-            <div class="summary-card"><h3>Goal</h3><p id="summaryGoal"></p></div>
-            <div class="summary-card"><h3>Experience</h3><p id="summaryExperience"></p></div>
-            <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays"></p></div>
+            <div class="summary-card"><h3>Goal</h3><p id="summaryGoal">-</p></div>
+            <div class="summary-card"><h3>Experience</h3><p id="summaryExperience">-</p></div>
+            <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays">-</p></div>
         </div>
 
-        <!-- Volume Progress -->
-        <div class="progress-wrapper">
-            <h3>Volume Progress</h3>
-            <div class="progress-bar">
-                <div class="progress" id="volumeProgress"></div>
-            </div>
-            <p id="volumeSummary"></p>
-        </div>
+        <h3>Volume Progress</h3>
+        <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
+        <p id="volumeSummary">0 / 0 sets</p>
 
-        <!-- Charts -->
-        <div class="charts-section">
-            <h3>Progress Trends</h3>
-            <div class="chart-container"><canvas id="volumeChart"></canvas></div>
-            <div class="chart-container"><canvas id="loadChart"></canvas></div>
-        </div>
+        <h3>Progress Trends</h3>
+        <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+        <div class="chart-container"><canvas id="loadChart"></canvas></div>
 
-        <!-- Workout History -->
-        <div class="workout-history">
-            <h3>Workout History</h3>
-            <ul id="workoutList"></ul>
-        </div>
+        <h3>Workout History</h3>
+        <ul id="workoutList"></ul>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <button onclick="openModal('logWorkout')">Log Workout</button>
         <button onclick="openModal('planner')">Planner</button>
