@@ -13,53 +13,22 @@ const userSelections = {
 
 let plan = null;
 
-/* ===========================
-   EXERCISE DATABASE (250+ EXERCISES SAMPLE)
-=========================== */
 const EXERCISES = [
-    { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
-    { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
-    { name: "Chest Fly", muscle: "Chest", equipment: "Machine" },
-    { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
-    { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
-    { name: "Lat Pulldown", muscle: "Back", equipment: "Cable" },
-    { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
-    { name: "Dumbbell Row", muscle: "Back", equipment: "Dumbbell" },
-    { name: "Seated Row", muscle: "Back", equipment: "Machine" },
-    { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
-    { name: "Dumbbell Shoulder Press", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Front Raise", muscle: "Shoulders", equipment: "Dumbbell" },
-    { name: "Rear Delt Fly", muscle: "Shoulders", equipment: "Machine" },
-    { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
-    { name: "Dumbbell Curl", muscle: "Biceps", equipment: "Dumbbell" },
-    { name: "Hammer Curl", muscle: "Biceps", equipment: "Dumbbell" },
-    { name: "Preacher Curl", muscle: "Biceps", equipment: "Machine" },
-    { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
-    { name: "Overhead Triceps Extension", muscle: "Triceps", equipment: "Dumbbell" },
-    { name: "Close-Grip Bench Press", muscle: "Triceps", equipment: "Barbell" },
-    { name: "Skull Crusher", muscle: "Triceps", equipment: "Barbell" },
-    { name: "Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Front Squat", muscle: "Quads", equipment: "Barbell" },
-    { name: "Leg Press", muscle: "Quads", equipment: "Machine" },
-    { name: "Lunge", muscle: "Quads", equipment: "Dumbbell" },
-    { name: "Bulgarian Split Squat", muscle: "Quads", equipment: "Dumbbell" },
-    { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
-    { name: "Leg Curl", muscle: "Hamstrings", equipment: "Machine" },
-    { name: "Glute Bridge", muscle: "Glutes", equipment: "Bodyweight" },
-    { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
-    { name: "Step-Up", muscle: "Glutes", equipment: "Dumbbell" },
-    { name: "Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Seated Calf Raise", muscle: "Calves", equipment: "Machine" },
-    { name: "Standing Calf Raise", muscle: "Calves", equipment: "Bodyweight" },
-    { name: "Plank", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Cable Crunch", muscle: "Core", equipment: "Cable" },
-    { name: "Hanging Leg Raise", muscle: "Core", equipment: "Bodyweight" },
-    { name: "Russian Twist", muscle: "Core", equipment: "Dumbbell" },
+    { name: "Barbell Bench Press", muscle: "Chest" },
+    { name: "Incline Dumbbell Press", muscle: "Chest" },
+    { name: "Pull-Up", muscle: "Back" },
+    { name: "Barbell Row", muscle: "Back" },
+    { name: "Shoulder Press", muscle: "Shoulders" },
+    { name: "Lateral Raise", muscle: "Shoulders" },
+    { name: "Barbell Curl", muscle: "Biceps" },
+    { name: "Triceps Pushdown", muscle: "Triceps" },
+    { name: "Back Squat", muscle: "Quads" },
+    { name: "Romanian Deadlift", muscle: "Hamstrings" },
+    { name: "Hip Thrust", muscle: "Glutes" }
 ];
 
 /* ===========================
-   ONBOARDING LOGIC
+   ONBOARDING
 =========================== */
 function updateProgress() {
     const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
@@ -69,7 +38,6 @@ function updateProgress() {
 function nextStep() {
     const current = document.getElementById('step' + currentStep);
     current.classList.remove('active');
-
     setTimeout(() => {
         currentStep++;
         const next = document.getElementById('step' + currentStep);
@@ -98,9 +66,7 @@ function selectCard(element, field, value) {
 function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
-
     plan = generatePlan(userSelections);
-    savePlan(plan); // Save current plan
     renderDashboard(plan);
 }
 
@@ -108,14 +74,10 @@ function finishOnboarding() {
    PLAN GENERATION
 =========================== */
 function generatePlan({ goal, experience, style, days }) {
-    const baseSets = experience === 'beginner' ? 8 :
-                     experience === 'experienced' ? 12 : 16;
+    const baseSets = experience === 'beginner' ? 8 : experience === 'experienced' ? 12 : 16;
     const maxSets = baseSets + 4;
-
-    const repRange = goal === 'muscle' ? [6, 12] :
-                     goal === 'combined' ? [8, 15] : [12, 20];
-    const rir = experience === 'beginner' ? 3 :
-                experience === 'experienced' ? 2 : 1;
+    const repRange = goal === 'muscle' ? [6, 12] : goal === 'combined' ? [8, 15] : [12, 20];
+    const rir = experience === 'beginner' ? 3 : experience === 'experienced' ? 2 : 1;
 
     let sessions = [];
     if (days <= 3) {
@@ -135,10 +97,7 @@ function generatePlan({ goal, experience, style, days }) {
         sessions = [
             { name: "Push", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
             { name: "Pull", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
-            { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) },
-            { name: "Push 2", exercises: getExercises(["Chest","Shoulders","Triceps"], 6, repRange, rir) },
-            { name: "Pull 2", exercises: getExercises(["Back","Biceps"], 6, repRange, rir) },
-            { name: "Legs 2", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
+            { name: "Legs", exercises: getExercises(["Quads","Hamstrings","Glutes"], 6, repRange, rir) }
         ];
     }
 
@@ -172,31 +131,18 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
-   MULTIPLE PLAN STORAGE
-=========================== */
-function savePlan(plan) {
-    const savedPlans = JSON.parse(localStorage.getItem("savedPlans") || "[]");
-    savedPlans.push(plan);
-    localStorage.setItem("savedPlans", JSON.stringify(savedPlans));
-}
-
-/* ===========================
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
     document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
-    dashboard.style.display = "block";
+    dashboard.classList.remove('hidden');
 
     document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
     document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
     document.getElementById('summaryDays').textContent = plan.days;
-
-    document.getElementById('volumeSummary').textContent =
-        `${plan.currentVolume} sets / ${plan.maxVolume} max`;
-
-    document.getElementById('volumeProgress').style.width =
-        `${(plan.currentVolume / plan.maxVolume) * 100}%`;
+    document.getElementById('volumeSummary').textContent = `${plan.currentVolume} sets / ${plan.maxVolume} max`;
+    document.getElementById('volumeProgress').style.width = `${(plan.currentVolume / plan.maxVolume) * 100}%`;
 
     renderCharts(plan);
     loadWorkouts();
@@ -206,13 +152,12 @@ function renderDashboard(plan) {
    CHARTS
 =========================== */
 function renderCharts(plan) {
-    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
-    new Chart(ctxVolume, {
+    new Chart(document.getElementById('volumeChart'), {
         type: 'line',
         data: {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
             datasets: [{
-                label: 'Volume (Sets)',
+                label: 'Volume',
                 data: [plan.currentVolume, plan.currentVolume + 5, plan.currentVolume + 10, plan.maxVolume],
                 borderColor: '#ff6b35',
                 fill: false,
@@ -221,13 +166,12 @@ function renderCharts(plan) {
         }
     });
 
-    const ctxLoad = document.getElementById('loadChart').getContext('2d');
-    new Chart(ctxLoad, {
+    new Chart(document.getElementById('loadChart'), {
         type: 'bar',
         data: {
             labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
             datasets: [{
-                label: 'Average Load',
+                label: 'Load',
                 data: [100, 110, 120, 130],
                 backgroundColor: '#ff914d'
             }]
@@ -236,7 +180,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODAL HANDLING
+   MODALS
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -253,14 +197,14 @@ function openModal(type) {
         `;
     } else if (type === 'planner') {
         body.innerHTML = `
-            <h2>Customize Your Plan</h2>
+            <h2>Customize Plan</h2>
             <div class="planner-form">
                 ${plan.sessions.map((session, sIndex) => `
                     <h3>${session.name}</h3>
                     ${session.exercises.map((ex, eIndex) => `
                         <div class="exercise-row">
                             <input type="text" value="${ex.name}" readonly>
-                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}" min="1">
+                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}">
                             <input type="text" id="reps-${sIndex}-${eIndex}" value="${ex.reps}">
                         </div>
                     `).join('')}
@@ -278,8 +222,29 @@ function closeModal() {
 }
 
 /* ===========================
-   PLANNER SAVE
+   LOGGING
 =========================== */
+async function submitWorkout() {
+    const fatigue = parseInt(document.getElementById('fatigueScore').value);
+    const notes = document.getElementById('workoutNotes').value;
+    if (!fatigue || fatigue < 1 || fatigue > 10) {
+        alert("Enter a valid fatigue score (1–10).");
+        return;
+    }
+    const workout = { date: new Date().toISOString(), fatigue, notes };
+    let workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+    workouts.push(workout);
+    localStorage.setItem('workouts', JSON.stringify(workouts));
+    closeModal();
+    loadWorkouts();
+}
+
+function loadWorkouts() {
+    const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+    const list = document.getElementById('workoutList');
+    list.innerHTML = workouts.map(w => `<li>${w.notes || 'Workout'} - Fatigue: ${w.fatigue}</li>`).join('');
+}
+
 function saveManualAdjust() {
     plan.sessions.forEach((session, sIndex) => {
         session.exercises.forEach((ex, eIndex) => {
@@ -287,42 +252,13 @@ function saveManualAdjust() {
             ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
         });
     });
-    localStorage.setItem("userPlan", JSON.stringify(plan));
+    localStorage.setItem('userPlan', JSON.stringify(plan));
     closeModal();
     renderDashboard(plan);
 }
 
 /* ===========================
-   WORKOUT LOGGING
-=========================== */
-async function submitWorkout() {
-    const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
-    const notes = document.getElementById('workoutNotes').value;
-
-    if (!fatigueScore || fatigueScore < 1 || fatigueScore > 10) {
-        alert("Please enter a valid fatigue score (1–10).");
-        return;
-    }
-
-    const workout = { date: new Date().toISOString(), fatigue: fatigueScore, notes };
-    saveWorkoutToDB(workout);
-    closeModal();
-    loadWorkouts();
-}
-
-async function loadWorkouts() {
-    const workouts = await getAllWorkoutsFromDB();
-    const list = document.getElementById('workoutList');
-    list.innerHTML = "";
-    workouts.forEach(w => {
-        const li = document.createElement('li');
-        li.textContent = `${w.notes || "Workout"} - Fatigue: ${w.fatigue} (on ${new Date(w.date).toLocaleDateString()})`;
-        list.appendChild(li);
-    });
-}
-
-/* ===========================
-   UTILITY
+   UTILITIES
 =========================== */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -332,12 +268,12 @@ function capitalize(str) {
    PAGE LOAD
 =========================== */
 window.onload = () => {
-    if (localStorage.getItem("onboardingCompleted") === "true") {
-        Object.assign(userSelections, JSON.parse(localStorage.getItem("userSelections")));
+    if (localStorage.getItem('onboardingCompleted') === 'true') {
+        Object.assign(userSelections, JSON.parse(localStorage.getItem('userSelections')));
         plan = generatePlan(userSelections);
         renderDashboard(plan);
     } else {
-        document.querySelector('#step1').classList.add('active');
+        document.getElementById('step1').classList.add('active');
         updateProgress();
     }
 };
