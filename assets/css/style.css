@@ -11,7 +11,7 @@ body {
     background: linear-gradient(-45deg, #111, #1a1a1a, #222, #111);
     background-size: 400% 400%;
     animation: gradientBG 8s ease infinite;
-    color: #ff6b35;
+    color: #fff;
     height: 100vh;
     overflow: hidden;
     display: flex;
@@ -34,6 +34,9 @@ body {
     position: relative;
     overflow-y: auto;
     padding-bottom: 30px;
+}
+.hidden {
+    display: none !important;
 }
 
 /* ===========================
@@ -127,40 +130,52 @@ body {
 /* ===========================
    DASHBOARD
 =========================== */
-#dashboard {
-    display: none;
+.dashboard {
     padding: 20px;
     text-align: center;
     color: #fff;
 }
-.dashboard h1 {
-    margin-bottom: 10px;
+.summary-grid {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
-.dashboard .progress-bar {
-    margin-top: 10px;
-    margin-bottom: 15px;
+.summary-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px 18px;
+    border-radius: 8px;
+    min-width: 90px;
+    text-align: center;
+    font-size: 0.9rem;
 }
-
-/* ===========================
-   WORKOUT HISTORY
-=========================== */
+.progress-wrapper {
+    margin: 15px 0;
+}
+.charts-section {
+    margin-top: 20px;
+}
+.chart-container {
+    width: 100%;
+    max-width: 650px;
+    margin: 15px auto;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+}
 .workout-history {
     background: rgba(255, 255, 255, 0.05);
     padding: 15px;
-    margin: 15px auto;
+    margin: 20px auto;
     border-radius: 10px;
     width: 90%;
     max-width: 500px;
-}
-.workout-history h2 {
-    margin-bottom: 10px;
-    color: #ff6b35;
+    text-align: left;
 }
 .workout-history ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    text-align: left;
 }
 .workout-history li {
     padding: 8px;
@@ -169,16 +184,29 @@ body {
     color: #ddd;
 }
 
-/* ===========================
-   CHARTS
-=========================== */
-.chart-container {
+/* Bottom Nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    max-width: 650px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
+    background: #1a1a1a;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    border-top: 2px solid #333;
+}
+.bottom-nav button {
+    background: #ff6b35;
+    border: none;
+    color: #111;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.bottom-nav button:hover {
+    background: #ff914d;
 }
 
 /* ===========================
@@ -281,5 +309,5 @@ body {
     .main-title { font-size: 2rem; }
     .divider { width: 50px; }
     .goal-card { width: 110px; padding: 15px; }
-    .chart-container { padding: 10px; }
+    .summary-grid { flex-direction: column; gap: 10px; }
 }
