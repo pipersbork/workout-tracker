@@ -1,5 +1,5 @@
 /* ===========================
-   RESET & BASE
+   BASE STYLES
 =========================== */
 * {
     margin: 0;
@@ -31,15 +31,15 @@ body {
 }
 
 /* ===========================
-   CONTAINER
+   CONTAINER & ONBOARDING
 =========================== */
 .container {
-    width: 100%;
-    height: 100%;
     text-align: center;
+    width: 100%;
+    max-width: 500px;
+    height: 100%;
     position: relative;
-    overflow-y: auto;
-    padding-bottom: 30px;
+    padding: 20px;
 }
 
 /* ===========================
@@ -61,179 +61,187 @@ body {
 }
 
 /* ===========================
-   ONBOARDING STEPS
+   STEPS
 =========================== */
 .step {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
-    width: 90%;
-    max-width: 400px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    display: none;
+    transition: opacity 0.3s ease;
 }
 .step.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) scale(1);
+    display: block;
 }
 
+/* ===========================
+   INTRO STYLES
+=========================== */
 .main-title {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     font-weight: bold;
-    letter-spacing: 6px;
     margin-bottom: 10px;
-    color: #ff6b35;
+    letter-spacing: 3px;
 }
 .divider {
     width: 80px;
     height: 3px;
     background-color: #ff6b35;
-    margin: 10px auto 20px auto;
+    margin: 15px auto;
 }
 .tagline {
     font-size: 1rem;
     margin-bottom: 30px;
+    color: #ff6b35;
 }
 
 /* ===========================
    BUTTONS
 =========================== */
 .cta-button {
-    display: inline-block;
-    width: 100%;
+    display: block;
+    width: 80%;
+    margin: 20px auto;
     padding: 14px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff;
     background: linear-gradient(45deg, #ff6b35, #ff914d);
     border: none;
     border-radius: 8px;
-    margin-top: 15px;
-    transition: transform 0.2s ease, background 0.3s ease;
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.3s ease;
 }
 .cta-button:hover {
     transform: scale(1.05);
-    background: linear-gradient(45deg, #ff914d, #ff6b35);
 }
 
 /* ===========================
-   CARD GROUP (Horizontal Scroll Removed)
+   CARD GROUPS (Onboarding)
 =========================== */
 .card-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    margin: 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
 }
 .goal-card {
     background: #1c1c1e;
-    border: 2px solid #333;
+    padding: 15px;
     border-radius: 10px;
-    padding: 20px 10px;
+    border: 2px solid #333;
+    width: 130px;
     text-align: center;
-    color: #fff;
-    transition: transform 0.3s, border-color 0.3s;
     cursor: pointer;
+    transition: 0.3s ease;
 }
-.goal-card:hover {
-    transform: scale(1.05);
-    border-color: #ff6b35;
-}
+.goal-card:hover,
 .goal-card.active {
     border-color: #ff6b35;
-    background: #292929;
+    transform: scale(1.05);
 }
 .goal-card .icon {
     font-size: 1.8rem;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 /* ===========================
    DASHBOARD
 =========================== */
-#dashboard {
-    width: 100%;
-    max-width: 900px;
-    margin: auto;
+.dashboard {
     padding: 20px;
+    width: 100%;
+    max-width: 700px;
+    margin: auto;
     text-align: center;
+}
+
+/* Plan Selector */
+.plan-selector {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.plan-card {
+    background: #1c1c1e;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #333;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s ease;
+    font-size: 0.9rem;
+}
+.plan-card.active,
+.plan-card:hover {
+    border-color: #ff6b35;
+    background: #2a2a2d;
 }
 
 /* Summary Grid */
 .summary-grid {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin: 20px 0;
 }
 .summary-card {
     flex: 1;
-    background: #1e1e1e;
+    background: #1c1c1e;
     padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    text-align: center;
+    border-radius: 10px;
+    border: 2px solid #333;
 }
 .summary-card h3 {
-    color: #ff6b35;
-    font-size: 1rem;
+    font-size: 0.9rem;
     margin-bottom: 5px;
 }
-
-/* Plan Selector */
-.plan-selector-wrapper {
-    text-align: left;
-    margin-bottom: 20px;
-}
-.plan-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.plan-card {
-    background: #1c1c1e;
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: 1px solid #333;
-    color: #fff;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-.plan-card.active {
-    border-color: #ff6b35;
-    background: #292929;
+.summary-card p {
+    font-size: 1.1rem;
+    font-weight: bold;
 }
 
-/* Charts */
-.charts-section h3 {
-    text-align: left;
-    margin: 15px 0 8px;
+/* ===========================
+   PROGRESS WRAPPER
+=========================== */
+.progress-wrapper {
+    margin-bottom: 25px;
+}
+.progress-wrapper h3 {
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+/* ===========================
+   CHARTS
+=========================== */
+.charts-section {
+    margin: 15px 0;
 }
 .chart-container {
     background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
+    padding: 10px;
     border-radius: 10px;
     margin-bottom: 15px;
 }
 
-/* Workout History */
+/* ===========================
+   WORKOUT HISTORY
+=========================== */
 .workout-history {
-    text-align: left;
-    margin-top: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 15px 0;
 }
 .workout-history ul {
     list-style: none;
     padding: 0;
 }
 .workout-history li {
-    background: #222;
-    margin-bottom: 6px;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    text-align: left;
     font-size: 0.9rem;
 }
 
@@ -241,26 +249,26 @@ body {
    BOTTOM NAV
 =========================== */
 .bottom-nav {
+    display: flex;
+    justify-content: space-around;
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    display: flex;
-    justify-content: space-around;
-    background: #111;
-    padding: 10px 0;
-    border-top: 1px solid #333;
+    background: #1a1a1a;
+    padding: 10px;
+    border-top: 2px solid #333;
 }
 .bottom-nav button {
     flex: 1;
     margin: 0 5px;
     padding: 12px;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #fff;
     background: #ff6b35;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
+    color: #111;
+    font-weight: bold;
+    font-size: 0.95rem;
     cursor: pointer;
 }
 .bottom-nav button:hover {
@@ -286,8 +294,8 @@ body {
     background: #1c1c1e;
     padding: 20px;
     border-radius: 10px;
-    width: 90%;
-    max-width: 450px;
+    width: 95%;
+    max-width: 600px;
     color: #fff;
     max-height: 80vh;
     overflow-y: auto;
@@ -299,26 +307,52 @@ body {
 }
 
 /* ===========================
+   PLANNER FORM
+=========================== */
+.planner-form {
+    margin-top: 20px;
+}
+.planner-form h3 {
+    margin-bottom: 8px;
+    color: #ff6b35;
+}
+.exercise-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.exercise-row input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #222;
+    color: #fff;
+    font-size: 0.9rem;
+}
+.planner-form button {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    background: #ff6b35;
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ===========================
    RESPONSIVE DESIGN
 =========================== */
-@media screen and (max-width: 768px) {
-    .card-group {
-        grid-template-columns: 1fr 1fr;
-    }
+@media screen and (max-width: 480px) {
     .summary-grid {
         flex-direction: column;
     }
-    .bottom-nav button {
-        font-size: 0.9rem;
+    .goal-card {
+        width: 100px;
         padding: 10px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .card-group {
-        grid-template-columns: 1fr;
-    }
-    .main-title {
-        font-size: 2rem;
     }
 }
