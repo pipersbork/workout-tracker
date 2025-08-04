@@ -30,7 +30,7 @@
         <button class="cta-button" onclick="nextStep()">Begin Onboarding</button>
     </div>
 
-    <!-- STEP 2: Goal -->
+    <!-- STEP 2 -->
     <div class="step" id="step2">
         <h2>Your Goal</h2>
         <p>Select your training focus:</p>
@@ -54,7 +54,7 @@
         <button class="cta-button" onclick="if(validateStep('goal')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 3: Experience -->
+    <!-- STEP 3 -->
     <div class="step" id="step3">
         <h2>Experience Level</h2>
         <p>Choose your fitness level:</p>
@@ -78,7 +78,7 @@
         <button class="cta-button" onclick="if(validateStep('experience')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 4: Preferences -->
+    <!-- STEP 4 -->
     <div class="step" id="step4">
         <h2>Workout Preferences</h2>
         <p>Select your preferred style:</p>
@@ -110,7 +110,7 @@
         <button class="cta-button" onclick="if(validateStep('style') && validateStep('days')) nextStep()">Next</button>
     </div>
 
-    <!-- STEP 5: Complete -->
+    <!-- STEP 5 -->
     <div class="step" id="step5">
         <h2>✅ All Set!</h2>
         <p>Your preferences have been saved.</p>
@@ -118,33 +118,42 @@
     </div>
 </div>
 
-<!-- Dashboard -->
+<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
     <div class="dashboard">
-        <h1>🏋️ Your Training Dashboard</h1>
-        <p id="userSummary"></p>
-
-        <div class="progress-bar">
-            <div class="progress" id="volumeProgress"></div>
-        </div>
-        <p id="volumeSummary"></p>
-
-        <div class="chart-container">
-            <canvas id="volumeChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="loadChart"></canvas>
+        <!-- Summary Grid -->
+        <div class="summary-grid">
+            <div class="summary-card"><h3>Goal</h3><p id="summaryGoal"></p></div>
+            <div class="summary-card"><h3>Experience</h3><p id="summaryExperience"></p></div>
+            <div class="summary-card"><h3>Days/Week</h3><p id="summaryDays"></p></div>
         </div>
 
+        <!-- Progress -->
+        <div class="progress-wrapper">
+            <h3>Volume Progress</h3>
+            <div class="progress-bar"><div class="progress" id="volumeProgress"></div></div>
+            <p id="volumeSummary"></p>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <h3>Progress Trends</h3>
+            <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+            <div class="chart-container"><canvas id="loadChart"></canvas></div>
+        </div>
+
+        <!-- Workout History -->
         <div class="workout-history">
-            <h2>Workout History</h2>
+            <h3>Workout History</h3>
             <ul id="workoutList"></ul>
         </div>
+    </div>
 
-        <div class="bottom-nav">
-            <button onclick="openModal('logWorkout')">Log Workout</button>
-            <button onclick="openModal('settings')">Settings</button>
-        </div>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button onclick="openModal('logWorkout')">Log Workout</button>
+        <button onclick="openModal('planner')">Planner</button>
+        <button onclick="openModal('settings')">Settings</button>
     </div>
 </div>
 
