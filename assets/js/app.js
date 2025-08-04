@@ -11,26 +11,26 @@ const userSelections = {
     days: ""
 };
 
-let currentPlanName = "Default Plan";
-let plans = {}; // Stores multiple workout plans
-let plan = null;
+let currentPlan = null;
+let allPlans = []; // Stores multiple plans
 
 /* ===========================
-   EXERCISE DATABASE (Short Sample)
-   Expand to 250+ in future
+   EXERCISE DATABASE (Sample for now)
 =========================== */
 const EXERCISES = [
     { name: "Barbell Bench Press", muscle: "Chest", equipment: "Barbell" },
     { name: "Incline Dumbbell Press", muscle: "Chest", equipment: "Dumbbell" },
-    { name: "Chest Fly", muscle: "Chest", equipment: "Machine" },
-    { name: "Push-Up", muscle: "Chest", equipment: "Bodyweight" },
     { name: "Pull-Up", muscle: "Back", equipment: "Bodyweight" },
     { name: "Barbell Row", muscle: "Back", equipment: "Barbell" },
     { name: "Shoulder Press", muscle: "Shoulders", equipment: "Barbell" },
     { name: "Lateral Raise", muscle: "Shoulders", equipment: "Dumbbell" },
+    { name: "Barbell Curl", muscle: "Biceps", equipment: "Barbell" },
+    { name: "Triceps Pushdown", muscle: "Triceps", equipment: "Cable" },
     { name: "Squat", muscle: "Quads", equipment: "Barbell" },
     { name: "Romanian Deadlift", muscle: "Hamstrings", equipment: "Barbell" },
     { name: "Hip Thrust", muscle: "Glutes", equipment: "Barbell" },
+    { name: "Plank", muscle: "Core", equipment: "Bodyweight" }
+    // ✅ Expand to 250 later
 ];
 
 /* ===========================
@@ -74,12 +74,40 @@ function finishOnboarding() {
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("userSelections", JSON.stringify(userSelections));
 
-    plan = generatePlan(userSelections);
-    currentPlanName = "Default Plan";
-    plans[currentPlanName] = plan;
+    currentPlan = generatePlan(userSelections);
+    allPlans.push(currentPlan);
     savePlans();
 
-    renderDashboard(plan);
+    renderDashboard(currentPlan);
+}
+
+/* ===========================
+   MULTI-PLAN MANAGEMENT
+=========================== */
+function savePlans() {
+    localStorage.setItem("allPlans", JSON.stringify(allPlans));
+}
+
+function loadPlans() {
+    const saved = localStorage.getItem("allPlans");
+    if (saved) {
+        allPlans = JSON.parse(saved);
+    }
+}
+
+function renderPlanSelector() {
+    const selector = document.querySelector(".plan-selector");
+    selector.innerHTML = allPlans.map((plan, index) => `
+        <div class="plan-card ${index === allPlans.indexOf(currentPlan) ? 'active' : ''}" onclick="switchPlan(${index})">
+            ${capitalize(plan.goal)} | ${capitalize(plan.experience)} | ${plan.days} Days
+        </div>
+    `).join('');
+}
+
+function switchPlan(index) {
+    currentPlan = allPlans[index];
+    savePlans();
+    renderDashboard(currentPlan);
 }
 
 /* ===========================
@@ -150,58 +178,12 @@ function getExercises(muscleGroups, count, repRange, rir) {
 }
 
 /* ===========================
-   MULTIPLE PLAN MANAGEMENT
-=========================== */
-function savePlans() {
-    localStorage.setItem("userPlans", JSON.stringify(plans));
-}
-
-function loadPlans() {
-    const saved = localStorage.getItem("userPlans");
-    if (saved) {
-        plans = JSON.parse(saved);
-        const keys = Object.keys(plans);
-        if (keys.length > 0) {
-            currentPlanName = keys[0];
-            plan = plans[currentPlanName];
-        }
-    }
-}
-
-function switchPlan(name) {
-    if (plans[name]) {
-        currentPlanName = name;
-        plan = plans[name];
-        renderDashboard(plan);
-    }
-}
-
-function addNewPlan() {
-    const name = prompt("Enter a name for the new plan:");
-    if (name && !plans[name]) {
-        plans[name] = generatePlan(userSelections);
-        currentPlanName = name;
-        savePlans();
-        renderDashboard(plans[name]);
-    }
-}
-
-/* ===========================
    DASHBOARD RENDER
 =========================== */
 function renderDashboard(plan) {
     document.querySelector('.container').style.display = "none";
     const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-
-    // Populate dropdown for plans
-    let planSelector = `<select id="planSelector" onchange="switchPlan(this.value)">`;
-    for (const name in plans) {
-        planSelector += `<option value="${name}" ${name === currentPlanName ? "selected" : ""}>${name}</option>`;
-    }
-    planSelector += `</select> <button class="cta-button small" onclick="addNewPlan()">+ New Plan</button>`;
-
-    document.querySelector('.plan-header').innerHTML = planSelector;
+    dashboard.style.display = "block";
 
     document.getElementById('summaryGoal').textContent = capitalize(plan.goal);
     document.getElementById('summaryExperience').textContent = capitalize(plan.experience);
@@ -214,6 +196,7 @@ function renderDashboard(plan) {
         `${(plan.currentVolume / plan.maxVolume) * 100}%`;
 
     renderCharts(plan);
+    renderPlanSelector();
     loadWorkouts();
 }
 
@@ -251,7 +234,7 @@ function renderCharts(plan) {
 }
 
 /* ===========================
-   MODALS (Log Workout + Planner)
+   MODAL: LOG WORKOUT
 =========================== */
 function openModal(type) {
     const modal = document.getElementById('modal');
@@ -266,23 +249,6 @@ function openModal(type) {
             <input type="number" id="fatigueScore" min="1" max="10">
             <button class="cta-button" onclick="submitWorkout()">Submit</button>
         `;
-    } else if (type === 'planner') {
-        body.innerHTML = `
-            <h2>Customize Plan</h2>
-            <div class="planner-form">
-                ${plan.sessions.map((session, sIndex) => `
-                    <h3>${session.name}</h3>
-                    ${session.exercises.map((ex, eIndex) => `
-                        <div class="exercise-row">
-                            <input type="text" value="${ex.name}" readonly>
-                            <input type="number" id="sets-${sIndex}-${eIndex}" value="${ex.sets}" min="1">
-                            <input type="text" id="reps-${sIndex}-${eIndex}" value="${ex.reps}">
-                        </div>
-                    `).join('')}
-                `).join('')}
-                <button onclick="saveManualAdjust()">Save Changes</button>
-            </div>
-        `;
     } else {
         body.innerHTML = `<h2>Settings</h2><p>Coming soon...</p>`;
     }
@@ -292,23 +258,10 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-function saveManualAdjust() {
-    plan.sessions.forEach((session, sIndex) => {
-        session.exercises.forEach((ex, eIndex) => {
-            ex.sets = parseInt(document.getElementById(`sets-${sIndex}-${eIndex}`).value);
-            ex.reps = document.getElementById(`reps-${sIndex}-${eIndex}`).value;
-        });
-    });
-    plans[currentPlanName] = plan;
-    savePlans();
-    closeModal();
-    renderDashboard(plan);
-}
-
 /* ===========================
    WORKOUT LOGGING
 =========================== */
-async function submitWorkout() {
+function submitWorkout() {
     const fatigueScore = parseInt(document.getElementById('fatigueScore').value);
     const notes = document.getElementById('workoutNotes').value;
 
@@ -346,8 +299,10 @@ function capitalize(str) {
 =========================== */
 window.onload = () => {
     loadPlans();
-    if (localStorage.getItem("onboardingCompleted") === "true" && plan) {
-        renderDashboard(plan);
+
+    if (localStorage.getItem("onboardingCompleted") === "true" && allPlans.length > 0) {
+        currentPlan = allPlans[0];
+        renderDashboard(currentPlan);
     } else {
         document.querySelector('#step1').classList.add('active');
         updateProgress();
