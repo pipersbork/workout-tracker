@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (completed === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
+                // In a future version, we would load the active plan from allPlans here
             }
         },
 
@@ -112,8 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (e.target.matches('.add-set-btn')) {
                     this.addSet(e.target.dataset.exerciseIndex);
                 }
+                // --- UPDATED to call the new completeWorkout function ---
                 if (e.target.matches('#complete-workout-btn')) {
-                    console.log('Completing workout...');
+                    this.completeWorkout();
                 }
             });
             
@@ -247,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.onboardingContainer.style.display = "none";
             this.elements.dashboard.style.display = 'none'; 
             this.elements.workoutView.classList.remove('hidden');
-
             this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
         },
 
@@ -258,21 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('exercise-list-container').innerHTML = `<p>Workout plan not available for this day.</p>`;
                 return;
             }
-
             const dayData = plan.weeks[weekNumber][dayNumber];
             const container = document.getElementById('exercise-list-container');
             document.getElementById('workout-day-title').textContent = `Week ${weekNumber}, Day ${dayNumber}: ${dayData.name}`;
             document.getElementById('workout-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             container.innerHTML = '';
-
             dayData.exercises.forEach((exercise, exerciseIndex) => {
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = 'exercise-card';
                 let setsHTML = '';
-                
-                // Use targetSets to render the initial empty rows
                 const setsToRenderCount = Math.max(exercise.sets.length, exercise.targetSets);
-
                 for (let setIndex = 0; setIndex < setsToRenderCount; setIndex++) {
                     const set = exercise.sets[setIndex] || {};
                      setsHTML += `
@@ -286,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 }
-
                 exerciseCard.innerHTML = `
                     <div class="exercise-card-header">
                         <h3>${exercise.name}</h3>
@@ -314,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const value = parseFloat(inputElement.value) || 0;
             const property = inputElement.classList.contains('weight-input') ? 'load' : 
                              inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
-
             const exerciseData = this.state.plan.weeks[week][day].exercises[exercise];
             while (exerciseData.sets.length <= set) {
                 exerciseData.sets.push({});
@@ -328,6 +322,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastSet = exerciseData.sets[exerciseData.sets.length - 1] || {};
             exerciseData.sets.push({ ...lastSet, rir: '' }); 
             this.renderDailyWorkout(week, day);
+        },
+        
+        // +++ NEW: Function to complete and save the current day's workout +++
+        /**
+         * Marks the current day as complete, saves the entire plan, and advances to the next day.
+         */
+        completeWorkout() {
+            const { week, day } = this.state.currentView;
+            const plan = this.state.plan;
+
+            if (!plan || !plan.weeks[week] || !plan.weeks[week][day]) {
+                alert("Could not find workout to complete.");
+                return;
+            }
+
+            // 1. Mark day as complete in the state
+            plan.weeks[week][day].completed = true;
+            console.log(`Workout for Week ${week}, Day ${day} marked as complete.`);
+
+            // 2. Update the plan in our array of all plans
+            const planIndex = this.state.allPlans.findIndex(p => p.id === plan.id);
+            if (planIndex > -1) {
+                this.state.allPlans[planIndex] = plan;
+            } else {
+                this.state.allPlans.push(plan);
+            }
+
+            // 3. Save the updated plans array to localStorage
+            this.saveStateToStorage();
+            alert(`Workout for Week ${week}, Day ${day} saved!`);
+
+            // 4. Advance to the next day
+            const daysPerWeek = parseInt(this.state.userSelections.days);
+            let nextDay = day + 1;
+            let nextWeek = week;
+
+            if (nextDay > daysPerWeek) {
+                nextDay = 1;
+                nextWeek++;
+            }
+
+            if (nextWeek > plan.durationWeeks) {
+                alert("Mesocycle complete! Well done!");
+            } else {
+                this.state.currentView = { week: nextWeek, day: nextDay };
+                this.showWorkoutView();
+            }
         },
 
         // ===========================
