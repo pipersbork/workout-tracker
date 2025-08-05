@@ -87,7 +87,7 @@
         <div class="home-nav-buttons">
             <button class="cta-button home-btn" id="planMesoBtn">Plan Mesocycle</button>
             <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
-            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Review Previous Workouts</button>
+            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Performance Summary</button>
         </div>
     </div>
 
@@ -118,6 +118,28 @@
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
         </div>
     </div>
+
+    <!-- NEW: Performance Summary View -->
+    <div id="performance-summary-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backToHomeFromSummary">&larr; Home</button>
+            <h2>Performance Summary</h2>
+        </div>
+        <div id="summary-content">
+            <div class="summary-section">
+                <h3>Completed Workouts</h3>
+                <div id="completed-workouts-list"></div>
+            </div>
+            <div class="summary-section">
+                <h3>Track Exercise Progress</h3>
+                <select id="exercise-tracker-select" class="builder-select"></select>
+                <div class="chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal: Used for pop-up dialogs like selecting mesocycle length. -->
     <div id="modal" class="modal hidden">
