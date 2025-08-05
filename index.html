@@ -8,14 +8,17 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
+    <!-- Chart.js is included for future use in progress tracking -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
+    <!-- Onboarding Container: Guides new users through initial setup. -->
     <div class="container" id="onboarding-container">
 
         <div class="progress-bar"><div class="progress"></div></div>
 
+        <!-- Step 1: Welcome Screen -->
         <div class="step active" id="step1">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
@@ -23,6 +26,7 @@
             <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
         </div>
 
+        <!-- Step 2: User Goal -->
         <div class="step" id="step2">
             <h2>Your Goal</h2>
             <p>Select your training focus:</p>
@@ -37,6 +41,7 @@
             </div>
         </div>
 
+        <!-- Step 3: Experience Level -->
         <div class="step" id="step3">
             <h2>Experience Level</h2>
             <p>Choose your fitness level:</p>
@@ -51,6 +56,7 @@
             </div>
         </div>
 
+        <!-- Step 4: Workout Preferences -->
         <div class="step" id="step4">
             <h2>Workout Preferences</h2>
             <p>Select your preferred style:</p>
@@ -68,35 +74,13 @@
             </div>
             <div class="button-group">
                 <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="prefsNextBtn">Next</button>
-            </div>
-        </div>
-
-        <div class="step" id="step5">
-            <h2>Mesocycle Length</h2>
-            <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
-            <div class="card-group" data-field="mesoLength">
-                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Short</p></div>
-                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Standard</p></div>
-                <div class="goal-card" data-value="8" role="button" tabindex="0"><h3>8</h3><p>Long</p></div>
-                <div class="goal-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="mesoLengthNextBtn">Next</button>
-            </div>
-        </div>
-
-        <div class="step" id="step6">
-            <h2>✅ All Set!</h2>
-            <p>Your preferences have been saved.</p>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="finishOnboardingBtn">Go to Home Screen</button>
+                <!-- This button now finishes the simplified onboarding -->
+                <button class="cta-button" id="finishOnboardingBtn">Create My Plan</button>
             </div>
         </div>
     </div>
 
+    <!-- Home Screen: Main navigation hub for the user. -->
     <div id="home-screen" class="container hidden">
         <div class="main-title">PROGRESSION</div>
         <div class="divider"></div>
@@ -107,6 +91,7 @@
         </div>
     </div>
 
+    <!-- Mesocycle Builder: For users who want to create a custom plan. -->
     <div id="builder-view" class="container hidden">
         <div class="workout-header">
             <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
@@ -119,18 +104,22 @@
         </div>
     </div>
 
+    <!-- Daily Workout View: Where the user tracks their workout for the day. -->
     <div id="daily-workout-view" class="hidden">
         <div class="workout-header">
             <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
-            <h2 id="workout-day-title"></h2>
-            <p id="workout-date"></p>
+            <h2 id="workout-day-title">Workout Title</h2>
+            <p id="workout-date">Date</p>
         </div>
-        <div id="exercise-list-container"></div>
+        <div id="exercise-list-container">
+            <!-- Exercise cards will be dynamically inserted here -->
+        </div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
         </div>
     </div>
 
+    <!-- Modal: Used for pop-up dialogs like selecting mesocycle length. -->
     <div id="modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-btn" id="closeModalBtn">&times;</span>
@@ -138,7 +127,7 @@
         </div>
     </div>
 
-    <script defer src="app.js"></script>
+    <script src="app.js"></script>
 
 </body>
 </html>
