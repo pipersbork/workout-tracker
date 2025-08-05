@@ -13,7 +13,6 @@
 <body>
 
     <div class="container" id="onboarding-container">
-
         <div class="progress-bar"><div class="progress"></div></div>
 
         <div class="step active" id="step1">
@@ -179,17 +178,38 @@
         </div>
     </div>
     
-    <div id="daily-workout-view" class="hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
-            <h2 id="workout-day-title"></h2>
-            <p id="workout-date"></p>
+    <template id="add-exercise-template">
+        <h2>Add Exercise</h2>
+        <input type="text" id="exercise-search" placeholder="Search for an exercise...">
+        <div id="exercise-list-modal">
+            </div>
+    </template>
+
+    <template id="edit-exercise-template">
+        <h2 id="edit-exercise-name"></h2>
+        <div class="edit-exercise-form">
+            <label for="edit-sets">Sets</label>
+            <input type="number" id="edit-sets" class="form-input">
+            
+            <label for="edit-reps">Reps</label>
+            <input type="text" id="edit-reps" class="form-input" placeholder="e.g., 10, 8-12, AMRAP">
+            
+            <label for="edit-notes">Notes (Optional)</label>
+            <textarea id="edit-notes" class="form-input" rows="3" placeholder="e.g., Drop set on last set"></textarea>
         </div>
-        <div id="exercise-list-container"></div>
-        <div class="workout-actions">
-            <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
+
+        <h4>Designator</h4>
+        <div class="designator-group" data-field="designator">
+            <div class="designator-btn" data-value="primary">Primary</div>
+            <div class="designator-btn" data-value="secondary">Secondary</div>
+            <div class="designator-btn" data-value="maintenance">Maintenance</div>
         </div>
-    </div>
+
+        <div class="button-group">
+            <button id="modal-delete-btn" class="cta-button secondary-button">Delete</button>
+            <button id="modal-save-btn" class="cta-button">Save</button>
+        </div>
+    </template>
 
     <script defer src="app.js"></script>
 
