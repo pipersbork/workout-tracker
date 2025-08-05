@@ -123,6 +123,62 @@
         </div>
     </div>
 
+    <div id="edit-day-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backToBuilderBtn">&larr; Back</button>
+            <h2 id="edit-day-title"></h2>
+        </div>
+    
+        <div id="exercise-plan-container">
+            </div>
+        
+        <div class="edit-day-actions">
+            <button class="cta-button secondary-button" id="add-exercise-btn">+ Add Exercise</button>
+            <button class="cta-button" id="save-day-btn">Save Day</button>
+        </div>
+    </div>
+
+    <div id="active-workout-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backFromActiveWorkout">&larr; Back</button>
+            <h2 id="active-workout-title"></h2>
+        </div>
+    
+        <div id="active-exercise-list">
+            </div>
+    
+        <div class="workout-actions">
+            <button id="complete-active-workout-btn" class="cta-button">Finish Workout</button>
+        </div>
+    </div>
+
+    <div id="review-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backFromReview">&larr; Home</button>
+            <h2>Review Workouts</h2>
+        </div>
+        
+        <div id="past-workouts-list">
+            </div>
+    </div>
+
+    <div id="workout-details-view" class="container hidden">
+        <div class="workout-header">
+            <button class="back-btn" id="backToReviewList">&larr; Back</button>
+            <h2 id="details-workout-title"></h2>
+            <p id="details-workout-date"></p>
+        </div>
+        <div id="workout-details-content">
+            </div>
+    </div>
+    
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
     <div id="daily-workout-view" class="hidden">
         <div class="workout-header">
             <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
@@ -132,13 +188,6 @@
         <div id="exercise-list-container"></div>
         <div class="workout-actions">
             <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
-        </div>
-    </div>
-    
-    <div id="modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <div id="modal-body"></div>
         </div>
     </div>
 
