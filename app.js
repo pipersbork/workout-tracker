@@ -5,9 +5,10 @@ const onboardingContainer = document.getElementById('onboarding-container');
 const homeScreen = document.getElementById('home-screen');
 const builderView = document.getElementById('builder-view');
 const activeWorkoutView = document.getElementById('active-workout-view');
-const dailyWorkoutView = document.getElementById('daily-workout-view');
+const dailyWorkoutView = document.getElementById('daily-workout-view'); // Note: This view is not used in the current flow
 const reviewView = document.getElementById('review-view');
 const workoutDetailsView = document.getElementById('workout-details-view');
+const editDayView = document.getElementById('edit-day-view');
 const modal = document.getElementById('modal');
 
 // All buttons and elements for Onboarding
@@ -33,6 +34,13 @@ const scheduleContainer = document.getElementById('schedule-container');
 const addDayBtn = document.getElementById('add-day-btn');
 const donePlanningBtn = document.getElementById('done-planning-btn');
 
+// All buttons and elements for Edit Day
+const backToBuilderBtn = document.getElementById('backToBuilderBtn');
+const editDayTitle = document.getElementById('edit-day-title');
+const exercisePlanContainer = document.getElementById('exercise-plan-container');
+const addExerciseBtn = document.getElementById('add-exercise-btn');
+const saveDayBtn = document.getElementById('save-day-btn');
+
 // All buttons and elements for Active Workout
 const activeWorkoutTitle = document.getElementById('active-workout-title');
 const activeExerciseList = document.getElementById('active-exercise-list');
@@ -55,12 +63,13 @@ const closeModalBtn = document.querySelector('.close-btn');
 let currentStep = 1;
 let onboardingData = {};
 let currentMesocycle = []; // This will store the workout plan
+let currentEditingDayIndex = -1;
 let currentWorkout = {};
 let workoutStartTime;
 
 // Utility function to show a specific view and hide all others
 function showView(viewId) {
-    const views = [onboardingContainer, homeScreen, builderView, dailyWorkoutView, activeWorkoutView, reviewView, workoutDetailsView, modal];
+    const views = [onboardingContainer, homeScreen, builderView, dailyWorkoutView, activeWorkoutView, reviewView, workoutDetailsView, editDayView, modal];
     views.forEach(view => {
         if (view && view.id === viewId) {
             view.classList.remove('hidden');
@@ -119,7 +128,7 @@ function saveOnboardingData() {
     localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
 }
 
-// --- Mesocycle Builder Logic ---
+// --- Mesocycle Builder & Edit Day Logic ---
 
 function renderMesocycleBuilder() {
     scheduleContainer.innerHTML = '';
@@ -143,6 +152,63 @@ function addWorkoutDay() {
         exercises: []
     };
     currentMesocycle.push(newDay);
+    renderMesocycleBuilder();
+}
+
+function deleteWorkoutDay(index) {
+    if (confirm(`Are you sure you want to delete ${currentMesocycle[index].name}?`)) {
+        currentMesocycle.splice(index, 1);
+        renderMesocycleBuilder();
+    }
+}
+
+function editWorkoutDay(index) {
+    currentEditingDayIndex = index;
+    const day = currentMesocycle[index];
+
+    editDayTitle.textContent = `Edit ${day.name}`;
+    renderExercisesForDay(day);
+    showView('edit-day-view');
+}
+
+function renderExercisesForDay(day) {
+    exercisePlanContainer.innerHTML = '';
+    
+    if (day.exercises.length === 0) {
+        exercisePlanContainer.innerHTML = '<p class="empty-state">No exercises added yet.</p>';
+        return;
+    }
+
+    day.exercises.forEach((exercise, index) => {
+        const exerciseElement = document.createElement('div');
+        exerciseElement.classList.add('exercise-card', 'editable');
+        exerciseElement.innerHTML = `
+            <h3>${exercise.name}</h3>
+            <p>${exercise.sets} sets of ${exercise.reps} reps</p>
+            <div class="exercise-actions">
+                <button class="cta-button edit-exercise-btn" data-exercise-index="${index}">Edit</button>
+                <button class="delete-exercise-btn" data-exercise-index="${index}">&times;</button>
+            </div>
+        `;
+        exercisePlanContainer.appendChild(exerciseElement);
+    });
+}
+
+function addExercise() {
+    // This will be a more complex function later, likely involving a modal
+    // For now, let's add a placeholder exercise
+    const newExercise = {
+        name: `New Exercise ${currentMesocycle[currentEditingDayIndex].exercises.length + 1}`,
+        sets: 3,
+        reps: 12
+    };
+    currentMesocycle[currentEditingDayIndex].exercises.push(newExercise);
+    renderExercisesForDay(currentMesocycle[currentEditingDayIndex]);
+}
+
+function saveDay() {
+    currentEditingDayIndex = -1; // Reset the state
+    showView('builder-view');
     renderMesocycleBuilder();
 }
 
@@ -312,7 +378,6 @@ skipDetailsBtn.addEventListener('click', () => {
     navigateOnboarding('next');
 });
 detailsNextBtn.addEventListener('click', () => {
-    // Gather and save optional details
     onboardingData.gender = document.querySelector('.card-group[data-field="gender"] .selected')?.getAttribute('data-value');
     onboardingData.height = document.getElementById('heightInput').value;
     onboardingData.weight = document.getElementById('weightInput').value;
@@ -325,6 +390,10 @@ document.querySelectorAll('.card-group').forEach(group => group.addEventListener
 
 // Home Screen Event Listeners
 planMesoBtn.addEventListener('click', () => {
+    const savedMesocycle = JSON.parse(localStorage.getItem('currentMesocycle'));
+    if (savedMesocycle) {
+        currentMesocycle = savedMesocycle;
+    }
     showView('builder-view');
     renderMesocycleBuilder();
 });
@@ -334,14 +403,32 @@ reviewWorkoutsBtn.addEventListener('click', () => {
     renderPreviousWorkouts();
 });
 
-// Mesocycle Builder Event Listeners
+// Mesocycle Builder & Edit Day Event Listeners
 backToHomeFromBuilderBtn.addEventListener('click', () => showView('home-screen'));
 addDayBtn.addEventListener('click', addWorkoutDay);
 donePlanningBtn.addEventListener('click', () => {
-    // For now, save the plan and go home.
     localStorage.setItem('currentMesocycle', JSON.stringify(currentMesocycle));
     showView('home-screen');
 });
+backToBuilderBtn.addEventListener('click', () => {
+    currentEditingDayIndex = -1;
+    showView('builder-view');
+});
+addExerciseBtn.addEventListener('click', addExercise);
+saveDayBtn.addEventListener('click', saveDay);
+
+// Event Delegation for dynamically created buttons (Edit/Delete Day)
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('edit-day-btn')) {
+        const index = parseInt(e.target.getAttribute('data-day-index'));
+        editWorkoutDay(index);
+    }
+    if (e.target.classList.contains('delete-day-btn')) {
+        const index = parseInt(e.target.getAttribute('data-day-index'));
+        deleteWorkoutDay(index);
+    }
+});
+
 
 // Active Workout Event Listeners
 backFromActiveWorkoutBtn.addEventListener('click', () => showView('home-screen'));
