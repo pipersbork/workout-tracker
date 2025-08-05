@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             allPlans: [],
             exercises: [],
+            progressChart: null, // To hold the chart instance
         },
 
         elements: {
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             homeScreen: document.getElementById('home-screen'),
             workoutView: document.getElementById('daily-workout-view'),
             builderView: document.getElementById('builder-view'),
+            performanceSummaryView: document.getElementById('performance-summary-view'),
             scheduleContainer: document.getElementById('schedule-container'),
             progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
@@ -112,11 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Home Screen Buttons
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
-            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
+            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('performanceSummary'));
 
             // Back Buttons
             document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromBuilder')?.addEventListener('click', () => this.showView('home'));
+            document.getElementById('backToHomeFromSummary')?.addEventListener('click', () => this.showView('home'));
             document.querySelectorAll('.back-btn-onboarding').forEach(button => {
                 button.addEventListener('click', () => this.previousStep());
             });
@@ -171,6 +174,11 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.workoutView.addEventListener('input', (e) => {
                 if(e.target.matches('.weight-input, .reps-input, .rir-input')) { this.handleSetInput(e.target); }
             });
+            
+            // Performance Summary Listener
+            document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => {
+                this.renderProgressChart(e.target.value);
+            });
         },
         
         openMesoLengthModal() {
@@ -197,11 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.homeScreen.classList.add('hidden');
             this.elements.workoutView.classList.add('hidden');
             this.elements.builderView.classList.add('hidden');
+            this.elements.performanceSummaryView.classList.add('hidden');
 
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
             else if (viewName === 'builder') { this.elements.builderView.classList.remove('hidden'); this.renderBuilder(); }
+            else if (viewName === 'performanceSummary') {
+                this.elements.performanceSummaryView.classList.remove('hidden');
+                this.renderPerformanceSummary();
+            }
         },
 
         // --- BUILDER METHODS ---
@@ -212,9 +225,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
                 return;
             }
-            const muscleOptions = ['Select a Muscle', ...new Set(this.state.exercises.map(ex => ex.muscle))].map(m => `<option value="${m.toLowerCase()}">${this.capitalize(m)}</option>`).join('');
             
-            // UPDATED: Map to control number of exercise slots shown in the UI
+            // UPDATED: Add "Rest Day" to the list of options
+            const muscleList = ['Select a Muscle', 'Rest Day 🧘', ...new Set(this.state.exercises.map(ex => ex.muscle))];
+            const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(' 🧘', '').replace(/ /g, '')}">${m}</option>`).join('');
+
             const exerciseSlotsByFocus = { 
                 'Primary': 3, 
                 'Secondary': 2, 
@@ -228,8 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
                     const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
                     
-                    // UPDATED: Dynamically create dropdowns based on focus
-                    const numSlots = exerciseSlotsByFocus[mg.focus] || 3; // Default to 3
+                    const numSlots = exerciseSlotsByFocus[mg.focus] || 3;
                     const exerciseDropdowns = Array.from({ length: numSlots }).map((_, exerciseSelectIndex) => `
                         <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exerciseSelectIndex}">
                             ${exerciseOptions.replace(`value="${mg.exercises[exerciseSelectIndex]}"`, `value="${mg.exercises[exerciseSelectIndex]}" selected`)}
@@ -241,6 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${focusLevel}
                         </button>
                     `).join('');
+                    
+                    // UPDATED: Conditionally render UI based on whether it's a rest day
+                    const isRestDay = mg.muscle === 'restday';
+
                     return `
                         <div class="muscle-group-block">
                             <div class="muscle-group-header">
@@ -248,13 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
                                         ${muscleOptions.replace(`value="${mg.muscle}"`, `value="${mg.muscle}" selected`)}
                                     </select>
-                                    <div class="focus-buttons">
-                                        ${focusButtons}
-                                    </div>
+                                    ${!isRestDay ? `<div class="focus-buttons">${focusButtons}</div>` : ''}
                                 </div>
                                 <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">🗑️</button>
                             </div>
-                            ${mg.muscle !== 'select a muscle' ? `<div class="exercise-selection-group"><label>Exercises:</label>${exerciseDropdowns}</div>` : ''}
+                            ${!isRestDay && mg.muscle !== 'selectamuscle' ? `<div class="exercise-selection-group"><label>Exercises:</label>${exerciseDropdowns}</div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -280,20 +296,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.appendChild(dayCard);
             });
         },
-        addDayToBuilder() { this.state.builderPlan.days.push({ label: 'Add a label', muscleGroups: [] }); this.renderBuilder(); },
+        addDayToBuilder() { 
+            // UPDATED: Add a day with one muscle group block already open
+            this.state.builderPlan.days.push({ 
+                label: 'Add a label', 
+                muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }] 
+            }); 
+            this.renderBuilder(); 
+        },
         deleteDayFromBuilder(dayIndex) { this.state.builderPlan.days.splice(dayIndex, 1); this.renderBuilder(); },
         updateDayLabel(dayIndex, newLabel) { this.state.builderPlan.days[dayIndex].label = newLabel; },
         addMuscleGroupToDay(dayIndex) { 
-            // When adding a new group, it defaults to Primary, which has 3 exercise slots.
-            // The underlying array will always have 3 slots to prevent data loss when switching focus.
-            this.state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'select a muscle', focus: 'Primary', exercises: ['', '', ''] }); 
+            this.state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }); 
             this.renderBuilder(); 
         },
         deleteMuscleGroupFromDay(dayIndex, muscleIndex) { this.state.builderPlan.days[dayIndex].muscleGroups.splice(muscleIndex, 1); this.renderBuilder(); },
-        updateMuscleGroup(dayIndex, muscleIndex, newMuscle) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = newMuscle; this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = ['', '', '']; this.renderBuilder(); },
+        updateMuscleGroup(dayIndex, muscleIndex, newMuscle) { 
+            this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = newMuscle; 
+            this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = ['', '', '']; 
+            this.renderBuilder(); 
+        },
         updateMuscleFocus(dayIndex, muscleIndex, newFocus) { 
             this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; 
-            this.renderBuilder(); // Re-render to show the correct number of exercise slots
+            this.renderBuilder();
         },
         updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
         
@@ -324,22 +349,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     newMeso.weeks[i][dayIndex + 1] = {
                         name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
                         completed: false,
-                        exercises: day.muscleGroups.flatMap(mg => 
-                            mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
-                                const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
-                                const setsPerExercise = focusSetMap[mg.focus] || 3;
-                                return {
-                                    exerciseId: `ex_${exName.replace(/\s+/g, '_')}`,
-                                    name: exName,
-                                    muscle: exerciseDetails.muscle || 'Unknown',
-                                    type: mg.focus,
-                                    targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                    targetReps: 10,
-                                    targetRIR: isDeload ? 4 : 2,
-                                    targetLoad: null,
-                                    sets: []
-                                };
-                            })
+                        // UPDATED: Filter out rest days and unused exercise slots when finalizing the plan
+                        exercises: day.muscleGroups
+                            .filter(mg => mg.muscle !== 'restday')
+                            .flatMap(mg => 
+                                mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
+                                    const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
+                                    const setsPerExercise = focusSetMap[mg.focus] || 3;
+                                    return {
+                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`,
+                                        name: exName,
+                                        muscle: exerciseDetails.muscle || 'Unknown',
+                                        type: mg.focus,
+                                        targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
+                                        targetReps: 10,
+                                        targetRIR: isDeload ? 4 : 2,
+                                        targetLoad: null,
+                                        sets: []
+                                    };
+                                })
                         )
                     };
                 });
@@ -405,20 +433,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- PLAN GENERATION & WORKOUT METHODS ---
         getExercisesByMuscle(muscles, count) {
             const allExercises = this.state.exercises.filter(ex => muscles.includes(ex.muscle));
-            // Simple shuffle and slice to get variety
             return allExercises.sort(() => 0.5 - Math.random()).slice(0, count);
         },
 
         generateMesocycle(goal, experience, daysPerWeek, mesoLength) {
-            console.log(`Generating a ${mesoLength}-week plan for a ${experience} user with a goal of ${goal}, training ${daysPerWeek} days a week.`);
-            
             const planTemplates = {
                 '3': { name: "Full Body Split", days: ["Full Body A", "Full Body B", "Full Body C"]},
                 '4': { name: "Upper/Lower Split", days: ["Upper A", "Lower A", "Upper B", "Lower B"]},
                 '5': { name: "Push/Pull/Legs Split", days: ["Push", "Pull", "Legs", "Upper", "Lower"]},
                 '6': { name: "Push/Pull/Legs x2", days: ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"]}
             };
-
             const dayTemplates = {
                 "Full Body A": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Quads"], count: 1}, {muscles: ["Shoulders"], count: 1} ],
                 "Full Body B": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Hamstrings"], count: 1}, {muscles: ["Biceps", "Triceps"], count: 1} ],
@@ -439,53 +463,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Pull B": [ {muscles: ["Back"], count: 2}, {muscles: ["Biceps"], count: 1} ],
                 "Legs B": [ {muscles: ["Hamstrings"], count: 2}, {muscles: ["Quads"], count: 1} ],
             };
-
-            const selectedTemplate = planTemplates[daysPerWeek] || planTemplates['3']; // Default to 3 days
-            const newMeso = {
-                id: `meso_${Date.now()}`,
-                startDate: new Date().toISOString(),
-                durationWeeks: mesoLength,
-                goal: goal,
-                experience: experience,
-                weeks: {}
-            };
-
+            const selectedTemplate = planTemplates[daysPerWeek] || planTemplates['3'];
+            const newMeso = { id: `meso_${Date.now()}`, startDate: new Date().toISOString(), durationWeeks: mesoLength, goal, experience, weeks: {} };
             const setsByExperience = { beginner: 3, experienced: 4, advanced: 4 };
             const targetSets = setsByExperience[experience] || 3;
-
             for (let week = 1; week <= mesoLength; week++) {
                 newMeso.weeks[week] = {};
                 const isDeload = (week === mesoLength);
-
                 selectedTemplate.days.forEach((dayName, index) => {
                     const dayNumber = index + 1;
                     const workoutExercises = [];
-                    const dayComposition = dayTemplates[dayName.replace(/ [AB]$/, '')] || dayTemplates[dayName]; // Handles "Upper A" -> "Upper"
-                    
+                    const dayComposition = dayTemplates[dayName.replace(/ [AB]$/, '')] || dayTemplates[dayName];
                     dayComposition.forEach(group => {
                         this.getExercisesByMuscle(group.muscles, group.count).forEach(ex => {
                             workoutExercises.push({
-                                exerciseId: ex.id,
-                                name: ex.name,
-                                muscle: ex.muscle,
-                                type: 'Primary', // Simplified for generated plans
+                                exerciseId: ex.id, name: ex.name, muscle: ex.muscle, type: 'Primary',
                                 targetSets: isDeload ? Math.ceil(targetSets / 2) : targetSets,
-                                targetReps: 10,
-                                targetRIR: isDeload ? 4 : 2,
-                                targetLoad: null, // User establishes weight on first go
-                                sets: []
+                                targetReps: 10, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
                             });
                         });
                     });
-
-                    newMeso.weeks[week][dayNumber] = {
-                        name: dayName,
-                        completed: false,
-                        exercises: workoutExercises
-                    };
+                    newMeso.weeks[week][dayNumber] = { name: dayName, completed: false, exercises: workoutExercises };
                 });
             }
-
             return newMeso;
         },
 
@@ -494,26 +494,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const workoutTitle = document.getElementById('workout-day-title');
             const workoutDate = document.getElementById('workout-date');
             container.innerHTML = ''; 
-
             const today = new Date();
             workoutDate.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
             if (!this.state.plan || !this.state.plan.weeks[weekNumber] || !this.state.plan.weeks[weekNumber][dayNumber]) {
                 workoutTitle.textContent = "No Workout Today";
                 container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete. Go to "Plan Mesocycle" to build your schedule.</p>`;
                 document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
-             document.getElementById('complete-workout-btn').classList.remove('hidden');
-
+            document.getElementById('complete-workout-btn').classList.remove('hidden');
             const workout = this.state.plan.weeks[weekNumber][dayNumber];
             workoutTitle.textContent = workout.name;
-
             if (workout.exercises.length === 0) {
-                container.innerHTML = `<p class="placeholder-text">This workout has no exercises. Add some in the builder!</p>`;
+                container.innerHTML = `<p class="placeholder-text">This is a rest day. Enjoy it!</p>`;
+                document.getElementById('complete-workout-btn').classList.remove('hidden'); // Allow completing rest days
                 return;
             }
-
             workout.exercises.forEach((ex, exIndex) => {
                 const setsHTML = ex.sets.map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir)).join('');
                 const exerciseCard = document.createElement('div');
@@ -558,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const value = parseFloat(inputElement.value);
             const property = inputElement.classList.contains('weight-input') ? 'weight' :
                              inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
-            
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
             if(workout && workout.exercises[exerciseIndex] && workout.exercises[exerciseIndex].sets[setIndex]) {
                workout.exercises[exerciseIndex].sets[setIndex][property] = value;
@@ -568,11 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
         addSet(exerciseIndex) {
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
             const exercise = workout.exercises[exerciseIndex];
-            
             const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-            
             exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
-
             const setContainer = document.getElementById(`sets-for-ex-${exerciseIndex}`);
             const newSetIndex = exercise.sets.length - 1;
             const newSetHTML = this.createSetRowHTML(exerciseIndex, newSetIndex, previousWeight, '', '');
@@ -580,23 +572,19 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         completeWorkout() {
-            if (!confirm("Are you sure you want to complete this workout?")) return;
-
+            if (!confirm("Are you sure you want to complete this day?")) return;
             const { week, day } = this.state.currentView;
             const workout = this.state.plan.weeks[week][day];
             workout.completed = true;
+            workout.completedDate = new Date().toISOString();
 
-            // Only calculate progression if it's not the last week (which is a deload)
-            if (week < this.state.plan.durationWeeks -1) {
+            if (week < this.state.plan.durationWeeks -1 && workout.exercises.length > 0) {
                 this.calculateNextWeekProgression(week);
             }
-
             const dayKeys = Object.keys(this.state.plan.weeks[week]).sort((a,b) => a - b);
             const currentDayIndex = dayKeys.indexOf(day.toString());
-            
             let nextWeek = week;
             let nextDay = null;
-
             if (currentDayIndex < dayKeys.length - 1) {
                 nextDay = parseInt(dayKeys[currentDayIndex + 1]);
             } else {
@@ -612,62 +600,157 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
-            
             this.state.currentView = { week: nextWeek, day: nextDay };
             this.saveStateToStorage();
-            alert("Workout saved! Great job!");
+            alert("Day marked as complete! Great job!");
             this.showView('home');
         },
 
         calculateNextWeekProgression(completedWeekNumber) {
             const nextWeekNumber = completedWeekNumber + 1;
-            if (!this.state.plan.weeks[nextWeekNumber]) {
-                console.log("End of mesocycle, no progression to calculate.");
-                return;
-            }
-
-            // Iterate through each day of the completed week
+            if (!this.state.plan.weeks[nextWeekNumber]) return;
             for (const dayKey in this.state.plan.weeks[completedWeekNumber]) {
                 const completedDay = this.state.plan.weeks[completedWeekNumber][dayKey];
                 const nextWeekDay = this.state.plan.weeks[nextWeekNumber][dayKey];
-
-                if (!nextWeekDay) continue; // Skip if there's no corresponding day next week
-
-                // Iterate through each exercise of the completed day
-                completedDay.exercises.forEach((completedEx, exIndex) => {
+                if (!nextWeekDay) continue;
+                completedDay.exercises.forEach((completedEx) => {
                     const nextWeekEx = nextWeekDay.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
-                    if (!nextWeekEx) return; // Skip if exercise doesn't exist next week
-
+                    if (!nextWeekEx) return;
                     let successfulSets = 0;
                     let lastSetWeight = completedEx.targetLoad || 0;
-
-                    if (completedEx.sets.length === 0) { // If user didn't do the exercise
-                        nextWeekEx.targetLoad = completedEx.targetLoad; // Keep the same weight
+                    if (completedEx.sets.length === 0) {
+                        nextWeekEx.targetLoad = completedEx.targetLoad;
                         return;
                     }
-
-                    // Analyze performance for each set
                     completedEx.sets.forEach(set => {
-                        // A set is "successful" if reps are met or exceeded
-                        if (set.reps >= completedEx.targetReps) {
-                            successfulSets++;
-                        }
-                        lastSetWeight = set.weight; // Keep track of the last used weight
+                        if (set.reps >= completedEx.targetReps) successfulSets++;
+                        lastSetWeight = set.weight;
                     });
-
-                    // Progression Logic: If all sets were successful, increase the weight
                     if (successfulSets >= completedEx.targetSets) {
-                        // Simple progression: add 5 lbs. Can be made more complex later.
                         nextWeekEx.targetLoad = lastSetWeight + 5;
-                        console.log(`Progressing ${nextWeekEx.name}: New target load is ${nextWeekEx.targetLoad} lbs.`);
                     } else {
-                        // If not all sets were successful, keep the same weight for next week
                         nextWeekEx.targetLoad = lastSetWeight;
-                        console.log(`Maintaining ${nextWeekEx.name}: Target load remains ${nextWeekEx.targetLoad} lbs.`);
                     }
                 });
             }
         },
+
+        // --- PERFORMANCE SUMMARY METHODS ---
+        renderPerformanceSummary() {
+            const listContainer = document.getElementById('completed-workouts-list');
+            const exerciseSelect = document.getElementById('exercise-tracker-select');
+            listContainer.innerHTML = '';
+            exerciseSelect.innerHTML = '<option value="">Select an exercise to track</option>';
+
+            const completedWorkouts = [];
+            const uniqueExercises = new Set();
+
+            if (this.state.plan && this.state.plan.weeks) {
+                Object.values(this.state.plan.weeks).forEach(week => {
+                    Object.values(week).forEach(day => {
+                        if (day.completed) {
+                            completedWorkouts.push(day);
+                            day.exercises.forEach(ex => uniqueExercises.add(ex.name));
+                        }
+                    });
+                });
+            }
+
+            if (completedWorkouts.length === 0) {
+                listContainer.innerHTML = '<p class="placeholder-text">No completed workouts yet. Go get one done!</p>';
+            } else {
+                completedWorkouts.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate))
+                    .forEach(workout => {
+                        const workoutItem = document.createElement('div');
+                        workoutItem.className = 'summary-item';
+                        workoutItem.innerHTML = `
+                            <h4>${workout.name}</h4>
+                            <p>${new Date(workout.completedDate).toLocaleDateString()}</p>
+                        `;
+                        listContainer.appendChild(workoutItem);
+                    });
+            }
+
+            uniqueExercises.forEach(exName => {
+                const option = document.createElement('option');
+                option.value = exName;
+                option.textContent = exName;
+                exerciseSelect.appendChild(option);
+            });
+            
+            this.renderProgressChart("");
+        },
+        
+        renderProgressChart(exerciseName) {
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            
+            if (this.state.progressChart) {
+                this.state.progressChart.destroy();
+            }
+
+            if (!exerciseName) {
+                return;
+            }
+
+            const labels = [];
+            const dataPoints = [];
+
+            if (this.state.plan && this.state.plan.weeks) {
+                 Object.values(this.state.plan.weeks).forEach((week, weekIndex) => {
+                    Object.values(week).forEach(day => {
+                        if (day.completed) {
+                            const exercise = day.exercises.find(ex => ex.name === exerciseName);
+                            if (exercise && exercise.sets.length > 0) {
+                                const maxWeight = Math.max(...exercise.sets.map(s => s.weight || 0));
+                                if (maxWeight > 0) {
+                                    labels.push(`W${weekIndex + 1}`);
+                                    dataPoints.push(maxWeight);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            this.state.progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Max Weight for ${exerciseName} (LBS)`,
+                        data: dataPoints,
+                        borderColor: 'var(--primary-color)',
+                        backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'var(--text-muted-color)' },
+                            grid: { color: 'var(--border-color)' }
+                        },
+                        x: {
+                            ticks: { color: 'var(--text-muted-color)' },
+                            grid: { color: 'var(--border-color)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'var(--text-color)'
+                            }
+                        }
+                    }
+                }
+            });
+        },
+
+
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
     };
     
