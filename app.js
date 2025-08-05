@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Home Screen Buttons
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
-            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
+            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('review')); // UPDATED
 
             // Back Buttons
             document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
@@ -376,8 +376,44 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         // --- PLAN GENERATION & WORKOUT METHODS ---
+        getExercisesByMuscle(muscles, count) {
+            const allExercises = this.state.exercises.filter(ex => muscles.includes(ex.muscle));
+            // Simple shuffle and slice to get variety
+            return allExercises.sort(() => 0.5 - Math.random()).slice(0, count);
+        },
+
         generateMesocycle(goal, experience, daysPerWeek, mesoLength) {
             console.log(`Generating a ${mesoLength}-week plan for a ${experience} user with a goal of ${goal}, training ${daysPerWeek} days a week.`);
+            
+            const planTemplates = {
+                '3': { name: "Full Body Split", days: ["Full Body A", "Full Body B", "Full Body C"]},
+                '4': { name: "Upper/Lower Split", days: ["Upper A", "Lower A", "Upper B", "Lower B"]},
+                '5': { name: "Push/Pull/Legs Split", days: ["Push", "Pull", "Legs", "Upper", "Lower"]},
+                '6': { name: "Push/Pull/Legs x2", days: ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"]}
+            };
+
+            const dayTemplates = {
+                "Full Body A": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Quads"], count: 1}, {muscles: ["Shoulders"], count: 1} ],
+                "Full Body B": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Hamstrings"], count: 1}, {muscles: ["Biceps", "Triceps"], count: 1} ],
+                "Full Body C": [ {muscles: ["Chest"], count: 1}, {muscles: ["Back"], count: 1}, {muscles: ["Quads", "Hamstrings"], count: 1} ],
+                "Upper A": [ {muscles: ["Chest"], count: 2}, {muscles: ["Back"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Biceps"], count: 1}, {muscles: ["Triceps"], count: 1} ],
+                "Lower A": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 2}, {muscles: ["Calves"], count: 1} ],
+                "Upper B": [ {muscles: ["Back"], count: 2}, {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Biceps"], count: 1}, {muscles: ["Triceps"], count: 1} ],
+                "Lower B": [ {muscles: ["Hamstrings"], count: 2}, {muscles: ["Quads"], count: 2}, {muscles: ["Calves"], count: 1} ],
+                "Push": [ {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 2}, {muscles: ["Triceps"], count: 2} ],
+                "Pull": [ {muscles: ["Back"], count: 3}, {muscles: ["Biceps"], count: 2} ],
+                "Legs": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 2}, {muscles: ["Calves"], count: 2} ],
+                "Upper": [ {muscles: ["Chest"], count: 2}, {muscles: ["Back"], count: 2}, {muscles: ["Shoulders", "Biceps", "Triceps"], count: 1} ],
+                "Lower": [ {muscles: ["Quads", "Hamstrings"], count: 2}, {muscles: ["Calves"], count: 1} ],
+                "Push A": [ {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Triceps"], count: 1} ],
+                "Pull A": [ {muscles: ["Back"], count: 2}, {muscles: ["Biceps"], count: 1} ],
+                "Legs A": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 1} ],
+                "Push B": [ {muscles: ["Shoulders"], count: 2}, {muscles: ["Chest"], count: 1}, {muscles: ["Triceps"], count: 1} ],
+                "Pull B": [ {muscles: ["Back"], count: 2}, {muscles: ["Biceps"], count: 1} ],
+                "Legs B": [ {muscles: ["Hamstrings"], count: 2}, {muscles: ["Quads"], count: 1} ],
+            };
+
+            const selectedTemplate = planTemplates[daysPerWeek] || planTemplates['3']; // Default to 3 days
             const newMeso = {
                 id: `meso_${Date.now()}`,
                 startDate: new Date().toISOString(),
@@ -386,20 +422,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 experience: experience,
                 weeks: {}
             };
-            // This is a dummy structure. We'll build this out later.
-            for(let i = 1; i <= mesoLength; i++) {
-                newMeso.weeks[i] = {
-                    1: {
-                        name: "Full Body Workout",
+
+            const setsByExperience = { beginner: 3, experienced: 4, advanced: 4 };
+            const targetSets = setsByExperience[experience] || 3;
+
+            for (let week = 1; week <= mesoLength; week++) {
+                newMeso.weeks[week] = {};
+                const isDeload = (week === mesoLength);
+
+                selectedTemplate.days.forEach((dayName, index) => {
+                    const dayNumber = index + 1;
+                    const workoutExercises = [];
+                    const dayComposition = dayTemplates[dayName.replace(/ [AB]$/, '')] || dayTemplates[dayName]; // Handles "Upper A" -> "Upper"
+                    
+                    dayComposition.forEach(group => {
+                        this.getExercisesByMuscle(group.muscles, group.count).forEach(ex => {
+                            workoutExercises.push({
+                                exerciseId: ex.id,
+                                name: ex.name,
+                                muscle: ex.muscle,
+                                type: 'Primary', // Simplified for generated plans
+                                targetSets: isDeload ? Math.ceil(targetSets / 2) : targetSets,
+                                targetReps: 10,
+                                targetRIR: isDeload ? 4 : 2,
+                                targetLoad: null, // User establishes weight on first go
+                                sets: []
+                            });
+                        });
+                    });
+
+                    newMeso.weeks[week][dayNumber] = {
+                        name: dayName,
                         completed: false,
-                        exercises: [
-                            { exerciseId: "ex_squat", name: "Barbell Squat", muscle: "Quads", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 135, sets: [] },
-                            { exerciseId: "ex_bench_press", name: "Barbell Bench Press", muscle: "Chest", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 135, sets: [] },
-                            { exerciseId: "ex_pull_ups", name: "Pull Up", muscle: "Back", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 0, sets: [] },
-                        ]
-                    }
-                };
+                        exercises: workoutExercises
+                    };
+                });
             }
+
             return newMeso;
         },
 
