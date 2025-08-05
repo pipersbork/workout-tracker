@@ -469,19 +469,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         handleSetInput(inputElement) {
             const { exerciseIndex, setIndex } = inputElement.dataset;
-            const value = inputElement.value;
+            const value = parseFloat(inputElement.value);
             const property = inputElement.classList.contains('weight-input') ? 'weight' :
                              inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
             
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
-            workout.exercises[exerciseIndex].sets[setIndex][property] = value;
+            if(workout && workout.exercises[exerciseIndex] && workout.exercises[exerciseIndex].sets[setIndex]) {
+               workout.exercises[exerciseIndex].sets[setIndex][property] = value;
+            }
         },
 
         addSet(exerciseIndex) {
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
             const exercise = workout.exercises[exerciseIndex];
             
-            // Pre-fill with previous set's weight, or target load if it's the first set
             const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
             
             exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
@@ -499,29 +500,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const workout = this.state.plan.weeks[week][day];
             workout.completed = true;
 
-            this.calculateNextWeekProgression(week);
+            // Only calculate progression if it's not the last week (which is a deload)
+            if (week < this.state.plan.durationWeeks -1) {
+                this.calculateNextWeekProgression(week);
+            }
 
-            // Find the next workout day
-            const dayKeys = Object.keys(this.state.plan.weeks[week]).sort();
+            const dayKeys = Object.keys(this.state.plan.weeks[week]).sort((a,b) => a - b);
             const currentDayIndex = dayKeys.indexOf(day.toString());
             
             let nextWeek = week;
             let nextDay = null;
 
             if (currentDayIndex < dayKeys.length - 1) {
-                // Next day in the same week
                 nextDay = parseInt(dayKeys[currentDayIndex + 1]);
             } else {
-                // Move to the next week
                 if (week < this.state.plan.durationWeeks) {
                     nextWeek = week + 1;
-                    const nextWeekDayKeys = Object.keys(this.state.plan.weeks[nextWeek]).sort();
+                    const nextWeekDayKeys = Object.keys(this.state.plan.weeks[nextWeek]).sort((a,b) => a - b);
                     nextDay = parseInt(nextWeekDayKeys[0]);
                 } else {
-                    // Mesocycle complete
                     alert("Congratulations! You've completed your mesocycle!");
                     this.showView('home');
-                    // Reset view to the start of the plan for next time
                     this.state.currentView = { week: 1, day: 1 }; 
                     this.saveStateToStorage();
                     return;
@@ -535,9 +534,53 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         calculateNextWeekProgression(completedWeekNumber) {
-            console.log(`Calculating progression based on performance in week ${completedWeekNumber}.`);
-            // This is where more complex logic will go.
-            // For example, check if rep targets were met and increase weight for next week.
+            const nextWeekNumber = completedWeekNumber + 1;
+            if (!this.state.plan.weeks[nextWeekNumber]) {
+                console.log("End of mesocycle, no progression to calculate.");
+                return;
+            }
+
+            // Iterate through each day of the completed week
+            for (const dayKey in this.state.plan.weeks[completedWeekNumber]) {
+                const completedDay = this.state.plan.weeks[completedWeekNumber][dayKey];
+                const nextWeekDay = this.state.plan.weeks[nextWeekNumber][dayKey];
+
+                if (!nextWeekDay) continue; // Skip if there's no corresponding day next week
+
+                // Iterate through each exercise of the completed day
+                completedDay.exercises.forEach((completedEx, exIndex) => {
+                    const nextWeekEx = nextWeekDay.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
+                    if (!nextWeekEx) return; // Skip if exercise doesn't exist next week
+
+                    let successfulSets = 0;
+                    let lastSetWeight = completedEx.targetLoad || 0;
+
+                    if (completedEx.sets.length === 0) { // If user didn't do the exercise
+                        nextWeekEx.targetLoad = completedEx.targetLoad; // Keep the same weight
+                        return;
+                    }
+
+                    // Analyze performance for each set
+                    completedEx.sets.forEach(set => {
+                        // A set is "successful" if reps are met or exceeded
+                        if (set.reps >= completedEx.targetReps) {
+                            successfulSets++;
+                        }
+                        lastSetWeight = set.weight; // Keep track of the last used weight
+                    });
+
+                    // Progression Logic: If all sets were successful, increase the weight
+                    if (successfulSets >= completedEx.targetSets) {
+                        // Simple progression: add 5 lbs. Can be made more complex later.
+                        nextWeekEx.targetLoad = lastSetWeight + 5;
+                        console.log(`Progressing ${nextWeekEx.name}: New target load is ${nextWeekEx.targetLoad} lbs.`);
+                    } else {
+                        // If not all sets were successful, keep the same weight for next week
+                        nextWeekEx.targetLoad = lastSetWeight;
+                        console.log(`Maintaining ${nextWeekEx.name}: Target load remains ${nextWeekEx.targetLoad} lbs.`);
+                    }
+                });
+            }
         },
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
     };
