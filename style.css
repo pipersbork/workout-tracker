@@ -125,6 +125,16 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .slider-value { font-weight: 600; color: var(--primary-color); min-width: 20px; }
 #save-feedback-btn { width: 100%; margin-top: 1rem; }
 /* ===========================
+   HISTORY VIEW STYLES
+=========================== */
+#history-list-container { display: flex; flex-direction: column; gap: 1rem; }
+.history-item-card { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; border-left: 5px solid var(--primary-color); }
+.history-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.history-item-header h3 { margin: 0; font-size: 1.2rem; }
+.history-item-header span { font-size: 0.9rem; color: var(--text-muted-color); }
+.history-exercise-list { list-style: none; padding-left: 1rem; margin: 0; }
+.history-exercise-list li { padding: 0.25rem 0; }
+/* ===========================
    ANIMATIONS & RESPONSIVENESS
 =========================== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
