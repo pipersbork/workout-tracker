@@ -5,7 +5,6 @@ const onboardingContainer = document.getElementById('onboarding-container');
 const homeScreen = document.getElementById('home-screen');
 const builderView = document.getElementById('builder-view');
 const activeWorkoutView = document.getElementById('active-workout-view');
-const dailyWorkoutView = document.getElementById('daily-workout-view'); // Note: This view is not used in the current flow
 const reviewView = document.getElementById('review-view');
 const workoutDetailsView = document.getElementById('workout-details-view');
 const editDayView = document.getElementById('edit-day-view');
@@ -58,18 +57,35 @@ const workoutDetailsContent = document.getElementById('workout-details-content')
 // Modal Elements
 const modalBody = document.getElementById('modal-body');
 const closeModalBtn = document.querySelector('.close-btn');
+const addExerciseTemplate = document.getElementById('add-exercise-template');
+const editExerciseTemplate = document.getElementById('edit-exercise-template');
 
 // State Variables
 let currentStep = 1;
 let onboardingData = {};
-let currentMesocycle = []; // This will store the workout plan
+let currentMesocycle = [];
 let currentEditingDayIndex = -1;
+let currentEditingExerciseIndex = -1;
 let currentWorkout = {};
 let workoutStartTime;
 
+// A simple exercise database
+const exerciseDatabase = [
+    { name: 'Barbell Squat', muscles: ['quads', 'glutes'] },
+    { name: 'Dumbbell Bench Press', muscles: ['chest', 'triceps'] },
+    { name: 'Pull-ups', muscles: ['back', 'biceps'] },
+    { name: 'Deadlift', muscles: ['hamstrings', 'back'] },
+    { name: 'Leg Press', muscles: ['quads', 'glutes'] },
+    { name: 'Overhead Press', muscles: ['shoulders', 'triceps'] },
+    { name: 'Barbell Rows', muscles: ['back', 'biceps'] },
+    { name: 'Bicep Curls', muscles: ['biceps'] },
+    { name: 'Tricep Pushdowns', muscles: ['triceps'] },
+    { name: 'Leg Extensions', muscles: ['quads'] },
+];
+
 // Utility function to show a specific view and hide all others
 function showView(viewId) {
-    const views = [onboardingContainer, homeScreen, builderView, dailyWorkoutView, activeWorkoutView, reviewView, workoutDetailsView, editDayView, modal];
+    const views = [onboardingContainer, homeScreen, builderView, activeWorkoutView, reviewView, workoutDetailsView, editDayView, modal];
     views.forEach(view => {
         if (view && view.id === viewId) {
             view.classList.remove('hidden');
@@ -92,12 +108,9 @@ function handleCardSelection(event) {
     const cardGroup = card.parentElement;
     const field = cardGroup.getAttribute('data-field');
 
-    // Deselect all other cards in the group
     cardGroup.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
-    // Select the clicked card
     card.classList.add('selected');
 
-    // Store the selected value
     onboardingData[field] = card.getAttribute('data-value');
 }
 
@@ -124,7 +137,6 @@ function navigateOnboarding(direction) {
 }
 
 function saveOnboardingData() {
-    // Save data to localStorage
     localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
 }
 
@@ -183,7 +195,7 @@ function renderExercisesForDay(day) {
         const exerciseElement = document.createElement('div');
         exerciseElement.classList.add('exercise-card', 'editable');
         exerciseElement.innerHTML = `
-            <h3>${exercise.name}</h3>
+            <h3>${exercise.name} <span class="designator">${exercise.designator}</span></h3>
             <p>${exercise.sets} sets of ${exercise.reps} reps</p>
             <div class="exercise-actions">
                 <button class="cta-button edit-exercise-btn" data-exercise-index="${index}">Edit</button>
@@ -195,19 +207,88 @@ function renderExercisesForDay(day) {
 }
 
 function addExercise() {
-    // This will be a more complex function later, likely involving a modal
-    // For now, let's add a placeholder exercise
-    const newExercise = {
-        name: `New Exercise ${currentMesocycle[currentEditingDayIndex].exercises.length + 1}`,
-        sets: 3,
-        reps: 12
-    };
-    currentMesocycle[currentEditingDayIndex].exercises.push(newExercise);
+    modalBody.innerHTML = '';
+    modalBody.appendChild(addExerciseTemplate.content.cloneNode(true));
+    modal.classList.remove('hidden');
+
+    const exerciseListModal = document.getElementById('exercise-list-modal');
+    const searchInput = document.getElementById('exercise-search');
+
+    renderExerciseList(exerciseDatabase, exerciseListModal);
+
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredExercises = exerciseDatabase.filter(ex => 
+            ex.name.toLowerCase().includes(searchTerm)
+        );
+        renderExerciseList(filteredExercises, exerciseListModal);
+    });
+}
+
+function renderExerciseList(exercises, container) {
+    container.innerHTML = '';
+    exercises.forEach(ex => {
+        const exerciseCard = document.createElement('div');
+        exerciseCard.classList.add('exercise-list-card');
+        exerciseCard.setAttribute('data-name', ex.name);
+        exerciseCard.innerHTML = `<h3>${ex.name}</h3>`;
+        container.appendChild(exerciseCard);
+    });
+}
+
+function editExercise(index) {
+    currentEditingExerciseIndex = index;
+    const exercise = currentMesocycle[currentEditingDayIndex].exercises[index];
+
+    modalBody.innerHTML = '';
+    modalBody.appendChild(editExerciseTemplate.content.cloneNode(true));
+    modal.classList.remove('hidden');
+
+    document.getElementById('edit-exercise-name').textContent = exercise.name;
+    document.getElementById('edit-sets').value = exercise.sets;
+    document.getElementById('edit-reps').value = exercise.reps;
+    document.getElementById('edit-notes').value = exercise.notes || '';
+
+    const designatorBtns = document.querySelectorAll('.designator-btn');
+    designatorBtns.forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.getAttribute('data-value') === exercise.designator) {
+            btn.classList.add('selected');
+        }
+    });
+
+    document.querySelectorAll('.designator-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.designator-btn').forEach(b => b.classList.remove('selected'));
+            e.target.classList.add('selected');
+        });
+    });
+}
+
+function saveExerciseChanges() {
+    const exercise = currentMesocycle[currentEditingDayIndex].exercises[currentEditingExerciseIndex];
+    
+    exercise.sets = document.getElementById('edit-sets').value;
+    exercise.reps = document.getElementById('edit-reps').value;
+    exercise.notes = document.getElementById('edit-notes').value;
+    exercise.designator = document.querySelector('.designator-btn.selected')?.getAttribute('data-value');
+
     renderExercisesForDay(currentMesocycle[currentEditingDayIndex]);
+    modal.classList.add('hidden');
+    currentEditingExerciseIndex = -1;
+}
+
+function deleteExerciseFromModal() {
+    if (confirm('Are you sure you want to remove this exercise?')) {
+        currentMesocycle[currentEditingDayIndex].exercises.splice(currentEditingExerciseIndex, 1);
+        renderExercisesForDay(currentMesocycle[currentEditingDayIndex]);
+        modal.classList.add('hidden');
+        currentEditingExerciseIndex = -1;
+    }
 }
 
 function saveDay() {
-    currentEditingDayIndex = -1; // Reset the state
+    currentEditingDayIndex = -1;
     showView('builder-view');
     renderMesocycleBuilder();
 }
@@ -215,16 +296,24 @@ function saveDay() {
 // --- Active Workout Logic ---
 
 function startNextWorkout() {
-    // For now, we'll use placeholder data. You'll replace this with your mesocycle plan later.
-    currentWorkout = {
-        date: new Date().toISOString().split('T')[0],
-        day: 'Day 1 - Placeholder',
-        exercises: [
-            { name: 'Barbell Squat', sets: 3, reps: 8, rest: 120 },
-            { name: 'Dumbbell Bench Press', sets: 3, reps: 10, rest: 90 },
-            { name: 'Pull-ups', sets: 3, reps: 'AMRAP', rest: 90 },
-        ]
-    };
+    const savedMesocycle = JSON.parse(localStorage.getItem('currentMesocycle')) || [];
+    if (savedMesocycle.length > 0) {
+        currentWorkout = {
+            date: new Date().toISOString().split('T')[0],
+            day: savedMesocycle[0].name, // Use the first day for now
+            exercises: savedMesocycle[0].exercises
+        };
+    } else {
+        // Fallback placeholder if no plan is saved
+        currentWorkout = {
+            date: new Date().toISOString().split('T')[0],
+            day: 'Day 1 - Placeholder',
+            exercises: [
+                { name: 'Barbell Squat', sets: 3, reps: '8-10', rest: 120 },
+                { name: 'Dumbbell Bench Press', sets: 3, reps: '10-12', rest: 90 },
+            ]
+        };
+    }
 
     activeWorkoutTitle.textContent = currentWorkout.day;
     renderActiveExercises();
@@ -417,7 +506,7 @@ backToBuilderBtn.addEventListener('click', () => {
 addExerciseBtn.addEventListener('click', addExercise);
 saveDayBtn.addEventListener('click', saveDay);
 
-// Event Delegation for dynamically created buttons (Edit/Delete Day)
+// Event Delegation for dynamically created buttons
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('edit-day-btn')) {
         const index = parseInt(e.target.getAttribute('data-day-index'));
@@ -427,8 +516,39 @@ document.addEventListener('click', (e) => {
         const index = parseInt(e.target.getAttribute('data-day-index'));
         deleteWorkoutDay(index);
     }
-});
+    if (e.target.closest('#modal') && e.target.classList.contains('exercise-list-card')) {
+        const selectedExerciseCard = e.target.closest('.exercise-list-card');
+        const exerciseName = selectedExerciseCard.getAttribute('data-name');
+        const newExercise = {
+            name: exerciseName,
+            sets: 3,
+            reps: '10-12',
+            notes: '',
+            designator: 'primary'
+        };
 
+        currentMesocycle[currentEditingDayIndex].exercises.push(newExercise);
+        renderExercisesForDay(currentMesocycle[currentEditingDayIndex]);
+        modal.classList.add('hidden');
+    }
+    if (e.target.classList.contains('edit-exercise-btn')) {
+        const index = parseInt(e.target.getAttribute('data-exercise-index'));
+        editExercise(index);
+    }
+    if (e.target.classList.contains('delete-exercise-btn')) {
+        const index = parseInt(e.target.getAttribute('data-exercise-index'));
+        if (confirm('Are you sure you want to remove this exercise?')) {
+            currentMesocycle[currentEditingDayIndex].exercises.splice(index, 1);
+            renderExercisesForDay(currentMesocycle[currentEditingDayIndex]);
+        }
+    }
+    if (e.target.id === 'modal-save-btn') {
+        saveExerciseChanges();
+    }
+    if (e.target.id === 'modal-delete-btn') {
+        deleteExerciseFromModal();
+    }
+});
 
 // Active Workout Event Listeners
 backFromActiveWorkoutBtn.addEventListener('click', () => showView('home-screen'));
