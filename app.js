@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Home Screen Buttons
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
-            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('review')); // UPDATED
+            document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => alert('Feature coming soon!'));
 
             // Back Buttons
             document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
@@ -213,17 +213,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             const muscleOptions = ['Select a Muscle', ...new Set(this.state.exercises.map(ex => ex.muscle))].map(m => `<option value="${m.toLowerCase()}">${this.capitalize(m)}</option>`).join('');
+            
+            // UPDATED: Map to control number of exercise slots shown in the UI
+            const exerciseSlotsByFocus = { 
+                'Primary': 3, 
+                'Secondary': 2, 
+                'Maintenance': 1 
+            };
+
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card';
                 const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
                     const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-                    const exerciseDropdowns = [0, 1, 2].map(exerciseSelectIndex => `
+                    
+                    // UPDATED: Dynamically create dropdowns based on focus
+                    const numSlots = exerciseSlotsByFocus[mg.focus] || 3; // Default to 3
+                    const exerciseDropdowns = Array.from({ length: numSlots }).map((_, exerciseSelectIndex) => `
                         <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exerciseSelectIndex}">
                             ${exerciseOptions.replace(`value="${mg.exercises[exerciseSelectIndex]}"`, `value="${mg.exercises[exerciseSelectIndex]}" selected`)}
                         </select>
                     `).join('');
+
                     const focusButtons = ['Primary', 'Secondary', 'Maintenance'].map(focusLevel => `
                         <button class="focus-btn ${mg.focus === focusLevel ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="${focusLevel}">
                             ${focusLevel}
@@ -271,10 +283,18 @@ document.addEventListener('DOMContentLoaded', () => {
         addDayToBuilder() { this.state.builderPlan.days.push({ label: 'Add a label', muscleGroups: [] }); this.renderBuilder(); },
         deleteDayFromBuilder(dayIndex) { this.state.builderPlan.days.splice(dayIndex, 1); this.renderBuilder(); },
         updateDayLabel(dayIndex, newLabel) { this.state.builderPlan.days[dayIndex].label = newLabel; },
-        addMuscleGroupToDay(dayIndex) { this.state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'select a muscle', focus: 'Primary', exercises: ['', '', ''] }); this.renderBuilder(); },
+        addMuscleGroupToDay(dayIndex) { 
+            // When adding a new group, it defaults to Primary, which has 3 exercise slots.
+            // The underlying array will always have 3 slots to prevent data loss when switching focus.
+            this.state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'select a muscle', focus: 'Primary', exercises: ['', '', ''] }); 
+            this.renderBuilder(); 
+        },
         deleteMuscleGroupFromDay(dayIndex, muscleIndex) { this.state.builderPlan.days[dayIndex].muscleGroups.splice(muscleIndex, 1); this.renderBuilder(); },
         updateMuscleGroup(dayIndex, muscleIndex, newMuscle) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = newMuscle; this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = ['', '', '']; this.renderBuilder(); },
-        updateMuscleFocus(dayIndex, muscleIndex, newFocus) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; this.renderBuilder(); },
+        updateMuscleFocus(dayIndex, muscleIndex, newFocus) { 
+            this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; 
+            this.renderBuilder(); // Re-render to show the correct number of exercise slots
+        },
         updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
         
         finalizeAndStartPlan(mesoLength) {
@@ -291,11 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 weeks: {}
             };
             
-            // UPDATED: Evidence-based set volumes
             const focusSetMap = { 
-                'Primary': 5,     // ~15-20 sets/week (MAV)
-                'Secondary': 4,   // ~12-16 sets/week (MEV/MAV)
-                'Maintenance': 2  // ~6-8 sets/week (MV)
+                'Primary': 5,
+                'Secondary': 4,
+                'Maintenance': 2
             };
 
             for (let i = 1; i <= newMeso.durationWeeks; i++) {
