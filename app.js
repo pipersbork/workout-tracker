@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = {
         state: {
             currentStep: 1,
-            totalSteps: 4, // UPDATED: Reduced to 4 steps for a quicker onboarding
+            totalSteps: 4,
             userSelections: { 
                 goal: "", 
                 experience: "", 
@@ -35,15 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
-            // Check if user has completed onboarding before
             if (localStorage.getItem("onboardingCompleted") === "true") {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
                 const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
                 if (savedPlans && savedPlans.length > 0) {
-                    this.state.plan = savedPlans[0]; // Load the most recent plan
+                    this.state.plan = savedPlans[0];
                     this.state.allPlans = savedPlans;
                 } else { 
-                    // If onboarding was done but no plan exists, generate one
                     this.finishOnboarding();
                     return;
                 }
@@ -61,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.state.exercises = await response.json();
             } catch (error) {
                 console.error("Failed to load exercises.json:", error);
-                // You could show an error to the user here
-                this.state.exercises = []; // Set to empty array to prevent further errors
+                this.state.exercises = [];
             }
         },
 
@@ -76,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (savedView) {
                     this.state.currentView = savedView;
                 }
+                 // Set the main plan from allPlans if it exists
+                if (this.state.allPlans.length > 0) {
+                    this.state.plan = this.state.allPlans[0];
+                }
             }
         },
 
@@ -83,6 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
         saveStateToStorage() {
             localStorage.setItem("onboardingCompleted", "true");
             localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
+            // Make sure the current plan is updated in the allPlans array before saving
+            if (this.state.plan) {
+                const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.plan.id);
+                if (planIndex > -1) {
+                    this.state.allPlans[planIndex] = this.state.plan;
+                } else {
+                    this.state.allPlans.push(this.state.plan);
+                }
+            }
             localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
@@ -93,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
-            // UPDATED: The final button now finishes onboarding
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
                 if (this.validateStep('style') && this.validateStep('days')) {
                     this.finishOnboarding();
@@ -143,18 +152,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Onboarding Card Selections
-            document.querySelectorAll('.card-group .goal-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    // Find the parent .card-group to get the data-field attribute
-                    const field = card.closest('.card-group').dataset.field;
-                    const value = card.dataset.value;
-                    this.selectCard(card, field, value);
+            document.querySelectorAll('.card-group').forEach(group => {
+                group.addEventListener('click', (e) => {
+                    const card = e.target.closest('.goal-card');
+                    if (card) {
+                        const field = card.closest('.card-group').dataset.field;
+                        const value = card.dataset.value;
+                        this.selectCard(card, field, value);
+                    }
                 });
             });
 
             // Workout View Listeners
             this.elements.workoutView.addEventListener('click', (e) => {
-                 if (e.target.matches('.add-set-btn')) { this.addSet(e.target.dataset.exerciseIndex); }
+                if (e.target.matches('.add-set-btn')) { this.addSet(e.target.dataset.exerciseIndex); }
                 if (e.target.matches('#complete-workout-btn')) { this.completeWorkout(); }
             });
             this.elements.workoutView.addEventListener('input', (e) => {
@@ -162,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // Opens the modal to select mesocycle length (for the builder)
         openMesoLengthModal() {
             const modalBody = this.elements.modalBody;
             modalBody.innerHTML = `
@@ -178,12 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.modal.classList.remove('hidden');
         },
 
-        // Closes the modal
         closeModal() {
             this.elements.modal.classList.add('hidden');
         },
 
-        // Switches between the main views of the application
         showView(viewName) {
             this.elements.onboardingContainer.classList.add('hidden');
             this.elements.homeScreen.classList.add('hidden');
@@ -269,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMuscleFocus(dayIndex, muscleIndex, newFocus) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; this.renderBuilder(); },
         updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
         
-        // Finalizes the custom plan from the builder
         finalizeAndStartPlan(mesoLength) {
             if (this.state.builderPlan.days.length === 0) {
                 alert("Please add at least one day to your plan before saving.");
@@ -311,10 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             this.state.plan = newMeso;
-            this.state.allPlans = [newMeso]; // For now, we just replace plans. We can change this to push later.
+            this.state.allPlans = [newMeso];
             this.state.currentView = { week: 1, day: 1 };
             this.saveStateToStorage();
-            this.showView('home'); // Go to home screen after creating a plan
+            this.showView('home');
         },
         
         // --- ONBOARDING METHODS ---
@@ -353,17 +360,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         selectCard(element, field, value) {
             this.state.userSelections[field] = value;
-            // Deselect other cards in the same group
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
         },
         finishOnboarding() {
-            // Generates a plan based on the guided setup selections
             this.state.plan = this.generateMesocycle(
                 this.state.userSelections.goal,
                 this.state.userSelections.experience,
                 this.state.userSelections.days,
-                6 // Defaulting guided plans to 6 weeks
+                6
             );
             this.state.allPlans.push(this.state.plan);
             this.saveStateToStorage();
@@ -371,12 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         // --- PLAN GENERATION & WORKOUT METHODS ---
-
-        // NEW: Basic implementation to generate a template plan
         generateMesocycle(goal, experience, daysPerWeek, mesoLength) {
             console.log(`Generating a ${mesoLength}-week plan for a ${experience} user with a goal of ${goal}, training ${daysPerWeek} days a week.`);
-            // This is a placeholder. A real implementation would have complex logic.
-            // For now, let's create a very simple structure.
             const newMeso = {
                 id: `meso_${Date.now()}`,
                 startDate: new Date().toISOString(),
@@ -386,27 +387,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 weeks: {}
             };
             // This is a dummy structure. We'll build this out later.
-            newMeso.weeks[1] = {
-                1: {
-                    name: "Full Body Workout",
-                    completed: false,
-                    exercises: [
-                        { exerciseId: "ex_squat", name: "Squat", muscle: "Quads", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, sets: [] },
-                        { exerciseId: "ex_bench_press", name: "Bench Press", muscle: "Chest", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, sets: [] },
-                        { exerciseId: "ex_pull_ups", name: "Pull Ups", muscle: "Back", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, sets: [] },
-                    ]
-                }
-            };
+            for(let i = 1; i <= mesoLength; i++) {
+                newMeso.weeks[i] = {
+                    1: {
+                        name: "Full Body Workout",
+                        completed: false,
+                        exercises: [
+                            { exerciseId: "ex_squat", name: "Barbell Squat", muscle: "Quads", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 135, sets: [] },
+                            { exerciseId: "ex_bench_press", name: "Barbell Bench Press", muscle: "Chest", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 135, sets: [] },
+                            { exerciseId: "ex_pull_ups", name: "Pull Up", muscle: "Back", type: "Primary", targetSets: 3, targetReps: 10, targetRIR: 2, targetLoad: 0, sets: [] },
+                        ]
+                    }
+                };
+            }
             return newMeso;
         },
 
-        // NEW: Basic implementation to render the daily workout view
         renderDailyWorkout(weekNumber, dayNumber) {
             const container = document.getElementById('exercise-list-container');
             const workoutTitle = document.getElementById('workout-day-title');
             const workoutDate = document.getElementById('workout-date');
-
-            container.innerHTML = ''; // Clear previous content
+            container.innerHTML = ''; 
 
             const today = new Date();
             workoutDate.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -414,8 +415,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!this.state.plan || !this.state.plan.weeks[weekNumber] || !this.state.plan.weeks[weekNumber][dayNumber]) {
                 workoutTitle.textContent = "No Workout Today";
                 container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete. Go to "Plan Mesocycle" to build your schedule.</p>`;
+                document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
+             document.getElementById('complete-workout-btn').classList.remove('hidden');
 
             const workout = this.state.plan.weeks[weekNumber][dayNumber];
             workoutTitle.textContent = workout.name;
@@ -425,7 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            workout.exercises.forEach((ex, index) => {
+            workout.exercises.forEach((ex, exIndex) => {
+                const setsHTML = ex.sets.map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir)).join('');
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = 'exercise-card';
                 exerciseCard.innerHTML = `
@@ -433,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3>${ex.name}</h3>
                         <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps @ RIR ${ex.targetRIR}</span>
                     </div>
-                    <div class="sets-container" id="sets-for-ex-${index}">
+                    <div class="sets-container" id="sets-for-ex-${exIndex}">
                         <div class="set-row header">
                             <div class="set-number">SET</div>
                             <div class="set-inputs">
@@ -442,27 +446,107 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span>RIR</span>
                             </div>
                         </div>
-                        <!-- Sets will be added here -->
+                        ${setsHTML}
                     </div>
-                    <button class="add-set-btn" data-exercise-index="${index}">+ Add Set</button>
+                    <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
                 `;
                 container.appendChild(exerciseCard);
             });
         },
-        handleSetInput(inputElement) { /* ... same as before ... */ },
-        addSet(exerciseIndex) { /* ... same as before ... */ },
-        completeWorkout() { /* ... same as before ... */ },
-        calculateNextWeekProgression(completedWeekNumber) { /* ... same as before ... */ },
+
+        createSetRowHTML(exIndex, setIndex, weight, reps, rir) {
+            return `
+                <div class="set-row" data-set-index="${setIndex}">
+                    <div class="set-number">${setIndex + 1}</div>
+                    <div class="set-inputs">
+                        <input type="number" class="weight-input" placeholder="-" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="number" class="reps-input" placeholder="-" value="${reps || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="number" class="rir-input" placeholder="-" value="${rir || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                    </div>
+                </div>
+            `;
+        },
+
+        handleSetInput(inputElement) {
+            const { exerciseIndex, setIndex } = inputElement.dataset;
+            const value = inputElement.value;
+            const property = inputElement.classList.contains('weight-input') ? 'weight' :
+                             inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
+            
+            const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
+            workout.exercises[exerciseIndex].sets[setIndex][property] = value;
+        },
+
+        addSet(exerciseIndex) {
+            const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
+            const exercise = workout.exercises[exerciseIndex];
+            
+            // Pre-fill with previous set's weight, or target load if it's the first set
+            const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
+            
+            exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
+
+            const setContainer = document.getElementById(`sets-for-ex-${exerciseIndex}`);
+            const newSetIndex = exercise.sets.length - 1;
+            const newSetHTML = this.createSetRowHTML(exerciseIndex, newSetIndex, previousWeight, '', '');
+            setContainer.insertAdjacentHTML('beforeend', newSetHTML);
+        },
+
+        completeWorkout() {
+            if (!confirm("Are you sure you want to complete this workout?")) return;
+
+            const { week, day } = this.state.currentView;
+            const workout = this.state.plan.weeks[week][day];
+            workout.completed = true;
+
+            this.calculateNextWeekProgression(week);
+
+            // Find the next workout day
+            const dayKeys = Object.keys(this.state.plan.weeks[week]).sort();
+            const currentDayIndex = dayKeys.indexOf(day.toString());
+            
+            let nextWeek = week;
+            let nextDay = null;
+
+            if (currentDayIndex < dayKeys.length - 1) {
+                // Next day in the same week
+                nextDay = parseInt(dayKeys[currentDayIndex + 1]);
+            } else {
+                // Move to the next week
+                if (week < this.state.plan.durationWeeks) {
+                    nextWeek = week + 1;
+                    const nextWeekDayKeys = Object.keys(this.state.plan.weeks[nextWeek]).sort();
+                    nextDay = parseInt(nextWeekDayKeys[0]);
+                } else {
+                    // Mesocycle complete
+                    alert("Congratulations! You've completed your mesocycle!");
+                    this.showView('home');
+                    // Reset view to the start of the plan for next time
+                    this.state.currentView = { week: 1, day: 1 }; 
+                    this.saveStateToStorage();
+                    return;
+                }
+            }
+            
+            this.state.currentView = { week: nextWeek, day: nextDay };
+            this.saveStateToStorage();
+            alert("Workout saved! Great job!");
+            this.showView('home');
+        },
+
+        calculateNextWeekProgression(completedWeekNumber) {
+            console.log(`Calculating progression based on performance in week ${completedWeekNumber}.`);
+            // This is where more complex logic will go.
+            // For example, check if rep targets were met and increase weight for next week.
+        },
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
     };
     
-    // Bind all methods to the app object to maintain correct `this` context
     for (const key in app) {
         if (typeof app[key] === 'function') {
             app[key] = app[key].bind(app);
         }
     }
     
-    // Start the application
     app.init();
 });
