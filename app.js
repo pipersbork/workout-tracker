@@ -290,7 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 experience: this.state.userSelections.experience,
                 weeks: {}
             };
-            const focusSetMap = { 'Primary': 4, 'Secondary': 3, 'Maintenance': 2 };
+            
+            // UPDATED: Evidence-based set volumes
+            const focusSetMap = { 
+                'Primary': 5,     // ~15-20 sets/week (MAV)
+                'Secondary': 4,   // ~12-16 sets/week (MEV/MAV)
+                'Maintenance': 2  // ~6-8 sets/week (MV)
+            };
+
             for (let i = 1; i <= newMeso.durationWeeks; i++) {
                 newMeso.weeks[i] = {};
                 const isDeload = (i === newMeso.durationWeeks);
@@ -301,12 +308,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         exercises: day.muscleGroups.flatMap(mg => 
                             mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
                                 const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
+                                const setsPerExercise = focusSetMap[mg.focus] || 3;
                                 return {
                                     exerciseId: `ex_${exName.replace(/\s+/g, '_')}`,
                                     name: exName,
                                     muscle: exerciseDetails.muscle || 'Unknown',
                                     type: mg.focus,
-                                    targetSets: isDeload ? Math.ceil(focusSetMap[mg.focus] / 2) : focusSetMap[mg.focus],
+                                    targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
                                     targetReps: 10,
                                     targetRIR: isDeload ? 4 : 2,
                                     targetLoad: null,
