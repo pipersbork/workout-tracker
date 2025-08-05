@@ -1,78 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progression - Workout Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progression - Workout Tracker</title>
 
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <div class="container" id="onboarding-container">
+<div class="container" id="onboarding-container">
 
-        <div class="progress-bar"><div class="progress"></div></div>
+<div class="progress-bar"><div class="progress"></div></div>
 
-        <div class="step active" id="step1">
-            <div class="main-title">PROGRESSION</div>
-            <div class="divider"></div>
-            <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-            <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
-        </div>
+<div class="step active" id="step1">
+<div class="main-title">PROGRESSION</div>
+<div class="divider"></div>
+<div class="tagline">BREAK DOWN, BREAK THROUGH</div>
+<button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
+</div>
 
-        <div class="step" id="step2">
-            <h2>Your Goal</h2>
-            <p>Select your training focus:</p>
-            <div class="card-group" data-field="goal">
-                <div class="goal-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3><p>Strength & Hypertrophy</p></div>
-                <div class="goal-card" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3><p>Endurance Training</p></div>
-                <div class="goal-card" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3><p>Balance Both</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="goalNextBtn">Next</button>
-            </div>
-        </div>
+<div class="step" id="step2">
+<h2>Your Goal</h2>
+<p>Select your training focus:</p>
+<div class="card-group" data-field="goal">
+<div class="goal-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3><p>Strength & Hypertrophy</p></div>
+<div class="goal-card" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3><p>Endurance Training</p></div>
+<div class="goal-card" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3><p>Balance Both</p></div>
+</div>
+<div class="button-group">
+<button class="cta-button secondary-button back-btn-onboarding">Back</button>
+<button class="cta-button" id="goalNextBtn">Next</button>
+</div>
+</div>
 
-        <div class="step" id="step3">
-            <h2>Experience Level</h2>
-            <p>Choose your fitness level:</p>
-            <div class="card-group" data-field="experience">
-                <div class="goal-card" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3><p>New to training</p></div>
-                <div class="goal-card" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3><p>6–18 months</p></div>
-                <div class="goal-card" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3><p>18+ months</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="experienceNextBtn">Next</button>
-            </div>
-        </div>
+<div class="step" id="step3">
+<h2>Experience Level</h2>
+<p>Choose your fitness level:</p>
+<div class="card-group" data-field="experience">
+<div class="goal-card" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3><p>New to training</p></div>
+<div class="goal-card" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3><p>6–18 months</p></div>
+<div class="goal-card" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3><p>18+ months</p></div>
+</div>
+<div class="button-group">
+<button class="cta-button secondary-button back-btn-onboarding">Back</button>
+<button class="cta-button" id="experienceNextBtn">Next</button>
+</div>
+</div>
 
-        <div class="step" id="step4">
-            <h2>Workout Preferences</h2>
-            <p>Select your preferred style:</p>
-            <div class="card-group" data-field="style">
-                <div class="goal-card" data-value="gym" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Gym</h3><p>Heavy Lifts</p></div>
-                <div class="goal-card" data-value="home" role="button" tabindex="0"><div class="icon">🏠</div><h3>Home</h3><p>Minimal Equipment</p></div>
-                <div class="goal-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3><p>Mix of Both</p></div>
-            </div>
-            <p>How many days per week?</p>
-            <div class="card-group" data-field="days">
-                <div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
-                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Balanced</p></div>
-                <div class="goal-card" data-value="5" role="button" tabindex="0"><h3>5</h3><p>Intense</p></div>
-                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Max Effort</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="prefsNextBtn">Next</button>
-            </div>
-        </div>
+<div class="step" id="step4">
+<h2>Workout Preferences</h2>
+<p>Select your preferred style:</p>
+<div class="card-group" data-field="style">
+<div class="goal-card" data-value="gym" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Gym</h3><p>Heavy Lifts</p></div>
+<div class="goal-card" data-value="home" role="button" tabindex="0"><div class="icon">🏠</div><h3>Home</h3><p>Minimal Equipment</p></div>
+<div class="goal-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3><p>Mix of Both</p></div>
+</div>
+<p>How many days per week?</p>
+<div class="card-group" data-field="days">
+<div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
+<div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Balanced</p></div>
+<div class="goal-card" data-value="5" role="button" tabindex="0"><h3>5</h3><p>Intense</p></div>
+<div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Max Effort</p></div>
+</div>
+<div class="button-group">
+<button class="cta-button secondary-button back-btn-onboarding">Back</button>
+<button class="cta-button" id="prefsNextBtn">Next</button>
+</div>
+</div>
 
-        <div class="step" id="step5">
+<div class="step" id="step5">
+            <h2>Mesocycle Length</h2>
+            <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
+            <div class="card-group" data-field="mesoLength">
+                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Short</p></div>
+                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Standard</p></div>
+                <div class="goal-card" data-value="8" role="button" tabindex="0"><h3>8</h3><p>Long</p></div>
+                <div class="goal-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
             <h2>Personal Details (Optional)</h2>
             <p>This information is not required but can help with future features like calorie tracking.</p>
             <div class="card-group" data-field="gender">
@@ -83,82 +90,31 @@
             <div class="details-inputs">
                 <div class="input-group"><label for="heightInput">Height (cm)</label><input type="number" id="heightInput" placeholder="e.g., 180"></div>
                 <div class="input-group"><label for="weightInput">Weight (kg)</label><input type="number" id="weightInput" placeholder="e.g., 85"></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
+</div>
+<div class="button-group">
+<button class="cta-button secondary-button back-btn-onboarding">Back</button>
+                <button class="cta-button" id="mesoLengthNextBtn">Next</button>
                 <button class="cta-button secondary-button" id="skipDetailsBtn">Skip</button>
                 <button class="cta-button" id="detailsNextBtn">Save & Continue</button>
-            </div>
-        </div>
+</div>
+</div>
 
-        <div class="step" id="step6">
-            <h2>✅ All Set!</h2>
-            <p>Your preferences have been saved.</p>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="finishOnboardingBtn">Go to Home Screen</button>
-            </div>
-        </div>
-    </div>
+@@ -130,15 +134,15 @@
+<button id="complete-workout-btn" class="cta-button">Complete Workout</button>
+</div>
+</div>
 
-    <div id="home-screen" class="container hidden">
-        <div class="main-title">PROGRESSION</div>
-        <div class="divider"></div>
-        <div class="home-nav-buttons">
-            <button class="cta-button home-btn" id="planMesoBtn">Plan Mesocycle</button>
-            <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
-            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Workout History</button>
-        </div>
-    </div>
-
-    <div id="builder-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
-            <h2>Mesocycle Builder</h2>
-        </div>
-        <div class="schedule-container" id="schedule-container"></div>
-        <div class="builder-actions">
-            <button class="cta-button secondary-button" id="add-day-btn">+ Add a Day</button>
-            <button class="cta-button" id="done-planning-btn">Done Planning</button>
-        </div>
-    </div>
-
-    <div id="history-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromHistory">&larr; Home</button>
-            <h2>Workout History</h2>
-        </div>
-        <div id="history-list-container">
-            </div>
-    </div>
-
-    <div id="daily-workout-view" class="hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
-            <h2 id="workout-day-title"></h2>
-            <p id="workout-date"></p>
-        </div>
-        <div id="exercise-list-container"></div>
-        <div class="workout-actions">
-            <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
-        </div>
-    </div>
     
-    <div id="modal" class="modal hidden">
-        <div class="modal-content">
+<div id="modal" class="modal hidden">
+<div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
             <span class="close-btn">&times;</span>
-            <div id="modal-body"></div>
-        </div>
-    </div>
+<div id="modal-body"></div>
+</div>
+</div>
 
-    <div id="feedback-modal" class="modal hidden">
-        <div class="modal-content">
-            <div id="feedback-modal-body">
-                </div>
-        </div>
-    </div>
-
-    <script defer src="app.js"></script>
+<script defer src="app.js"></script>
 
 </body>
+</html>
 </html>
