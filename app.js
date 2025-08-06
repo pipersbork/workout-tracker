@@ -365,16 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (shouldSave) await this.saveStateToFirestore();
         },
         
-        // --- UPDATED: Onboarding now triggers plan generation ---
         async finishOnboarding() {
             this.state.userSelections.onboardingCompleted = true;
             await this.saveStateToFirestore();
             
-            // Generate the plan
             const generatedPlan = this.planGenerator.generate(this.state.userSelections, this.state.exercises);
             this.state.builderPlan = generatedPlan.builderPlan;
             
-            // Show confirmation modal
             this.showModal(
                 "We've Built a Plan For You!",
                 `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>. You can use this plan as is, or customize it to fit your needs.`,
@@ -396,12 +393,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.startNewPlan();
             }
         },
+        
+        // --- UPDATED: startNewPlan now launches the custom wizard ---
         startNewPlan() {
             this.state.editingPlanId = null;
-            this.state.builderPlan = { days: [] };
-            this.elements.builderTitle.textContent = "Create New Plan";
-            this.showView('builder');
+            this.customPlanWizard.start();
         },
+
         editPlan(planId) {
             const planToEdit = this.state.allPlans.find(p => p.id === planId);
             if (!planToEdit) return;
@@ -985,38 +983,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; },
 
-        // --- NEW: The Plan Generator "Brain" ---
-        planGenerator: {
-            generate(userSelections, allExercises) {
-                const { experience, goal, style } = userSelections;
-                const equipmentFilter = this._getEquipmentFilter(style);
-                let template;
-                let description = "";
+        // --- NEW: Custom Plan Wizard Object ---
+        customPlanWizard: {
+            config: {},
+            start() {
+                this.config = {};
+                this.askDaysPerWeek();
+            },
+            askDaysPerWeek() {
+                app.elements.modalBody.innerHTML = `
+                    <h2>Custom Plan</h2>
+                    <p>How many days per week do you want to train?</p>
+                    <div class="card-group">
+                        ${[2,3,4,5,6].map(d => `<div class="goal-card day-card" data-value="${d}" role="button" tabindex="0"><h3>${d} Days</h3></div>`).join('')}
+                    </div>`;
+                app.elements.modalActions.innerHTML = '';
+                app.elements.modal.querySelectorAll('.day-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        this.config.days = parseInt(card.dataset.value);
+                        this.askTrainingFocus();
+                    });
+                });
+                app.elements.modal.classList.add('active');
+            },
+            askTrainingFocus() {
+                app.elements.modalBody.innerHTML = `
+                    <h2>Training Goal</h2>
+                    <p>Should this plan focus more on strength or muscle growth?</p>
+                    <div class="card-group">
+                        <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Strength</h3><p>Lower reps (3-5)</p></div>
+                        <div class="goal-card focus-card" data-value="growth" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Growth</h3><p>Higher reps (8-12)</p></div>
+                    </div>`;
+                app.elements.modalActions.innerHTML = '';
+                app.elements.modal.querySelectorAll('.focus-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        this.config.focus = card.dataset.value;
+                        this.askPriorityMuscles();
+                    });
+                });
+            },
+            askPriorityMuscles() {
+                this.config.priorityMuscles = [];
+                const muscles = ['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps'];
+                app.elements.modalBody.innerHTML = `
+                    <h2>Priority Muscles</h2>
+                    <p>Select up to two muscle groups to focus on.</p>
+                    <div class="card-group">
+                        ${muscles.map(m => `<div class="goal-card muscle-card" data-value="${m}" role="button" tabindex="0"><h3>${m}</h3></div>`).join('')}
+                    </div>`;
+                app.elements.modalActions.innerHTML = '<button id="finish-wizard-btn" class="cta-button">Finish</button>';
+                
+                const muscleCards = app.elements.modal.querySelectorAll('.muscle-card');
+                muscleCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        const muscle = card.dataset.value;
+                        if (card.classList.contains('active')) {
+                            card.classList.remove('active');
+                            this.config.priorityMuscles = this.config.priorityMuscles.filter(m => m !== muscle);
+                        } else {
+                            if (this.config.priorityMuscles.length < 2) {
+                                card.classList.add('active');
+                                this.config.priorityMuscles.push(muscle);
+                            }
+                        }
+                    });
+                });
+                
+                document.getElementById('finish-wizard-btn').addEventListener('click', () => {
+                    this.finish();
+                });
+            },
+            finish() {
+                app.closeModal();
+                const generatedPlan = app.planGenerator.generate(
+                    {
+                        experience: app.state.userSelections.experience, // Use user's experience level
+                        goal: this.config.focus,
+                        style: app.state.userSelections.style, // Use user's equipment style
+                        days: this.config.days,
+                        priorityMuscles: this.config.priorityMuscles
+                    },
+                    app.state.exercises,
+                    true // isCustom flag
+                );
+                app.state.builderPlan = generatedPlan.builderPlan;
+                app.elements.builderTitle.textContent = "Your Custom Plan";
+                app.showView('builder');
+            }
+        },
 
-                // Select the correct template based on experience and goal
-                if (goal === 'muscle') {
-                    if (experience === 'beginner') {
-                        template = this.templates.beginner.muscle;
-                        description = "3-Day Full Body Routine";
-                    } else if (experience === 'experienced') {
-                        template = this.templates.experienced.muscle;
-                        description = "4-Day Upper/Lower Split";
-                    } else { // advanced
-                        template = this.templates.advanced.muscle;
-                        description = "5-Day 'Body Part' Split";
+        planGenerator: {
+            generate(userSelections, allExercises, isCustom = false) {
+                let template, description;
+                
+                if (isCustom) {
+                    // Logic for custom generation based on wizard answers
+                    const { days, priorityMuscles, goal, experience } = userSelections;
+                    template = this._buildCustomTemplate(days, priorityMuscles, goal);
+                    description = `${days}-Day Custom Plan`;
+                } else {
+                    // Original automatic generation logic
+                    const { experience, goal } = userSelections;
+                    if (goal === 'muscle') {
+                        if (experience === 'beginner') { template = this.templates.beginner.muscle; description = "3-Day Full Body Routine"; } 
+                        else if (experience === 'experienced') { template = this.templates.experienced.muscle; description = "4-Day Upper/Lower Split"; } 
+                        else { template = this.templates.advanced.muscle; description = "5-Day 'Body Part' Split"; }
+                    } else {
+                        template = this.templates.beginner.combined;
+                        description = "3-Day Full Body & Cardio Plan";
                     }
-                } else { // Default to a balanced plan for 'cardio' or 'combined' for now
-                    template = this.templates.beginner.combined;
-                    description = "3-Day Full Body & Cardio Plan";
                 }
 
+                const equipmentFilter = this._getEquipmentFilter(userSelections.style);
                 const builderPlan = { days: [] };
                 template.days.forEach(dayTemplate => {
-                    const newDay = {
-                        label: dayTemplate.label,
-                        isExpanded: true,
-                        muscleGroups: []
-                    };
+                    const newDay = { label: dayTemplate.label, isExpanded: true, muscleGroups: [] };
                     dayTemplate.muscles.forEach(muscleGroup => {
                         const newMuscleGroup = {
                             muscle: muscleGroup.name.toLowerCase(),
@@ -1031,18 +1112,96 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { builderPlan, description };
             },
 
+            _buildCustomTemplate(days, priorityMuscles, goal) {
+                // This is a simplified logic tree for custom splits. Can be expanded.
+                let split;
+                const baseVolume = { 'Primary': 2, 'Secondary': 1 };
+                
+                if (days <= 3) split = this.splits.fullBody(days, priorityMuscles, baseVolume);
+                else if (days === 4) split = this.splits.upperLower(priorityMuscles, baseVolume);
+                else if (days === 5) split = this.splits.pplUpperLower(priorityMuscles, baseVolume);
+                else split = this.splits.pplTwice(priorityMuscles, baseVolume);
+
+                return { days: split };
+            },
+
+            splits: {
+                fullBody(days, priorities, volume) {
+                    // Simple full body structure, can be enhanced
+                    const structure = [
+                        { label: 'Full Body A', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
+                        { label: 'Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
+                        { label: 'Full Body C', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] }
+                    ];
+                    return structure.slice(0, days);
+                },
+                upperLower(priorities, volume) {
+                    const upperA = { label: 'Upper A', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Secondary', count: volume.Secondary }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const lowerA = { label: 'Lower A', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
+                    const upperB = { label: 'Upper B', muscles: [{ name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Secondary', count: volume.Secondary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const lowerB = { label: 'Lower B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
+                    
+                    // Add priority volume
+                    priorities.forEach(p => {
+                        [upperA, lowerA, upperB, lowerB].forEach(day => {
+                            day.muscles.forEach(mg => {
+                                if (mg.name === p) mg.focus = 'Primary';
+                            });
+                        });
+                    });
+
+                    return [upperA, lowerA, upperB, lowerB];
+                },
+                pplUpperLower(priorities, volume) {
+                    // A common 5-day split
+                    const push = { label: 'Push', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const pull = { label: 'Pull', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const legs = { label: 'Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
+                    const upper = { label: 'Upper', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Secondary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Secondary', count: volume.Secondary }] };
+                    const lower = { label: 'Lower', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }] };
+
+                    priorities.forEach(p => {
+                        [push, pull, legs, upper, lower].forEach(day => {
+                            day.muscles.forEach(mg => {
+                                if (mg.name === p) mg.focus = 'Primary';
+                            });
+                        });
+                    });
+
+                    return [push, pull, legs, upper, lower];
+                },
+                 pplTwice(priorities, volume) {
+                    const push1 = { label: 'Push 1', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const pull1 = { label: 'Pull 1', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const legs1 = { label: 'Legs 1', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
+                    const push2 = { label: 'Push 2', muscles: [{ name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const pull2 = { label: 'Pull 2', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
+                    const legs2 = { label: 'Legs 2', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
+                    
+                    priorities.forEach(p => {
+                        [push1, pull1, legs1, push2, pull2, legs2].forEach(day => {
+                            day.muscles.forEach(mg => {
+                                if (mg.name === p) mg.focus = 'Primary';
+                            });
+                        });
+                    });
+
+                    return [push1, pull1, legs1, push2, pull2, legs2];
+                }
+            },
+
             _getEquipmentFilter(style) {
                 if (style === 'gym') return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
                 if (style === 'home') return ['bodyweight', 'dumbbell'];
-                return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar']; // Hybrid default
+                return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
             },
 
             _getExercisesForMuscle(allExercises, muscle, equipmentFilter, count) {
+                if (muscle === 'Rest Day') return [];
                 const filtered = allExercises.filter(ex => 
                     ex.muscle === muscle && 
                     (ex.equipment.includes('bodyweight') || ex.equipment.some(e => equipmentFilter.includes(e)))
                 );
-                // Shuffle to get variation and take the top 'count'
                 return filtered.sort(() => 0.5 - Math.random()).slice(0, count).map(ex => ex.name);
             },
 
@@ -1055,19 +1214,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             { label: 'Day 3: Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
                             { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
                             { label: 'Day 5: Full Body C', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
                         ]
                     },
                     combined: {
                         days: [
                             { label: 'Day 1: Full Body', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
                             { label: 'Day 2: Cardio', muscles: [{ name: 'Cardio', focus: 'Primary', count: 1 }] },
-                            { label: 'Day 3: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                            { label: 'Day 4: Full Body', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
-                            { label: 'Day 5: Cardio', muscles: [{ name: 'Cardio', focus: 'Primary', count: 1 }] },
-                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
+                            { label: 'Day 3: Full Body', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
                         ]
                     }
                 },
@@ -1078,9 +1231,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             { label: 'Day 2: Lower A', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
                             { label: 'Day 3: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
                             { label: 'Day 4: Upper B', muscles: [{ name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Primary', count: 2 }, { name: 'Chest', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
-                            { label: 'Day 5: Lower B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
                         ]
                     }
                 },
@@ -1092,8 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             { label: 'Day 3: Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
                             { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
                             { label: 'Day 5: Upper', muscles: [{ name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Secondary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
-                            { label: 'Day 6: Lower', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
                         ]
                     }
                 }
@@ -1101,8 +1249,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    // Bind all app methods to the app object
     for (const key in app) {
         if (typeof app[key] === 'function') app[key] = app[key].bind(app);
+    }
+    for (const key in app.customPlanWizard) {
+        if (typeof app.customPlanWizard[key] === 'function') app.customPlanWizard[key] = app.customPlanWizard[key].bind(app.customPlanWizard);
     }
     
     app.init();
