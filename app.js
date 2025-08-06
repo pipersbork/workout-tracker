@@ -483,9 +483,31 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         renderTemplateLibrary() {
-            // This is a placeholder for now. We will build this out next.
             const container = document.getElementById('template-list-container');
-            container.innerHTML = `<p class="placeholder-text">Template library coming soon!</p>`;
+            const progressionTemplates = this.planGenerator.getAllTemplates();
+
+            let templatesHTML = progressionTemplates.map(template => `
+                <div class="hub-option" data-template-id="${template.id}">
+                    <div class="hub-option-icon">${template.icon}</div>
+                    <div class="hub-option-text">
+                        <h3>${template.name}</h3>
+                        <p>${template.description}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = templatesHTML;
+
+            container.querySelectorAll('.hub-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const templateId = option.dataset.templateId;
+                    const selectedTemplate = progressionTemplates.find(t => t.id === templateId);
+                    if(selectedTemplate) {
+                        this.state.builderPlan = this.planGenerator.generate(selectedTemplate.config, this.state.exercises).builderPlan;
+                        this.showView('builder');
+                    }
+                });
+            });
         },
 
         startNewPlan() {
