@@ -316,20 +316,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             this.elements.modal.classList.add('active');
         },
-        // --- UPDATED: showModal now accepts a layout parameter ---
         showModal(title, message, buttons = [], layout = 'horizontal') {
             this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
             this.elements.modalActions.innerHTML = '';
             this.elements.modalActions.className = `modal-actions ${layout}`;
 
-            if (buttons.length === 0) buttons.push({ text: 'OK', class: 'cta-button' });
+            if (buttons.length === 0) buttons.push({ text: 'OK', class: 'cta-button', id: 'ok-btn' });
             buttons.forEach(btnInfo => {
                 const button = document.createElement('button');
                 button.textContent = btnInfo.text;
                 button.className = btnInfo.class;
-                button.addEventListener('click', () => {
-                    this.closeModal();
-                    if (btnInfo.action) btnInfo.action();
+                if (btnInfo.id) button.id = btnInfo.id;
+                button.addEventListener('click', (e) => {
+                    if (!btnInfo.noClose) {
+                        this.closeModal();
+                    }
+                    if (btnInfo.action) btnInfo.action(e);
                 });
                 this.elements.modalActions.appendChild(button);
             });
@@ -368,7 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (shouldSave) await this.saveStateToFirestore();
         },
         
-        // --- UPDATED: Onboarding modal now has new buttons and colors ---
         async finishOnboarding() {
             this.state.userSelections.onboardingCompleted = true;
             await this.saveStateToFirestore();
@@ -380,12 +381,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 "We've Built a Plan For You!",
                 `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>.`,
                 [
-                    { text: 'Use This Plan', class: 'azure-button', action: () => this.openMesoLengthModal() },
-                    { text: 'Customize This Plan', class: 'cta-button', action: () => this.showView('builder') },
-                    { text: 'Design My Own Plan', class: 'cta-button', action: () => this.startNewPlan() }
+                    { id: 'use-plan-btn', text: 'Use This Plan', class: 'azure-button', noClose: true },
+                    { id: 'customize-plan-btn', text: 'Customize This Plan', class: 'secondary-button', noClose: true },
+                    { id: 'design-own-btn', text: 'Design My Own Plan', class: 'cta-button', action: () => this.startNewPlan() }
                 ],
-                'vertical' // New layout parameter
+                'vertical'
             );
+
+            const usePlanBtn = document.getElementById('use-plan-btn');
+            const customizePlanBtn = document.getElementById('customize-plan-btn');
+            let isCustomizing = false;
+
+            usePlanBtn.addEventListener('click', () => {
+                if (isCustomizing) {
+                    this.closeModal();
+                    this.showView('builder');
+                } else {
+                    this.closeModal();
+                    this.openMesoLengthModal();
+                }
+            });
+
+            customizePlanBtn.addEventListener('click', () => {
+                isCustomizing = true;
+                usePlanBtn.textContent = 'Finish Customizing';
+                usePlanBtn.className = 'azure-button';
+                customizePlanBtn.className = 'secondary-button';
+            });
         },
         
         handlePlanMesoClick() {
@@ -1256,4 +1278,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     app.init();
 });
-
