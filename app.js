@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const setsHTML = Array.from({ length: ex.targetSets }).map((_, setIndex) => {
                     const set = ex.sets[setIndex] || {};
                     const lastWeekSet = lastWeekEx?.sets[setIndex];
-                    return this.createSetRowHTML(exIndex, setIndex, set.weight, set.rawInput, lastWeekSet, ex.targetReps, ex.targetRIR);
+                    return this.createSetRowHTML(exIndex, setIndex, set.weight, set.rawInput, lastWeekSet, ex.targetReps, ex.targetRIR, week);
                 }).join('');
 
                 const exerciseCard = document.createElement('div');
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z" stroke-width="0" fill="currentColor"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1 14H8v-2h3v-3H8V9h3V6h2v3h3v2h-3v3h3v2h-3v3h-2v-3z"/></svg>
                             </button>
                         </div>
-                        <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps @ ${ex.targetRIR} RIR</span>
+                        <span class="exercise-target">${ex.targetSets} Sets @ ${ex.targetRIR} RIR</span>
                     </div>
                     <div class="sets-container" id="sets-for-ex-${exIndex}">
                         <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS / RIR</span></div></div>
@@ -766,8 +766,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.renderDailyWorkout();
         },
-        createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSet, targetReps, targetRIR) {
-            const placeholder = `e.g. ${targetReps} reps or ${targetRIR} RIR`;
+        createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSet, targetReps, targetRIR, week) {
+            let placeholder;
+            if (week === 1) {
+                placeholder = `e.g. ${targetRIR} RIR`;
+            } else {
+                const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
+                placeholder = lastWeekSet ? `${lastWeekSet.weight} x ${lastWeekEReps}` : `e.g. ${targetReps} reps`;
+            }
             return `
                 <div class="set-row" data-set-index="${setIndex}">
                     <div class="set-number">${setIndex + 1}</div>
