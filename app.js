@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workout: 'daily-workout-view',
             performanceSummary: 'performance-summary-view',
             settings: 'settings-view',
+            customPlanWizard: 'custom-plan-wizard-view'
         },
 
         state: {
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             builderView: document.getElementById('builder-view'),
             performanceSummaryView: document.getElementById('performance-summary-view'),
             settingsView: document.getElementById('settings-view'),
+            customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
             scheduleContainer: document.getElementById('schedule-container'),
             progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
@@ -164,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('backToHomeFromBuilder')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSummary')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSettings')?.addEventListener('click', () => this.showView('home'));
+            document.getElementById('backToHomeFromWizard')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
             
@@ -262,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (viewName === 'builder') this.renderBuilder();
                 else if (viewName === 'performanceSummary') this.renderPerformanceSummary();
                 else if (viewName === 'settings') this.renderSettings();
+                else if (viewName === 'customPlanWizard') this.customPlanWizard.render();
 
                 this.state.currentViewName = viewName;
             };
@@ -426,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         startNewPlan() {
             this.state.editingPlanId = null;
-            this.customPlanWizard.start();
+            this.showView('customPlanWizard');
         },
 
         editPlan(planId) {
@@ -772,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 placeholder = `e.g. ${targetRIR} RIR`;
             } else {
                 const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
-                placeholder = lastWeekSet ? `${lastWeekSet.weight} x ${lastWeekEReps}` : `e.g. ${targetReps} reps`;
+                placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
             }
             return `
                 <div class="set-row" data-set-index="${setIndex}">
@@ -1125,82 +1129,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
         customPlanWizard: {
             config: {},
-            start() {
-                this.config = {};
-                this.askDaysPerWeek();
+            render() {
+                const contentEl = document.getElementById('custom-wizard-content');
+                contentEl.innerHTML = `
+                    <div class="settings-section">
+                        <h3>How many days per week do you want to train?</h3>
+                        <div class="card-group">
+                            ${[2,3,4,5,6].map(d => `<div class="goal-card day-card" data-value="${d}" role="button" tabindex="0"><h3>${d} Days</h3></div>`).join('')}
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>What is your primary training goal?</h3>
+                        <div class="card-group">
+                            <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Strength</h3><p>Lower reps (3-5)</p></div>
+                            <div class="goal-card focus-card" data-value="growth" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Growth</h3><p>Higher reps (8-12)</p></div>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3 id="priority-muscles-title">Any priority muscles? (Select up to 2)</h3>
+                        <div class="card-group">
+                            ${['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps'].map(m => `<div class="goal-card muscle-card" data-value="${m}" role="button" tabindex="0"><h3>${m}</h3></div>`).join('')}
+                        </div>
+                    </div>
+                    <div class="wizard-actions">
+                        <button id="finish-wizard-btn" class="cta-button">Generate My Plan</button>
+                    </div>
+                `;
+                this.addWizardEventListeners();
             },
-            askDaysPerWeek() {
-                app.elements.modalBody.innerHTML = `
-                    <h2>Custom Plan</h2>
-                    <p>How many days per week do you want to train?</p>
-                    <div class="card-group">
-                        ${[2,3,4,5,6].map(d => `<div class="goal-card day-card" data-value="${d}" role="button" tabindex="0"><h3>${d} Days</h3></div>`).join('')}
-                    </div>`;
-                app.elements.modalActions.innerHTML = '';
-                app.elements.modal.querySelectorAll('.day-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        this.config.days = parseInt(card.dataset.value);
-                        this.askTrainingFocus();
-                    });
-                });
-                app.elements.modal.classList.add('active');
+            addWizardEventListeners() {
+                const view = document.getElementById('custom-plan-wizard-view');
+                view.querySelectorAll('.day-card').forEach(card => card.addEventListener('click', () => {
+                    this.config.days = parseInt(card.dataset.value);
+                    this.updatePriorityMuscleLimit();
+                    view.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                }));
+                view.querySelectorAll('.focus-card').forEach(card => card.addEventListener('click', () => {
+                    this.config.focus = card.dataset.value;
+                    view.querySelectorAll('.focus-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                }));
+                view.querySelectorAll('.muscle-card').forEach(card => card.addEventListener('click', () => {
+                    const muscle = card.dataset.value;
+                    const limit = this.getPriorityMuscleLimit();
+                    if (card.classList.contains('active')) {
+                        card.classList.remove('active');
+                        this.config.priorityMuscles = (this.config.priorityMuscles || []).filter(m => m !== muscle);
+                    } else {
+                        if ((this.config.priorityMuscles || []).length < limit) {
+                            card.classList.add('active');
+                            this.config.priorityMuscles = [...(this.config.priorityMuscles || []), muscle];
+                        }
+                    }
+                }));
+                document.getElementById('finish-wizard-btn').addEventListener('click', () => this.finish());
             },
-            askTrainingFocus() {
-                app.elements.modalBody.innerHTML = `
-                    <h2>Training Goal</h2>
-                    <p>Should this plan focus more on strength or muscle growth?</p>
-                    <div class="card-group">
-                        <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Strength</h3><p>Lower reps (3-5)</p></div>
-                        <div class="goal-card focus-card" data-value="growth" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Growth</h3><p>Higher reps (8-12)</p></div>
-                    </div>`;
-                app.elements.modalActions.innerHTML = '';
-                app.elements.modal.querySelectorAll('.focus-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        this.config.focus = card.dataset.value;
-                        this.askPriorityMuscles();
-                    });
-                });
+            getPriorityMuscleLimit() {
+                const experience = app.state.userSelections.experience;
+                const days = this.config.days || 0;
+                if (days >= 6 && (experience === 'experienced' || experience === 'advanced')) return 4;
+                if (days >= 4 && (experience === 'experienced' || experience === 'advanced')) return 3;
+                return 2;
             },
-            askPriorityMuscles() {
-                this.config.priorityMuscles = [];
-                const muscles = ['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps'];
-                app.elements.modalBody.innerHTML = `
-                    <h2>Priority Muscles</h2>
-                    <p>Select up to two muscle groups to focus on.</p>
-                    <div class="card-group">
-                        ${muscles.map(m => `<div class="goal-card muscle-card" data-value="${m}" role="button" tabindex="0"><h3>${m}</h3></div>`).join('')}
-                    </div>`;
-                app.elements.modalActions.innerHTML = '<button id="finish-wizard-btn" class="cta-button">Finish</button>';
-                
-                const muscleCards = app.elements.modal.querySelectorAll('.muscle-card');
-                muscleCards.forEach(card => {
-                    card.addEventListener('click', () => {
-                        const muscle = card.dataset.value;
-                        if (card.classList.contains('active')) {
+            updatePriorityMuscleLimit() {
+                const limit = this.getPriorityMuscleLimit();
+                document.getElementById('priority-muscles-title').textContent = `Any priority muscles? (Select up to ${limit})`;
+                const selected = this.config.priorityMuscles || [];
+                if (selected.length > limit) {
+                    this.config.priorityMuscles = selected.slice(0, limit);
+                    document.querySelectorAll('.muscle-card.active').forEach(card => {
+                        if (!this.config.priorityMuscles.includes(card.dataset.value)) {
                             card.classList.remove('active');
-                            this.config.priorityMuscles = this.config.priorityMuscles.filter(m => m !== muscle);
-                        } else {
-                            if (this.config.priorityMuscles.length < 2) {
-                                card.classList.add('active');
-                                this.config.priorityMuscles.push(muscle);
-                            }
                         }
                     });
-                });
-                
-                document.getElementById('finish-wizard-btn').addEventListener('click', () => {
-                    this.finish();
-                });
+                }
             },
             finish() {
-                app.closeModal();
+                if (!this.config.days || !this.config.focus) {
+                    app.showModal("Incomplete", "Please select your training days and primary goal.");
+                    return;
+                }
                 const generatedPlan = app.planGenerator.generate(
                     {
                         experience: app.state.userSelections.experience,
                         goal: this.config.focus,
                         style: app.state.userSelections.style,
                         days: this.config.days,
-                        priorityMuscles: this.config.priorityMuscles
+                        priorityMuscles: this.config.priorityMuscles || []
                     },
                     app.state.exercises,
                     true
