@@ -1,7 +1,29 @@
+// --- FIREBASE SDK IMPORTS ---
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- FIREBASE CONFIGURATION ---
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
+  authDomain: "progression-700a3.firebaseapp.com",
+  projectId: "progression-700a3",
+  storageBucket: "progression-700a3.firebasestorage.app",
+  messagingSenderId: "525938060953",
+  appId: "1:525938060953:web:e453db795cd89aabc15208"
+};
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const app = {
-        // MODIFIED: Added a viewMap for robust screen switching.
         viewMap: {
             onboarding: 'onboarding-container',
             home: 'home-screen',
@@ -12,12 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         state: {
+            // Firebase/Auth state
+            userId: null,
+            isDataLoaded: false,
+
+            // App state
             currentStep: 1,
             totalSteps: 4,
             userSelections: { 
                 goal: null, 
                 experience: null, 
                 style: null,
+                onboardingCompleted: false // Replaces localStorage flag
             },
             settings: {
                 units: 'lbs',
@@ -51,17 +79,38 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModalBtn: document.getElementById('closeModalBtn'),
         },
 
+        // --- INITIALIZATION & AUTHENTICATION ---
         async init() {
             await this.loadExercises();
-            this.loadStateFromStorage();
             this.addEventListeners();
-            this.applyTheme();
+            this.handleAuthentication();
+        },
 
-            if (localStorage.getItem("onboardingCompleted") === "true") {
-                this.showView('home', true);
-            } else {
-                this.showView('onboarding', true);
-            }
+        handleAuthentication() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in anonymously.
+                    this.state.userId = user.uid;
+                    console.log("Authenticated with UID:", this.state.userId);
+
+                    // Now that we have a user, load their data from Firestore
+                    await this.loadStateFromFirestore();
+                    
+                    // Apply settings and show the correct view
+                    this.applyTheme();
+                    if (this.state.userSelections.onboardingCompleted) {
+                        this.showView('home', true);
+                    } else {
+                        this.showView('onboarding', true);
+                    }
+                } else {
+                    // If no user, sign them in anonymously. This will trigger the onAuthStateChanged listener again.
+                    signInAnonymously(auth).catch((error) => {
+                        console.error("Anonymous sign-in failed:", error);
+                        this.showModal("Connection Error", "Could not connect to the database. Please refresh the page.");
+                    });
+                }
+            });
         },
 
         async loadExercises() {
@@ -75,37 +124,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        loadStateFromStorage() {
-            const completed = localStorage.getItem("onboardingCompleted");
-            if (completed) {
-                const savedUserSelections = JSON.parse(localStorage.getItem("userSelections"));
-                if (savedUserSelections) {
-                    this.state.userSelections = { ...this.state.userSelections, ...savedUserSelections };
-                }
+        // --- FIRESTORE DATA HANDLING ---
+        async loadStateFromFirestore() {
+            if (!this.state.userId) return;
+            const userDocRef = doc(db, "users", this.state.userId);
 
-                const savedSettings = JSON.parse(localStorage.getItem("settings"));
-                if (savedSettings) {
-                    this.state.settings = { ...this.state.settings, ...savedSettings };
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Merge data from Firestore into the app's state
+                    this.state.userSelections = data.userSelections || this.state.userSelections;
+                    this.state.settings = data.settings || this.state.settings;
+                    this.state.allPlans = data.allPlans || [];
+                    this.state.currentView = data.currentView || this.state.currentView;
+                    if (this.state.allPlans.length > 0) {
+                        this.state.plan = this.state.allPlans[0]; 
+                    }
+                    console.log("User data loaded from Firestore.");
+                } else {
+                    console.log("No existing user data. A new profile will be created on first save.");
                 }
-
-                this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
-                const savedView = JSON.parse(localStorage.getItem("currentView"));
-                if (savedView) this.state.currentView = savedView;
-                if (this.state.allPlans.length > 0) this.state.plan = this.state.allPlans[0];
+                this.state.isDataLoaded = true;
+            } catch (error) {
+                console.error("Error loading state from Firestore:", error);
+                this.showModal("Error", "Could not load your data from the database.");
             }
         },
 
-        saveStateToStorage() {
-            localStorage.setItem("onboardingCompleted", "true");
-            localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
-            localStorage.setItem("settings", JSON.stringify(this.state.settings));
-            if (this.state.plan) {
-                const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.plan.id);
-                if (planIndex > -1) this.state.allPlans[planIndex] = this.state.plan;
-                else this.state.allPlans.push(this.state.plan);
+        async saveStateToFirestore() {
+            if (!this.state.userId) {
+                console.error("Cannot save state: No user ID.");
+                return;
             }
-            localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
-            localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
+            const userDocRef = doc(db, "users", this.state.userId);
+            
+            // Consolidate all the data we want to save into one object
+            const dataToSave = {
+                userSelections: this.state.userSelections,
+                settings: this.state.settings,
+                allPlans: this.state.allPlans,
+                currentView: this.state.currentView
+            };
+
+            try {
+                // setDoc will create the document if it doesn't exist, or overwrite it if it does.
+                await setDoc(userDocRef, dataToSave);
+                console.log("State saved to Firestore.");
+            } catch (error) {
+                console.error("Error saving state to Firestore:", error);
+                this.showModal("Error", "Could not save your progress. Please check your connection.");
+            }
         },
 
         addEventListeners() {
@@ -161,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
                 if (e.target.matches('.day-label-selector')) this.updateDayLabel(dayIndex, e.target.value);
                 if (e.target.matches('.muscle-select')) this.updateMuscleGroup(dayIndex, muscleIndex, e.target.value);
-                if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, e.target.value);
+                if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value);
             });
 
             // Modal
@@ -259,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.modal.classList.remove('active');
         },
 
-        // MODIFIED: Rewritten to use the viewMap for reliability.
         showView(viewName, skipAnimation = false) {
             const currentViewId = this.viewMap[this.state.currentViewName];
             const newViewId = this.viewMap[viewName];
@@ -318,19 +386,19 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement));
         },
 
-        setUnits(unit) {
+        async setUnits(unit) {
             this.state.settings.units = unit;
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.renderSettings();
             if (this.state.currentViewName === 'workout') {
                 this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
             }
         },
 
-        setTheme(theme) {
+        async setTheme(theme) {
             this.state.settings.theme = theme;
             this.applyTheme();
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.renderSettings();
         },
 
@@ -338,15 +406,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.dataset.theme = this.state.settings.theme;
         },
 
-        setProgressionModel(model) {
+        async setProgressionModel(model) {
             this.state.settings.progressionModel = model;
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.renderSettings();
         },
 
-        setWeightIncrement(increment) {
+        async setWeightIncrement(increment) {
             this.state.settings.weightIncrement = increment;
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.renderSettings();
         },
 
@@ -455,9 +523,11 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = newFocus; 
             this.renderBuilder();
         },
-        updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; },
+        updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, newExercise) { 
+            this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; 
+        },
         
-        finalizeAndStartPlan(mesoLength) {
+        async finalizeAndStartPlan(mesoLength) {
             if (this.state.builderPlan.days.length === 0) {
                 this.showModal("Incomplete Plan", "Please add at least one day to your plan before saving.");
                 return;
@@ -490,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.plan = newMeso;
             this.state.allPlans = [newMeso];
             this.state.currentView = { week: 1, day: 1 };
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.showView('home');
         },
         
@@ -523,17 +593,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         },
         validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
-        selectCard(element, field, value, shouldSave = false) {
+        async selectCard(element, field, value, shouldSave = false) {
             this.state.userSelections[field] = value;
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
             if (shouldSave) {
-                this.saveStateToStorage();
+                await this.saveStateToFirestore();
             }
         },
-        // MODIFIED: Takes user to the home screen after onboarding.
-        finishOnboarding() {
-            this.saveStateToStorage();
+        async finishOnboarding() {
+            this.state.userSelections.onboardingCompleted = true; // Set the flag
+            await this.saveStateToFirestore();
             this.showView('home');
         },
         
@@ -626,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
         },
 
-        completeWorkout() {
+        async completeWorkout() {
             const { week, day } = this.state.currentView;
             const workout = this.state.plan.weeks[week][day];
             workout.completed = true;
@@ -647,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     nextDay = parseInt(nextWeekDayKeys[0]);
                 } else {
                     this.state.currentView = { week: 1, day: 1 };
-                    this.saveStateToStorage();
+                    await this.saveStateToFirestore();
                     this.showModal('Mesocycle Complete!', 'Congratulations! You have finished your training block. Your plan has been reset.', [
                         { text: 'Awesome!', class: 'cta-button', action: () => this.showView('home') }
                     ]);
@@ -655,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             this.state.currentView = { week: nextWeek, day: nextDay };
-            this.saveStateToStorage();
+            await this.saveStateToFirestore();
             this.showModal('Workout Complete!', 'Great job! Your progress has been saved.', [
                 { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
             ]);
