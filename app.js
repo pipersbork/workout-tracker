@@ -372,12 +372,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const generatedPlan = this.planGenerator.generate(this.state.userSelections, this.state.exercises);
             this.state.builderPlan = generatedPlan.builderPlan;
             
+            // --- UPDATED: Swapped button classes for new UI hierarchy ---
             this.showModal(
                 "We've Built a Plan For You!",
                 `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>. You can use this plan as is, or customize it to fit your needs.`,
                 [
-                    { text: 'Use This Plan', class: 'cta-button', action: () => this.openMesoLengthModal() },
-                    { text: 'Customize in Builder', class: 'secondary-button', action: () => this.showView('builder') }
+                    { text: 'Use This Plan', class: 'secondary-button', action: () => this.openMesoLengthModal() },
+                    { text: 'Customize in Builder', class: 'cta-button', action: () => this.showView('builder') }
                 ]
             );
         },
@@ -394,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         
-        // --- UPDATED: startNewPlan now launches the custom wizard ---
         startNewPlan() {
             this.state.editingPlanId = null;
             this.customPlanWizard.start();
@@ -983,7 +983,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; },
 
-        // --- NEW: Custom Plan Wizard Object ---
         customPlanWizard: {
             config: {},
             start() {
@@ -1057,9 +1056,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 app.closeModal();
                 const generatedPlan = app.planGenerator.generate(
                     {
-                        experience: app.state.userSelections.experience, // Use user's experience level
+                        experience: app.state.userSelections.experience,
                         goal: this.config.focus,
-                        style: app.state.userSelections.style, // Use user's equipment style
+                        style: app.state.userSelections.style,
                         days: this.config.days,
                         priorityMuscles: this.config.priorityMuscles
                     },
@@ -1077,12 +1076,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 let template, description;
                 
                 if (isCustom) {
-                    // Logic for custom generation based on wizard answers
-                    const { days, priorityMuscles, goal, experience } = userSelections;
+                    const { days, priorityMuscles, goal } = userSelections;
                     template = this._buildCustomTemplate(days, priorityMuscles, goal);
                     description = `${days}-Day Custom Plan`;
                 } else {
-                    // Original automatic generation logic
                     const { experience, goal } = userSelections;
                     if (goal === 'muscle') {
                         if (experience === 'beginner') { template = this.templates.beginner.muscle; description = "3-Day Full Body Routine"; } 
@@ -1113,7 +1110,6 @@ document.addEventListener('DOMContentLoaded', () => {
             },
 
             _buildCustomTemplate(days, priorityMuscles, goal) {
-                // This is a simplified logic tree for custom splits. Can be expanded.
                 let split;
                 const baseVolume = { 'Primary': 2, 'Secondary': 1 };
                 
@@ -1127,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             splits: {
                 fullBody(days, priorities, volume) {
-                    // Simple full body structure, can be enhanced
                     const structure = [
                         { label: 'Full Body A', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
                         { label: 'Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
@@ -1141,7 +1136,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const upperB = { label: 'Upper B', muscles: [{ name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Secondary', count: volume.Secondary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
                     const lowerB = { label: 'Lower B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
                     
-                    // Add priority volume
                     priorities.forEach(p => {
                         [upperA, lowerA, upperB, lowerB].forEach(day => {
                             day.muscles.forEach(mg => {
@@ -1153,7 +1147,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return [upperA, lowerA, upperB, lowerB];
                 },
                 pplUpperLower(priorities, volume) {
-                    // A common 5-day split
                     const push = { label: 'Push', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
                     const pull = { label: 'Pull', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
                     const legs = { label: 'Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
@@ -1249,7 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // Bind all app methods to the app object
     for (const key in app) {
         if (typeof app[key] === 'function') app[key] = app[key].bind(app);
     }
