@@ -56,13 +56,14 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
     margin-bottom: 1.5rem; 
     font-size: 1.2rem; 
     background-color: transparent;
-    border: 2px solid var(--primary-color);
-    color: var(--primary-color);
+    border: 2px solid var(--border-color);
+    color: var(--text-muted-color);
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 .home-btn:hover {
-    background-color: var(--primary-color);
-    color: #fff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
     transform: translateY(-3px);
 }
 
