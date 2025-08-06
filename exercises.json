@@ -1,22 +1,183 @@
 [
-    { "name": "Barbell Bench Press", "muscle": "Chest" },
-    { "name": "Incline Dumbbell Press", "muscle": "Chest" },
-    { "name": "Push-Up", "muscle": "Chest" },
-    { "name": "Pull-Up", "muscle": "Back" },
-    { "name": "Barbell Row", "muscle": "Back" },
-    { "name": "Lat Pulldown", "muscle": "Back" },
-    { "name": "Shoulder Press", "muscle": "Shoulders" },
-    { "name": "Lateral Raise", "muscle": "Shoulders" },
-    { "name": "Barbell Curl", "muscle": "Biceps" },
-    { "name": "Hammer Curl", "muscle": "Biceps" },
-    { "name": "Triceps Pushdown", "muscle": "Triceps" },
-    { "name": "Overhead Triceps Extension", "muscle": "Triceps" },
-    { "name": "Back Squat", "muscle": "Quads" },
-    { "name": "Lunge", "muscle": "Quads" },
-    { "name": "Romanian Deadlift", "muscle": "Hamstrings" },
-    { "name": "Leg Curl", "muscle": "Hamstrings" },
-    { "name": "Hip Thrust", "muscle": "Glutes" },
-    { "name": "Step-Up", "muscle": "Glutes" },
-    { "name": "Plank", "muscle": "Core" },
-    { "name": "Hanging Leg Raise", "muscle": "Core" }
+  {
+    "name": "Barbell Squat",
+    "muscle": "Quads",
+    "equipment": ["barbell", "rack"],
+    "alternatives": ["Dumbbell Goblet Squat", "Leg Press", "Smith Machine Squat"]
+  },
+  {
+    "name": "Dumbbell Goblet Squat",
+    "muscle": "Quads",
+    "equipment": ["dumbbell"],
+    "alternatives": ["Barbell Squat", "Leg Press", "Kettlebell Squat"]
+  },
+  {
+    "name": "Leg Press",
+    "muscle": "Quads",
+    "equipment": ["machine"],
+    "alternatives": ["Barbell Squat", "Dumbbell Goblet Squat"]
+  },
+  {
+    "name": "Leg Extension",
+    "muscle": "Quads",
+    "equipment": ["machine"],
+    "alternatives": ["Banded Leg Extension"]
+  },
+  {
+    "name": "Romanian Deadlift",
+    "muscle": "Hamstrings",
+    "equipment": ["barbell", "dumbbell"],
+    "alternatives": ["Good Mornings", "Kettlebell Swing"]
+  },
+  {
+    "name": "Lying Leg Curl",
+    "muscle": "Hamstrings",
+    "equipment": ["machine"],
+    "alternatives": ["Seated Leg Curl", "Stability Ball Leg Curl"]
+  },
+  {
+    "name": "Seated Leg Curl",
+    "muscle": "Hamstrings",
+    "equipment": ["machine"],
+    "alternatives": ["Lying Leg Curl", "Stability Ball Leg Curl"]
+  },
+  {
+    "name": "Bench Press",
+    "muscle": "Chest",
+    "equipment": ["barbell", "bench"],
+    "alternatives": ["Dumbbell Bench Press", "Incline Bench Press", "Push-up"]
+  },
+  {
+    "name": "Dumbbell Bench Press",
+    "muscle": "Chest",
+    "equipment": ["dumbbell", "bench"],
+    "alternatives": ["Bench Press", "Incline Dumbbell Press", "Push-up"]
+  },
+  {
+    "name": "Incline Bench Press",
+    "muscle": "Chest",
+    "equipment": ["barbell", "bench"],
+    "alternatives": ["Incline Dumbbell Press", "Bench Press"]
+  },
+  {
+    "name": "Incline Dumbbell Press",
+    "muscle": "Chest",
+    "equipment": ["dumbbell", "bench"],
+    "alternatives": ["Incline Bench Press", "Dumbbell Bench Press"]
+  },
+  {
+    "name": "Push-up",
+    "muscle": "Chest",
+    "equipment": ["bodyweight"],
+    "alternatives": ["Bench Press", "Dumbbell Bench Press", "Knee Push-up"]
+  },
+  {
+    "name": "Chest Fly",
+    "muscle": "Chest",
+    "equipment": ["dumbbell", "machine", "cable"],
+    "alternatives": ["Pec Deck Machine", "Cable Crossover"]
+  },
+  {
+    "name": "Pull-up",
+    "muscle": "Back",
+    "equipment": ["pullup-bar", "bodyweight"],
+    "alternatives": ["Lat Pulldown", "Assisted Pull-up Machine"]
+  },
+  {
+    "name": "Lat Pulldown",
+    "muscle": "Back",
+    "equipment": ["cable", "machine"],
+    "alternatives": ["Pull-up", "Chin-up"]
+  },
+  {
+    "name": "Bent Over Row",
+    "muscle": "Back",
+    "equipment": ["barbell", "dumbbell"],
+    "alternatives": ["T-Bar Row", "Seated Cable Row", "Dumbbell Row"]
+  },
+  {
+    "name": "Dumbbell Row",
+    "muscle": "Back",
+    "equipment": ["dumbbell", "bench"],
+    "alternatives": ["Bent Over Row", "Seated Cable Row"]
+  },
+  {
+    "name": "Seated Cable Row",
+    "muscle": "Back",
+    "equipment": ["cable", "machine"],
+    "alternatives": ["Bent Over Row", "T-Bar Row"]
+  },
+  {
+    "name": "Overhead Press",
+    "muscle": "Shoulders",
+    "equipment": ["barbell", "dumbbell"],
+    "alternatives": ["Seated Dumbbell Press", "Arnold Press"]
+  },
+  {
+    "name": "Seated Dumbbell Press",
+    "muscle": "Shoulders",
+    "equipment": ["dumbbell", "bench"],
+    "alternatives": ["Overhead Press", "Arnold Press"]
+  },
+  {
+    "name": "Lateral Raise",
+    "muscle": "Shoulders",
+    "equipment": ["dumbbell", "cable"],
+    "alternatives": ["Machine Lateral Raise"]
+  },
+  {
+    "name": "Barbell Curl",
+    "muscle": "Biceps",
+    "equipment": ["barbell"],
+    "alternatives": ["Dumbbell Curl", "Preacher Curl"]
+  },
+  {
+    "name": "Dumbbell Curl",
+    "muscle": "Biceps",
+    "equipment": ["dumbbell"],
+    "alternatives": ["Barbell Curl", "Hammer Curl"]
+  },
+  {
+    "name": "Tricep Pushdown",
+    "muscle": "Triceps",
+    "equipment": ["cable"],
+    "alternatives": ["Skull Crusher", "Overhead Tricep Extension"]
+  },
+  {
+    "name": "Skull Crusher",
+    "muscle": "Triceps",
+    "equipment": ["barbell", "dumbbell", "bench"],
+    "alternatives": ["Tricep Pushdown", "Lying Tricep Extension"]
+  },
+  {
+    "name": "Plank",
+    "muscle": "Core",
+    "equipment": ["bodyweight"],
+    "alternatives": ["Ab Wheel Rollout", "Hanging Leg Raise"]
+  },
+  {
+    "name": "Hanging Leg Raise",
+    "muscle": "Core",
+    "equipment": ["pullup-bar"],
+    "alternatives": ["Captain's Chair Leg Raise", "Lying Leg Raise"]
+  },
+  {
+    "name": "Running",
+    "muscle": "Cardio",
+    "equipment": ["bodyweight", "treadmill"],
+    "alternatives": ["Cycling", "Rowing", "Elliptical"]
+  },
+  {
+    "name": "Cycling",
+    "muscle": "Cardio",
+    "equipment": ["machine"],
+    "alternatives": ["Running", "Rowing", "Elliptical"]
+  },
+  {
+    "name": "Rowing",
+    "muscle": "Cardio",
+    "equipment": ["machine"],
+    "alternatives": ["Running", "Cycling", "Elliptical"]
+  }
 ]
+
