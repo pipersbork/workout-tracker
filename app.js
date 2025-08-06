@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             settings: {
                 units: 'lbs', // 'lbs' or 'kg'
-                theme: 'dark' // 'dark' or 'light'
+                theme: 'dark', // 'dark' or 'light'
+                progressionModel: 'double', // 'linear' or 'double'
+                weightIncrement: 5 // 2.5, 5, or 10
             },
             plan: null,
             currentView: { week: 1, day: 1 },
@@ -64,8 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStateFromStorage() {
             const completed = localStorage.getItem("onboardingCompleted");
             if (completed) {
-                this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
-                this.state.settings = JSON.parse(localStorage.getItem("settings")) || this.state.settings;
+                const savedUserSelections = JSON.parse(localStorage.getItem("userSelections"));
+                if (savedUserSelections) {
+                    this.state.userSelections = { ...this.state.userSelections, ...savedUserSelections };
+                }
+
+                const savedSettings = JSON.parse(localStorage.getItem("settings"));
+                if (savedSettings) {
+                    this.state.settings = { ...this.state.settings, ...savedSettings };
+                }
+
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
                 const savedView = JSON.parse(localStorage.getItem("currentView"));
                 if (savedView) this.state.currentView = savedView;
@@ -165,6 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('units-kg-btn')?.addEventListener('click', () => this.setUnits('kg'));
             document.getElementById('theme-dark-btn')?.addEventListener('click', () => this.setTheme('dark'));
             document.getElementById('theme-light-btn')?.addEventListener('click', () => this.setTheme('light'));
+            document.getElementById('prog-linear-btn')?.addEventListener('click', () => this.setProgressionModel('linear'));
+            document.getElementById('prog-double-btn')?.addEventListener('click', () => this.setProgressionModel('double'));
+            document.getElementById('weight-increment-switch')?.addEventListener('click', (e) => {
+                if (e.target.matches('.toggle-btn')) {
+                    this.setWeightIncrement(parseFloat(e.target.dataset.increment));
+                }
+            });
         },
         
         openMesoLengthModal() {
@@ -187,10 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         showView(viewName) {
-            Object.values(this.elements).forEach(el => {
-                if (el.classList.contains('container')) el.classList.add('hidden');
-            });
-
+            // Hide all main containers
+            this.elements.onboardingContainer.classList.add('hidden');
+            this.elements.homeScreen.classList.add('hidden');
+            this.elements.workoutView.classList.add('hidden');
+            this.elements.builderView.classList.add('hidden');
+            this.elements.performanceSummaryView.classList.add('hidden');
+            this.elements.settingsView.classList.add('hidden');
+        
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
@@ -214,6 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
             document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
             document.getElementById('theme-light-btn').classList.toggle('active', this.state.settings.theme === 'light');
+            document.getElementById('prog-linear-btn').classList.toggle('active', this.state.settings.progressionModel === 'linear');
+            document.getElementById('prog-double-btn').classList.toggle('active', this.state.settings.progressionModel === 'double');
+            document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement);
+            });
         },
 
         setUnits(unit) {
@@ -234,9 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         applyTheme() {
+            // In a real app, you'd toggle a class on the body or change CSS variables
+            console.log(`Applying theme: ${this.state.settings.theme}`);
             document.body.dataset.theme = this.state.settings.theme;
         },
 
+        setProgressionModel(model) {
+            this.state.settings.progressionModel = model;
+            this.saveStateToStorage();
+            this.renderSettings();
+        },
+
+        setWeightIncrement(increment) {
+            this.state.settings.weightIncrement = increment;
+            this.saveStateToStorage();
+            this.renderSettings();
+        },
 
         // --- BUILDER METHODS ---
         renderBuilder() {
@@ -352,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return {
                                         exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 10, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
+                                        targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: [] // Start at rep floor
                                     };
                                 })
                         )
@@ -387,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.userSelections[field] = value;
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
+            this.saveStateToStorage();
         },
         finishOnboarding() {
             this.state.plan = this.generateMesocycle(this.state.userSelections.goal, this.state.userSelections.experience, this.state.userSelections.days, 6);
@@ -444,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             workoutExercises.push({
                                 exerciseId: ex.id, name: ex.name, muscle: ex.muscle, type: 'Primary',
                                 targetSets: isDeload ? Math.ceil(targetSets / 2) : targetSets,
-                                targetReps: 10, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
+                                targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: [] // Start at rep floor (e.g. 8)
                             });
                         });
                     });
@@ -573,28 +613,55 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateNextWeekProgression(completedWeekNumber) {
             const nextWeekNumber = completedWeekNumber + 1;
             if (!this.state.plan.weeks[nextWeekNumber]) return;
-            const weightIncrement = this.state.settings.units === 'lbs' ? 5 : 2.5; // 5lbs or 2.5kg
+        
+            const { progressionModel, weightIncrement } = this.state.settings;
+            const REP_RANGE_FLOOR = 8;
+            const REP_RANGE_CEILING = 12;
+        
             for (const dayKey in this.state.plan.weeks[completedWeekNumber]) {
                 const completedDay = this.state.plan.weeks[completedWeekNumber][dayKey];
                 const nextWeekDay = this.state.plan.weeks[nextWeekNumber][dayKey];
+        
                 if (!nextWeekDay) continue;
+        
                 completedDay.exercises.forEach((completedEx) => {
                     const nextWeekEx = nextWeekDay.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
                     if (!nextWeekEx) return;
-                    let successfulSets = 0;
-                    let lastSetWeight = completedEx.targetLoad || 0;
+        
                     if (completedEx.sets.length === 0) {
                         nextWeekEx.targetLoad = completedEx.targetLoad;
+                        nextWeekEx.targetReps = completedEx.targetReps;
                         return;
                     }
+        
+                    let successfulSets = 0;
                     completedEx.sets.forEach(set => {
                         if (set.reps >= completedEx.targetReps) successfulSets++;
-                        lastSetWeight = set.weight;
                     });
-                    if (successfulSets >= completedEx.targetSets) {
-                        nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
-                    } else {
-                        nextWeekEx.targetLoad = lastSetWeight;
+                    const allSetsSuccessful = successfulSets >= completedEx.targetSets;
+                    const lastSetWeight = completedEx.sets[completedEx.sets.length - 1].weight;
+        
+                    if (progressionModel === 'double') {
+                        if (allSetsSuccessful) {
+                            const newTargetReps = (completedEx.targetReps || REP_RANGE_FLOOR) + 1;
+                            if (newTargetReps > REP_RANGE_CEILING) {
+                                nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
+                                nextWeekEx.targetReps = REP_RANGE_FLOOR;
+                            } else {
+                                nextWeekEx.targetLoad = lastSetWeight;
+                                nextWeekEx.targetReps = newTargetReps;
+                            }
+                        } else {
+                            nextWeekEx.targetLoad = lastSetWeight;
+                            nextWeekEx.targetReps = completedEx.targetReps;
+                        }
+                    } else { // Linear Progression
+                        if (allSetsSuccessful) {
+                            nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
+                        } else {
+                            nextWeekEx.targetLoad = lastSetWeight;
+                        }
+                        nextWeekEx.targetReps = completedEx.targetReps;
                     }
                 });
             }
