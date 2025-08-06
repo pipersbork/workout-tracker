@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
                                         targetReps: 8, targetLoad: null, sets: [],
-                                        stallCount: 0 // Initialize stall count
+                                        stallCount: 0 
                                     };
                                 })
                         )
@@ -842,12 +842,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         
-        // --- NEW: Dynamic Progression & Deload Logic ---
         checkForStallAndRecommendDeload(plan, completedWeek, completedDayKey) {
-            if (completedWeek < 2) return null; // Can't stall before week 2
+            if (completedWeek < 2) return null;
 
             const completedWorkout = plan.weeks[completedWeek][completedDayKey];
-            const lastWeekWorkout = plan.weeks[completedWeek - 1][completedDayKey];
+            const lastWeekWorkout = plan.weeks[completedWeek - 1]?.[completedDayKey];
             if (!lastWeekWorkout || !lastWeekWorkout.completed) return null;
 
             let stalledExercise = null;
@@ -864,9 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const maxRepsLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.reps || 0));
 
                 if (maxWeightThisWeek < maxWeightLastWeek || (maxWeightThisWeek === maxWeightLastWeek && maxRepsThisWeek <= maxRepsLastWeek)) {
-                    ex.stallCount = (ex.stallCount || 0) + 1;
+                    ex.stallCount = (lastWeekEx.stallCount || 0) + 1;
                 } else {
-                    ex.stallCount = 0; // Progress was made, reset stall count
+                    ex.stallCount = 0;
                 }
 
                 if (ex.stallCount >= 2) {
@@ -898,8 +897,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const exToDeload = day.exercises.find(e => e.exerciseId === exercise.exerciseId);
                 if (exToDeload) {
                     const lastWeight = Math.max(...(exercise.sets || []).map(s => s.weight || 0));
-                    exToDeload.targetLoad = Math.round((lastWeight * 0.85) / 5) * 5; // Reduce by 15% and round to nearest 5
-                    exToDeload.stallCount = 0; // Reset stall count after deload
+                    exToDeload.targetLoad = Math.round((lastWeight * 0.85) / 5) * 5;
+                    exToDeload.stallCount = 0;
                 }
             }
             this.showView('home');
