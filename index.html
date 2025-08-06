@@ -3,183 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progression - Workout Tracker</title>
-
+    <title>Weight Progression Planner</title>
+    
+    <!-- Link to Tailwind CSS (for utility classes) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Link to your custom CSS file -->
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Onboarding Container -->
-    <div class="container" id="onboarding-container">
-        <div class="progress-bar"><div class="progress"></div></div>
-        <div class="step active" id="step1">
-            <div class="main-title">PROGRESSION</div>
-            <div class="divider"></div>
-            <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-            <button class="cta-button" id="beginOnboardingBtn">Begin Onboarding</button>
-        </div>
-        <div class="step" id="step2">
-            <h2>Your Goal</h2>
-            <p>Select your training focus:</p>
-            <div class="card-group" data-field="goal">
-                <div class="goal-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3><p>Strength & Hypertrophy</p></div>
-                <div class="goal-card" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3><p>Endurance Training</p></div>
-                <div class="goal-card" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3><p>Balance Both</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="goalNextBtn">Next</button>
-            </div>
-        </div>
-        <div class="step" id="step3">
-            <h2>Experience Level</h2>
-            <p>Choose your fitness level:</p>
-            <div class="card-group" data-field="experience">
-                <div class="goal-card" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3><p>New to training</p></div>
-                <div class="goal-card" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3><p>6–18 months</p></div>
-                <div class="goal-card" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3><p>18+ months</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="experienceNextBtn">Next</button>
-            </div>
-        </div>
-        <div class="step" id="step4">
-            <h2>Workout Preferences</h2>
-            <p>Select your preferred style:</p>
-            <div class="card-group" data-field="style">
-                <div class="goal-card" data-value="gym" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Gym</h3><p>Heavy Lifts</p></div>
-                <div class="goal-card" data-value="home" role="button" tabindex="0"><div class="icon">🏠</div><h3>Home</h3><p>Minimal Equipment</p></div>
-                <div class="goal-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3><p>Mix of Both</p></div>
-            </div>
-            <p>How many days per week?</p>
-            <div class="card-group" data-field="days">
-                <div class="goal-card" data-value="3" role="button" tabindex="0"><h3>3</h3><p>Light</p></div>
-                <div class="goal-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Balanced</p></div>
-                <div class="goal-card" data-value="5" role="button" tabindex="0"><h3>5</h3><p>Intense</p></div>
-                <div class="goal-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Max Effort</p></div>
-            </div>
-            <div class="button-group">
-                <button class="cta-button secondary-button back-btn-onboarding">Back</button>
-                <button class="cta-button" id="finishOnboardingBtn">Create My Plan</button>
-            </div>
-        </div>
-    </div>
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-5xl">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Weight Progression Planner</h1>
+            <p class="mt-3 text-md sm:text-lg text-gray-600 max-w-2xl mx-auto">Intelligently plan your strength journey with sustainable, micro-load progressions.</p>
+        </header>
 
-    <!-- Home Screen -->
-    <div id="home-screen" class="container hidden">
-        <div class="main-title">PROGRESSION</div>
-        <div class="divider"></div>
-        <div class="home-nav-buttons">
-            <button class="cta-button home-btn" id="planMesoBtn">Plan Mesocycle</button>
-            <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
-            <button class="cta-button home-btn" id="reviewWorkoutsBtn">Performance Summary</button>
-        </div>
-        <button class="home-icon-btn" id="settingsBtn" aria-label="Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
-    </div>
+        <main class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <!-- Input Section -->
+                <div id="input-section" class="lg:col-span-2">
+                    <h2 class="text-2xl font-semibold mb-6 border-b border-gray-200 pb-3 text-gray-800">Create Your Plan</h2>
 
-    <!-- Mesocycle Builder -->
-    <div id="builder-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromBuilder">&larr; Home</button>
-            <h2>Mesocycle Builder</h2>
-        </div>
-        <div class="schedule-container" id="schedule-container"></div>
-        <div class="builder-actions">
-            <button class="cta-button secondary-button" id="add-day-btn">+ Add a Day</button>
-            <button class="cta-button" id="done-planning-btn">Done Planning</button>
-        </div>
-    </div>
+                    <form id="progression-form" class="space-y-6">
+                        <!-- Progression Style Selection -->
+                        <div>
+                            <label for="progressionStyle" class="block text-sm font-semibold text-gray-700 mb-2">1. Select Progression Style</label>
+                            <select id="progressionStyle" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-select">
+                                <option value="double" selected>Double Progression (Reps First)</option>
+                                <option value="linear">Linear Micro-Loading (Weight First)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Common Form Inputs -->
+                        <div>
+                            <label for="exerciseName" class="block text-sm font-semibold text-gray-700 mb-2">2. Exercise Name</label>
+                            <input type="text" id="exerciseName" value="Cable Bicep Curl" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                        </div>
+                        <div>
+                            <label for="startWeight" class="block text-sm font-semibold text-gray-700 mb-2">3. Starting Weight (lbs)</label>
+                            <input type="number" id="startWeight" value="20" min="0" step="1.25" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                        </div>
 
-    <!-- Daily Workout View -->
-    <div id="daily-workout-view" class="hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeBtn">&larr; Home</button>
-            <h2 id="workout-day-title">Workout Title</h2>
-            <p id="workout-date">Date</p>
-        </div>
-        <div id="exercise-list-container"></div>
-        <div class="workout-actions">
-            <button id="complete-workout-btn" class="cta-button">Complete Workout</button>
-        </div>
-    </div>
+                        <!-- Inputs for Double Progression -->
+                        <div id="doubleProgressionInputs" class="space-y-6 border-t border-gray-200 pt-6">
+                            <h3 class="text-md font-semibold text-gray-700">4. Set Your Rep Range</h3>
+                            <div>
+                                <label for="minReps" class="block text-sm font-medium text-gray-600">Minimum Reps</label>
+                                <input type="number" id="minReps" value="8" min="1" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                            </div>
+                            <div>
+                                <label for="maxReps" class="block text-sm font-medium text-gray-600">Maximum Reps (Rep Goal)</label>
+                                <input type="number" id="maxReps" value="12" min="1" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                            </div>
+                        </div>
 
-    <!-- Performance Summary View -->
-    <div id="performance-summary-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromSummary">&larr; Home</button>
-            <h2>Performance Summary</h2>
-        </div>
-        <div id="summary-content">
-            <div class="summary-section">
-                <h3>Completed Workouts</h3>
-                <div id="completed-workouts-list"></div>
-            </div>
-            <div class="summary-section">
-                <h3>Track Exercise Progress</h3>
-                <select id="exercise-tracker-select" class="builder-select"></select>
-                <div class="chart-container">
-                    <canvas id="progress-chart"></canvas>
+                        <!-- Inputs for Linear Micro-Loading -->
+                        <div id="linearProgressionInputs" class="hidden space-y-6 border-t border-gray-200 pt-6">
+                             <h3 class="text-md font-semibold text-gray-700">4. Set Your Targets</h3>
+                            <div>
+                                <label for="targetSets" class="block text-sm font-medium text-gray-600">Target Sets</label>
+                                <input type="number" id="targetSets" value="4" min="1" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                            </div>
+                            <div>
+                                <label for="targetReps" class="block text-sm font-medium text-gray-600">Target Reps</p>
+                                <input type="number" id="targetReps" value="8" min="1" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                            </div>
+                            <div>
+                                <label for="stallSession" class="block text-sm font-medium text-gray-600">Simulate Stall at Session #</label>
+                                <input type="number" id="stallSession" value="5" min="2" class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-lg form-input">
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Generate Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Output Section -->
+                <div id="output-section" class="lg:col-span-3">
+                    <h2 class="text-2xl font-semibold mb-6 border-b border-gray-200 pb-3 text-gray-800">Your 8-Session Plan</h2>
+                    <div id="plan-title" class="text-xl font-bold text-gray-900 mb-4"></div>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-200">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="table-cell text-center">Session</th>
+                                    <th class="table-cell text-center">Weight (lbs)</th>
+                                    <th class="table-cell">Goal (Sets x Reps)</th>
+                                    <th class="table-cell">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plan-table-body" class="text-gray-700">
+                                <!-- Plan will be generated by script.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="plan-summary" class="mt-6 text-sm text-gray-600 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        Enter your details and click "Generate Plan" to see your progression.
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- NEW: Settings View -->
-    <div id="settings-view" class="container hidden">
-        <div class="workout-header">
-            <button class="back-btn" id="backToHomeFromSettings">&larr; Home</button>
-            <h2>Settings</h2>
-        </div>
-        <div id="settings-content">
-            <div class="settings-section">
-                <h3>Training Goal</h3>
-                <div class="card-group" data-field="goal" id="settings-goal-cards">
-                    <div class="goal-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3></div>
-                    <div class="goal-card" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3></div>
-                    <div class="goal-card" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3></div>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Experience Level</h3>
-                <div class="card-group" data-field="experience" id="settings-experience-cards">
-                    <div class="goal-card" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3></div>
-                    <div class="goal-card" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3></div>
-                    <div class="goal-card" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3></div>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Units</h3>
-                <div class="toggle-switch">
-                    <button id="units-lbs-btn" class="toggle-btn active" data-unit="lbs">LBS</button>
-                    <button id="units-kg-btn" class="toggle-btn" data-unit="kg">KG</button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Theme</h3>
-                <div class="toggle-switch">
-                    <button id="theme-dark-btn" class="toggle-btn active" data-theme="dark">Dark</button>
-                    <button id="theme-light-btn" class="toggle-btn" data-theme="light">Light</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div id="modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-btn" id="closeModalBtn">&times;</span>
-            <div id="modal-body"></div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
-
+    <!-- Link to your JavaScript file -->
+    <script src="script.js"></script>
 </body>
 </html>
 
