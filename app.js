@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         viewMap: {
             onboarding: 'onboarding-container',
             home: 'home-screen',
-            planHub: 'plan-hub-view', // NEW
-            templateLibrary: 'template-library-view', // NEW
+            planHub: 'plan-hub-view',
+            templateLibrary: 'template-library-view',
             customPlanWizard: 'custom-plan-wizard-view',
             builder: 'builder-view',
             workout: 'daily-workout-view',
