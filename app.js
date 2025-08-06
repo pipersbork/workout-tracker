@@ -25,11 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
         viewMap: {
             onboarding: 'onboarding-container',
             home: 'home-screen',
+            planHub: 'plan-hub-view', // NEW
+            customPlanWizard: 'custom-plan-wizard-view',
             builder: 'builder-view',
             workout: 'daily-workout-view',
             performanceSummary: 'performance-summary-view',
             settings: 'settings-view',
-            customPlanWizard: 'custom-plan-wizard-view'
         },
 
         state: {
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements: {
             onboardingContainer: document.getElementById('onboarding-container'),
             homeScreen: document.getElementById('home-screen'),
+            planHubView: document.getElementById('plan-hub-view'),
             workoutView: document.getElementById('daily-workout-view'),
             builderView: document.getElementById('builder-view'),
             performanceSummaryView: document.getElementById('performance-summary-view'),
@@ -158,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.validateStep('style')) this.finishOnboarding();
             });
             document.querySelectorAll('.back-btn-onboarding').forEach(button => button.addEventListener('click', () => this.previousStep()));
-            document.getElementById('planMesoBtn')?.addEventListener('click', () => this.handlePlanMesoClick());
+            document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('planHub'));
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('performanceSummary'));
             document.getElementById('settingsBtn')?.addEventListener('click', () => this.showView('settings'));
@@ -167,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('backToHomeFromSummary')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSettings')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromWizard')?.addEventListener('click', () => this.showView('home'));
+            document.getElementById('backToHomeFromHub')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
             
@@ -233,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('weight-increment-switch')?.addEventListener('click', (e) => {
                 if (e.target.matches('.toggle-btn')) this.setWeightIncrement(parseFloat(e.target.dataset.increment));
             });
-            document.getElementById('create-new-plan-btn')?.addEventListener('click', () => this.startNewPlan());
+            document.getElementById('create-new-plan-btn')?.addEventListener('click', () => this.showView('planHub'));
             this.elements.planManagementList.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
@@ -261,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (viewName === 'home') this.renderHomeScreen();
                 else if (viewName === 'onboarding') this.showStep(this.state.currentStep);
+                else if (viewName === 'planHub') this.renderPlanHub();
                 else if (viewName === 'workout') this.renderDailyWorkout();
                 else if (viewName === 'builder') this.renderBuilder();
                 else if (viewName === 'performanceSummary') this.renderPerformanceSummary();
@@ -387,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 [
                     { id: 'use-plan-btn', text: 'Use This Plan', class: 'azure-button', noClose: true },
                     { id: 'customize-plan-btn', text: 'Customize This Plan', class: 'secondary-button', noClose: true },
-                    { id: 'design-own-btn', text: 'Design My Own Plan', class: 'cta-button', action: () => this.startNewPlan() }
+                    { id: 'design-own-btn', text: 'Design My Own Plan', class: 'cta-button', action: () => this.showView('customPlanWizard') }
                 ],
                 'vertical'
             );
@@ -417,15 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         handlePlanMesoClick() {
-            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
-            if (activePlan) {
-                this.showModal('Plan Your Mesocycle', 'Do you want to create a new plan or edit your current active plan?', [
-                    { text: 'Create New', class: 'cta-button', action: () => this.startNewPlan() },
-                    { text: 'Edit Active Plan', class: 'secondary-button', action: () => this.editPlan(this.state.activePlanId) }
-                ]);
-            } else {
-                this.startNewPlan();
-            }
+            this.showView('planHub');
         },
         
         startNewPlan() {
