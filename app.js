@@ -1,11 +1,9 @@
 // --- FIREBASE SDK IMPORTS ---
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- FIREBASE CONFIGURATION ---
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
@@ -45,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 goal: null, 
                 experience: null, 
                 style: null,
-                onboardingCompleted: false // Replaces localStorage flag
+                onboardingCompleted: false
             },
             settings: {
                 units: 'lbs',
@@ -53,15 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressionModel: 'double',
                 weightIncrement: 5
             },
-            plan: null,
+            // --- NEW: State for multiple plans ---
+            allPlans: [],
+            activePlanId: null, 
+            editingPlanId: null, // To track which plan is being edited
+            // ---
             currentView: { week: 1, day: 1 },
             currentViewName: 'onboarding',
             builderPlan: {
                 days: [] 
             },
-            allPlans: [],
             exercises: [],
+            // --- NEW: State for new charts ---
             progressChart: null,
+            volumeChart: null,
         },
 
         elements: {
@@ -77,6 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
             modalBody: document.getElementById('modal-body'),
             modalActions: document.getElementById('modal-actions'),
             closeModalBtn: document.getElementById('closeModalBtn'),
+            activePlanDisplay: document.getElementById('active-plan-display'),
+            builderTitle: document.getElementById('builder-title'),
+            planManagementList: document.getElementById('plan-management-list'),
         },
 
         // --- INITIALIZATION & AUTHENTICATION ---
@@ -89,14 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         handleAuthentication() {
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    // User is signed in anonymously.
                     this.state.userId = user.uid;
-                    console.log("Authenticated with UID:", this.state.userId);
-
-                    // Now that we have a user, load their data from Firestore
                     await this.loadStateFromFirestore();
-                    
-                    // Apply settings and show the correct view
                     this.applyTheme();
                     if (this.state.userSelections.onboardingCompleted) {
                         this.showView('home', true);
@@ -104,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.showView('onboarding', true);
                     }
                 } else {
-                    // If no user, sign them in anonymously. This will trigger the onAuthStateChanged listener again.
                     signInAnonymously(auth).catch((error) => {
                         console.error("Anonymous sign-in failed:", error);
                         this.showModal("Connection Error", "Could not connect to the database. Please refresh the page.");
@@ -124,24 +123,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // --- FIRESTORE DATA HANDLING ---
+        // --- FIRESTORE DATA HANDLING (UPDATED) ---
         async loadStateFromFirestore() {
             if (!this.state.userId) return;
             const userDocRef = doc(db, "users", this.state.userId);
-
             try {
                 const docSnap = await getDoc(userDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Merge data from Firestore into the app's state
                     this.state.userSelections = data.userSelections || this.state.userSelections;
                     this.state.settings = data.settings || this.state.settings;
                     this.state.allPlans = data.allPlans || [];
+                    this.state.activePlanId = data.activePlanId || (this.state.allPlans.length > 0 ? this.state.allPlans[0].id : null);
                     this.state.currentView = data.currentView || this.state.currentView;
-                    if (this.state.allPlans.length > 0) {
-                        this.state.plan = this.state.allPlans[0]; 
-                    }
-                    console.log("User data loaded from Firestore.");
                 } else {
                     console.log("No existing user data. A new profile will be created on first save.");
                 }
@@ -153,24 +147,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async saveStateToFirestore() {
-            if (!this.state.userId) {
-                console.error("Cannot save state: No user ID.");
-                return;
-            }
+            if (!this.state.userId) return;
             const userDocRef = doc(db, "users", this.state.userId);
-            
-            // Consolidate all the data we want to save into one object
             const dataToSave = {
                 userSelections: this.state.userSelections,
                 settings: this.state.settings,
                 allPlans: this.state.allPlans,
+                activePlanId: this.state.activePlanId,
                 currentView: this.state.currentView
             };
-
             try {
-                // setDoc will create the document if it doesn't exist, or overwrite it if it does.
                 await setDoc(userDocRef, dataToSave);
-                console.log("State saved to Firestore.");
             } catch (error) {
                 console.error("Error saving state to Firestore:", error);
                 this.showModal("Error", "Could not save your progress. Please check your connection.");
@@ -183,15 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
-                if (this.validateStep('style')) {
-                    this.finishOnboarding();
-                }
+                if (this.validateStep('style')) this.finishOnboarding();
             });
             document.querySelectorAll('.back-btn-onboarding').forEach(button => button.addEventListener('click', () => this.previousStep()));
             
             // Home Screen
+            document.getElementById('planMesoBtn')?.addEventListener('click', () => this.handlePlanMesoClick());
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
-            document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
             document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('performanceSummary'));
             document.getElementById('settingsBtn')?.addEventListener('click', () => this.showView('settings'));
 
@@ -208,17 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.scheduleContainer.addEventListener('click', (e) => {
                 const dayCard = e.target.closest('.day-card');
                 if (!dayCard) return;
-
                 const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
-                
                 if (e.target.closest('.day-header') && dayCard.classList.contains('collapsed')) {
                     this.toggleDayExpansion(dayIndex);
                     return;
                 }
-
                 const button = e.target.closest('button');
                 if (!button) return;
-
                 const { muscleIndex, focus } = button.dataset;
                 if (button.matches('.add-muscle-group-btn')) this.addMuscleGroupToDay(dayIndex);
                 if (button.matches('.delete-day-btn')) this.deleteDayFromBuilder(dayIndex);
@@ -239,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target === this.elements.modal) this.closeModal();
                 if (e.target.matches('.meso-length-card')) {
                     const length = e.target.dataset.value;
-                    this.showModal('Finalize Plan?', `Are you sure you want to create a ${length}-week plan? This will replace your current schedule.`, [
+                    this.showModal('Finalize Plan?', `Are you sure you want to create a ${length}-week plan?`, [
                         { text: 'Cancel', class: 'secondary-button' },
                         { text: 'Yes, Create Plan', class: 'cta-button', action: () => this.finalizeAndStartPlan(length) }
                     ]);
@@ -265,13 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.matches('#complete-workout-btn')) this.confirmCompleteWorkout();
             });
             this.elements.workoutView.addEventListener('input', (e) => {
-                if(e.target.matches('.weight-input, .reps-input, .rir-input')) this.handleSetInput(e.target);
+                if(e.target.matches('.weight-input, .reps-input')) this.handleSetInput(e.target);
             });
             
             // Performance Summary
             document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => this.renderProgressChart(e.target.value));
 
-            // Settings Toggles
+            // Settings
             document.getElementById('units-lbs-btn')?.addEventListener('click', () => this.setUnits('lbs'));
             document.getElementById('units-kg-btn')?.addEventListener('click', () => this.setUnits('kg'));
             document.getElementById('theme-dark-btn')?.addEventListener('click', () => this.setTheme('dark'));
@@ -279,71 +260,27 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('prog-linear-btn')?.addEventListener('click', () => this.setProgressionModel('linear'));
             document.getElementById('prog-double-btn')?.addEventListener('click', () => this.setProgressionModel('double'));
             document.getElementById('weight-increment-switch')?.addEventListener('click', (e) => {
-                if (e.target.matches('.toggle-btn')) {
-                    this.setWeightIncrement(parseFloat(e.target.dataset.increment));
-                }
+                if (e.target.matches('.toggle-btn')) this.setWeightIncrement(parseFloat(e.target.dataset.increment));
+            });
+            document.getElementById('create-new-plan-btn')?.addEventListener('click', () => this.startNewPlan());
+            this.elements.planManagementList.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+                const planId = button.dataset.planId;
+                if (button.matches('.set-active-plan-btn')) this.setActivePlan(planId);
+                if (button.matches('.edit-plan-btn')) this.editPlan(planId);
+                if (button.matches('.delete-plan-btn')) this.confirmDeletePlan(planId);
             });
         },
         
-        openMesoLengthModal() {
-            this.elements.modalBody.innerHTML = `
-                <h2>Select Mesocycle Length</h2>
-                <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
-                <div class="card-group">
-                    <div class="goal-card meso-length-card" data-value="4" role="button" tabindex="0"><h3>4</h3><p>Short</p></div>
-                    <div class="goal-card meso-length-card" data-value="6" role="button" tabindex="0"><h3>6</h3><p>Standard</p></div>
-                    <div class="goal-card meso-length-card" data-value="8" role="button" tabindex="0"><h3>8</h3><p>Long</p></div>
-                    <div class="goal-card meso-length-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
-                </div>
-            `;
-            this.elements.modalActions.innerHTML = '';
-            this.elements.modal.classList.add('active');
-        },
-
-        showModal(title, message, buttons = []) {
-            this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
-            this.elements.modalActions.innerHTML = '';
-            
-            if (buttons.length === 0) {
-                buttons.push({ text: 'OK', class: 'cta-button' });
-            }
-
-            buttons.forEach(btnInfo => {
-                const button = document.createElement('button');
-                button.textContent = btnInfo.text;
-                button.className = btnInfo.class;
-                button.addEventListener('click', () => {
-                    this.closeModal();
-                    if (btnInfo.action) {
-                        btnInfo.action();
-                    }
-                });
-                this.elements.modalActions.appendChild(button);
-            });
-
-            this.elements.modal.classList.add('active');
-        },
-
-        closeModal() {
-            this.elements.modal.classList.remove('active');
-        },
-
+        // --- VIEW RENDERING & NAVIGATION ---
         showView(viewName, skipAnimation = false) {
             const currentViewId = this.viewMap[this.state.currentViewName];
             const newViewId = this.viewMap[viewName];
-
-            if (!newViewId) {
-                console.error(`View "${viewName}" not found in viewMap.`);
-                return;
-            }
-
+            if (!newViewId) return;
             const currentViewEl = document.getElementById(currentViewId);
             const newViewEl = document.getElementById(newViewId);
-
-            if (!newViewEl) {
-                console.error(`Element with ID "${newViewId}" for view "${viewName}" not found.`);
-                return;
-            }
+            if (!newViewEl) return;
 
             const transition = () => {
                 if(currentViewEl) {
@@ -352,8 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 newViewEl.classList.remove('hidden');
 
-                if (viewName === 'onboarding') this.showStep(this.state.currentStep);
-                else if (viewName === 'workout') this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
+                if (viewName === 'home') this.renderHomeScreen();
+                else if (viewName === 'onboarding') this.showStep(this.state.currentStep);
+                else if (viewName === 'workout') this.renderDailyWorkout();
                 else if (viewName === 'builder') this.renderBuilder();
                 else if (viewName === 'performanceSummary') this.renderPerformanceSummary();
                 else if (viewName === 'settings') this.renderSettings();
@@ -368,54 +306,193 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(transition, 400);
             }
         },
-        
-        // --- SETTINGS METHODS ---
-        renderSettings() {
-            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
-            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
-            
-            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
-            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
-            
-            document.getElementById('units-lbs-btn').classList.toggle('active', this.state.settings.units === 'lbs');
-            document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
-            document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
-            document.getElementById('theme-light-btn').classList.toggle('active', this.state.settings.theme === 'light');
-            document.getElementById('prog-linear-btn').classList.toggle('active', this.state.settings.progressionModel === 'linear');
-            document.getElementById('prog-double-btn').classList.toggle('active', this.state.settings.progressionModel === 'double');
-            document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement));
-        },
 
-        async setUnits(unit) {
-            this.state.settings.units = unit;
-            await this.saveStateToFirestore();
-            this.renderSettings();
-            if (this.state.currentViewName === 'workout') {
-                this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
+        renderHomeScreen() {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            if (activePlan) {
+                this.elements.activePlanDisplay.textContent = `Active Plan: ${activePlan.name}`;
+            } else {
+                this.elements.activePlanDisplay.textContent = 'No active plan. Create one!';
             }
         },
 
-        async setTheme(theme) {
-            this.state.settings.theme = theme;
-            this.applyTheme();
+        // --- MODAL & ONBOARDING ---
+        openMesoLengthModal() {
+            this.elements.modalBody.innerHTML = `
+                <h2>Select Mesocycle Length</h2>
+                <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
+                <div class="card-group">
+                    <div class="goal-card meso-length-card" data-value="4" role="button" tabindex="0"><h3>4 Weeks</h3></div>
+                    <div class="goal-card meso-length-card" data-value="6" role="button" tabindex="0"><h3>6 Weeks</h3></div>
+                    <div class="goal-card meso-length-card" data-value="8" role="button" tabindex="0"><h3>8 Weeks</h3></div>
+                </div>
+                <h2>Plan Name</h2>
+                <input type="text" id="new-plan-name" class="modal-input" placeholder="e.g., My Summer Bulk">
+            `;
+            this.elements.modalActions.innerHTML = `<button id="save-plan-details-btn" class="cta-button">Save Plan</button>`;
+            document.getElementById('save-plan-details-btn').addEventListener('click', () => {
+                const length = document.querySelector('.meso-length-card.active')?.dataset.value;
+                const name = document.getElementById('new-plan-name').value;
+                if (!length || !name) {
+                    alert('Please select a length and provide a name.');
+                    return;
+                }
+                this.finalizeAndStartPlan(length, name);
+                this.closeModal();
+            });
+            this.elements.modal.classList.add('active');
+        },
+        showModal(title, message, buttons = []) {
+            this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
+            this.elements.modalActions.innerHTML = '';
+            if (buttons.length === 0) buttons.push({ text: 'OK', class: 'cta-button' });
+            buttons.forEach(btnInfo => {
+                const button = document.createElement('button');
+                button.textContent = btnInfo.text;
+                button.className = btnInfo.class;
+                button.addEventListener('click', () => {
+                    this.closeModal();
+                    if (btnInfo.action) btnInfo.action();
+                });
+                this.elements.modalActions.appendChild(button);
+            });
+            this.elements.modal.classList.add('active');
+        },
+        closeModal() { this.elements.modal.classList.remove('active'); },
+        showStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            const newStep = document.getElementById(`step${stepNumber}`);
+            if (newStep) {
+                newStep.classList.add('active');
+                ['goal', 'experience', 'style'].forEach(field => {
+                    if (this.state.userSelections[field]) {
+                        const card = newStep.querySelector(`.card-group[data-field="${field}"] .goal-card[data-value="${this.state.userSelections[field]}"]`);
+                        if (card) card.classList.add('active');
+                    }
+                });
+            }
+            this.updateProgress();
+        },
+        updateProgress() { this.elements.progress.style.width = `${((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100}%`; },
+        nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
+        previousStep() { if (this.state.currentStep > 1) { this.state.currentStep--; this.showStep(this.state.currentStep); } },
+        validateStep(field) {
+            if (!this.state.userSelections[field]) { 
+                this.showModal('Selection Required', `Please select an option for "${this.capitalize(field)}" before continuing.`);
+                return false; 
+            }
+            return true;
+        },
+        validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
+        async selectCard(element, field, value, shouldSave = false) {
+            this.state.userSelections[field] = value;
+            element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            if (shouldSave) await this.saveStateToFirestore();
+        },
+        async finishOnboarding() {
+            this.state.userSelections.onboardingCompleted = true;
+            await this.saveStateToFirestore();
+            this.showView('home');
+        },
+        
+        // --- PLAN MANAGEMENT (NEW & UPDATED) ---
+        handlePlanMesoClick() {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            if (activePlan) {
+                this.showModal('Plan Your Mesocycle', 'Do you want to create a new plan or edit your current active plan?', [
+                    { text: 'Create New', class: 'cta-button', action: () => this.startNewPlan() },
+                    { text: 'Edit Active Plan', class: 'secondary-button', action: () => this.editPlan(this.state.activePlanId) }
+                ]);
+            } else {
+                this.startNewPlan();
+            }
+        },
+        startNewPlan() {
+            this.state.editingPlanId = null;
+            this.state.builderPlan = { days: [] };
+            this.elements.builderTitle.textContent = "Create New Plan";
+            this.showView('builder');
+        },
+        editPlan(planId) {
+            const planToEdit = this.state.allPlans.find(p => p.id === planId);
+            if (!planToEdit) return;
+            this.state.editingPlanId = planId;
+            // Create a deep copy for the builder to avoid modifying the original state directly
+            this.state.builderPlan = JSON.parse(JSON.stringify(planToEdit.builderTemplate || { days: [] }));
+            this.elements.builderTitle.textContent = `Editing: ${planToEdit.name}`;
+            this.showView('builder');
+        },
+        async setActivePlan(planId) {
+            this.state.activePlanId = planId;
             await this.saveStateToFirestore();
             this.renderSettings();
         },
-
-        applyTheme() {
-            document.body.dataset.theme = this.state.settings.theme;
+        confirmDeletePlan(planId) {
+            this.showModal('Delete Plan?', 'Are you sure you want to permanently delete this plan? This cannot be undone.', [
+                { text: 'Cancel', class: 'secondary-button' },
+                { text: 'Yes, Delete', class: 'cta-button', action: () => this.deletePlan(planId) }
+            ]);
         },
-
-        async setProgressionModel(model) {
-            this.state.settings.progressionModel = model;
+        async deletePlan(planId) {
+            this.state.allPlans = this.state.allPlans.filter(p => p.id !== planId);
+            if (this.state.activePlanId === planId) {
+                this.state.activePlanId = this.state.allPlans.length > 0 ? this.state.allPlans[0].id : null;
+            }
             await this.saveStateToFirestore();
             this.renderSettings();
         },
+        async finalizeAndStartPlan(mesoLength, planName) {
+            if (this.state.builderPlan.days.length === 0) {
+                this.showModal("Incomplete Plan", "Please add at least one day to your plan.");
+                return;
+            }
 
-        async setWeightIncrement(increment) {
-            this.state.settings.weightIncrement = increment;
+            const newMeso = { 
+                id: this.state.editingPlanId || `meso_${Date.now()}`, 
+                name: planName,
+                startDate: new Date().toISOString(), 
+                durationWeeks: parseInt(mesoLength), 
+                builderTemplate: JSON.parse(JSON.stringify(this.state.builderPlan)), // Save the builder structure
+                weeks: {} 
+            };
+
+            const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
+            for (let i = 1; i <= newMeso.durationWeeks; i++) {
+                newMeso.weeks[i] = {};
+                const isDeload = (i === newMeso.durationWeeks);
+                this.state.builderPlan.days.forEach((day, dayIndex) => {
+                    newMeso.weeks[i][dayIndex + 1] = {
+                        name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
+                        completed: false,
+                        exercises: day.muscleGroups
+                            .filter(mg => mg.muscle !== 'restday')
+                            .flatMap(mg => 
+                                mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
+                                    const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
+                                    const setsPerExercise = focusSetMap[mg.focus] || 3;
+                                    return {
+                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
+                                        targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
+                                        targetReps: 8, targetLoad: null, sets: []
+                                    };
+                                })
+                        )
+                    };
+                });
+            }
+
+            if (this.state.editingPlanId) {
+                const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.editingPlanId);
+                this.state.allPlans[planIndex] = newMeso;
+            } else {
+                this.state.allPlans.push(newMeso);
+            }
+            
+            this.state.activePlanId = newMeso.id;
+            this.state.currentView = { week: 1, day: 1 };
             await this.saveStateToFirestore();
-            this.renderSettings();
+            this.showView('home');
         },
 
         // --- BUILDER METHODS ---
@@ -436,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
-                    const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
+                    const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}" ${mg.exercises.includes(ex.name) ? 'selected' : ''}>${ex.name}</option>`).join('');
                     const numSlots = exerciseSlotsByFocus[mg.focus] || 3;
                     const exerciseDropdowns = Array.from({ length: numSlots }).map((_, exerciseSelectIndex) => `
                         <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exerciseSelectIndex}">
@@ -444,23 +521,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     `).join('');
                     const focusButtons = ['Primary', 'Secondary', 'Maintenance'].map(focusLevel => `
-                        <button class="focus-btn ${mg.focus === focusLevel ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="${focusLevel}">
-                            ${focusLevel}
-                        </button>
+                        <button class="focus-btn ${mg.focus === focusLevel ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="${focusLevel}">${focusLevel}</button>
                     `).join('');
                     const isRestDay = mg.muscle === 'restday';
                     return `
                         <div class="muscle-group-block">
                             <div class="muscle-group-header">
                                 <div class="muscle-group-selectors">
-                                    <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
-                                        ${muscleOptions.replace(`value="${mg.muscle}"`, `value="${mg.muscle}" selected`)}
-                                    </select>
+                                    <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">${muscleOptions.replace(`value="${mg.muscle}"`, `value="${mg.muscle}" selected`)}</select>
                                     ${!isRestDay ? `<div class="focus-buttons">${focusButtons}</div>` : ''}
                                 </div>
-                                <button class="delete-btn delete-muscle-group-btn" data-muscle-index="${muscleIndex}" aria-label="Delete muscle group">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                </button>
+                                <button class="delete-btn delete-muscle-group-btn" data-muscle-index="${muscleIndex}" aria-label="Delete muscle group"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                             </div>
                             ${!isRestDay && mg.muscle !== 'selectamuscle' ? `<div class="exercise-selection-group"><label>Exercises:</label>${exerciseDropdowns}</div>` : ''}
                         </div>
@@ -470,41 +541,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCard.innerHTML = `
                     <div class="day-header">
                         <select class="builder-select day-label-selector" data-day-index="${dayIndex}">
-                            <option>Add a label</option>
-                            <option ${day.label === 'Monday' ? 'selected' : ''}>Monday</option>
-                            <option ${day.label === 'Tuesday' ? 'selected' : ''}>Tuesday</option>
-                            <option ${day.label === 'Wednesday' ? 'selected' : ''}>Wednesday</option>
-                            <option ${day.label === 'Thursday' ? 'selected' : ''}>Thursday</option>
-                            <option ${day.label === 'Friday' ? 'selected' : ''}>Friday</option>
-                            <option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option>
-                            <option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
+                            <option>Add a label</option><option ${day.label === 'Monday' ? 'selected' : ''}>Monday</option><option ${day.label === 'Tuesday' ? 'selected' : ''}>Tuesday</option><option ${day.label === 'Wednesday' ? 'selected' : ''}>Wednesday</option><option ${day.label === 'Thursday' ? 'selected' : ''}>Thursday</option><option ${day.label === 'Friday' ? 'selected' : ''}>Friday</option><option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option><option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
                         </select>
-                        <button class="delete-btn delete-day-btn" aria-label="Delete day">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                        </button>
+                        <button class="delete-btn delete-day-btn" aria-label="Delete day"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                     </div>
-                    <div class="day-content">
-                        ${muscleGroupsHTML}
-                        <button class="cta-button secondary-button add-muscle-group-btn">+ Add a Muscle Group</button>
-                    </div>
+                    <div class="day-content">${muscleGroupsHTML}<button class="cta-button secondary-button add-muscle-group-btn">+ Add a Muscle Group</button></div>
                 `;
                 container.appendChild(dayCard);
             });
         },
         addDayToBuilder() { 
             this.state.builderPlan.days.forEach(day => day.isExpanded = false);
-            
-            this.state.builderPlan.days.push({ 
-                label: 'Add a label', 
-                muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }],
-                isExpanded: true
-            }); 
+            this.state.builderPlan.days.push({ label: 'Add a label', muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }], isExpanded: true }); 
             this.renderBuilder(); 
         },
         toggleDayExpansion(dayIndex) {
-            this.state.builderPlan.days.forEach((day, index) => {
-                day.isExpanded = (index === dayIndex) ? !day.isExpanded : false;
-            });
+            this.state.builderPlan.days.forEach((day, index) => { day.isExpanded = (index === dayIndex) ? !day.isExpanded : false; });
             this.renderBuilder();
         },
         deleteDayFromBuilder(dayIndex) { this.state.builderPlan.days.splice(dayIndex, 1); this.renderBuilder(); },
@@ -527,101 +579,92 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; 
         },
         
-        async finalizeAndStartPlan(mesoLength) {
-            if (this.state.builderPlan.days.length === 0) {
-                this.showModal("Incomplete Plan", "Please add at least one day to your plan before saving.");
-                return;
-            }
-            const newMeso = { id: `meso_${Date.now()}`, startDate: new Date().toISOString(), durationWeeks: parseInt(mesoLength) || 6, goal: 'custom', experience: this.state.userSelections.experience, weeks: {} };
-            const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
-            for (let i = 1; i <= newMeso.durationWeeks; i++) {
-                newMeso.weeks[i] = {};
-                const isDeload = (i === newMeso.durationWeeks);
-                this.state.builderPlan.days.forEach((day, dayIndex) => {
-                    newMeso.weeks[i][dayIndex + 1] = {
-                        name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
-                        completed: false,
-                        exercises: day.muscleGroups
-                            .filter(mg => mg.muscle !== 'restday')
-                            .flatMap(mg => 
-                                mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
-                                    const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
-                                    const setsPerExercise = focusSetMap[mg.focus] || 3;
-                                    return {
-                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
-                                        targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
-                                    };
-                                })
-                        )
-                    };
+        // --- SETTINGS METHODS (UPDATED) ---
+        renderSettings() {
+            // Render basic settings
+            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
+            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
+            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
+            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
+            document.getElementById('units-lbs-btn').classList.toggle('active', this.state.settings.units === 'lbs');
+            document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
+            document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
+            document.getElementById('theme-light-btn').classList.toggle('active', this.state.settings.theme === 'light');
+            document.getElementById('prog-linear-btn').classList.toggle('active', this.state.settings.progressionModel === 'linear');
+            document.getElementById('prog-double-btn').classList.toggle('active', this.state.settings.progressionModel === 'double');
+            document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement));
+
+            // Render plan management list
+            this.elements.planManagementList.innerHTML = '';
+            if (this.state.allPlans.length === 0) {
+                this.elements.planManagementList.innerHTML = `<p class="placeholder-text">You haven't created any plans yet.</p>`;
+            } else {
+                this.state.allPlans.forEach(plan => {
+                    const isActive = plan.id === this.state.activePlanId;
+                    const planItem = document.createElement('div');
+                    planItem.className = `plan-item ${isActive ? 'active' : ''}`;
+                    planItem.innerHTML = `
+                        <span class="plan-name">${plan.name}</span>
+                        <div class="plan-actions">
+                            <button class="plan-btn edit-plan-btn" data-plan-id="${plan.id}">Edit</button>
+                            <button class="plan-btn delete-plan-btn" data-plan-id="${plan.id}">Delete</button>
+                            <button class="plan-btn set-active-plan-btn" data-plan-id="${plan.id}" ${isActive ? 'disabled' : ''}>${isActive ? 'Active' : 'Set Active'}</button>
+                        </div>
+                    `;
+                    this.elements.planManagementList.appendChild(planItem);
                 });
             }
-            this.state.plan = newMeso;
-            this.state.allPlans = [newMeso];
-            this.state.currentView = { week: 1, day: 1 };
+        },
+        async setUnits(unit) {
+            this.state.settings.units = unit;
             await this.saveStateToFirestore();
-            this.showView('home');
+            this.renderSettings();
+            if (this.state.currentViewName === 'workout') this.renderDailyWorkout();
         },
-        
-        // --- ONBOARDING METHODS ---
-        showStep(stepNumber) {
-            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-            const newStep = document.getElementById(`step${stepNumber}`);
-            if (newStep) {
-                newStep.classList.add('active');
-                ['goal', 'experience', 'style'].forEach(field => {
-                    if (this.state.userSelections[field]) {
-                        const card = newStep.querySelector(`.card-group[data-field="${field}"] .goal-card[data-value="${this.state.userSelections[field]}"]`);
-                        if (card) card.classList.add('active');
-                    }
-                });
-            }
-            this.updateProgress();
-        },
-        updateProgress() {
-            const percentage = ((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100;
-            this.elements.progress.style.width = `${percentage}%`;
-        },
-        nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
-        previousStep() { if (this.state.currentStep > 1) { this.state.currentStep--; this.showStep(this.state.currentStep); } },
-        validateStep(field) {
-            if (!this.state.userSelections[field]) { 
-                this.showModal('Selection Required', `Please select an option for "${this.capitalize(field)}" before continuing.`);
-                return false; 
-            }
-            return true;
-        },
-        validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
-        async selectCard(element, field, value, shouldSave = false) {
-            this.state.userSelections[field] = value;
-            element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
-            element.classList.add('active');
-            if (shouldSave) {
-                await this.saveStateToFirestore();
-            }
-        },
-        async finishOnboarding() {
-            this.state.userSelections.onboardingCompleted = true; // Set the flag
+        async setTheme(theme) {
+            this.state.settings.theme = theme;
+            this.applyTheme();
             await this.saveStateToFirestore();
-            this.showView('home');
+            this.renderSettings();
         },
-        
-        renderDailyWorkout(weekNumber, dayNumber) {
+        applyTheme() { document.body.dataset.theme = this.state.settings.theme; },
+        async setProgressionModel(model) {
+            this.state.settings.progressionModel = model;
+            await this.saveStateToFirestore();
+            this.renderSettings();
+        },
+        async setWeightIncrement(increment) {
+            this.state.settings.weightIncrement = increment;
+            await this.saveStateToFirestore();
+            this.renderSettings();
+        },
+
+        // --- WORKOUT LOGIC (UPDATED) ---
+        renderDailyWorkout() {
             const container = document.getElementById('exercise-list-container');
             const workoutTitle = document.getElementById('workout-day-title');
             const workoutDate = document.getElementById('workout-date');
             container.innerHTML = ''; 
-            const today = new Date();
-            workoutDate.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            if (!this.state.plan || !this.state.plan.weeks[weekNumber] || !this.state.plan.weeks[weekNumber][dayNumber]) {
+            workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            if (!activePlan) {
+                workoutTitle.textContent = "No Active Plan";
+                container.innerHTML = `<p class="placeholder-text">Please create and set an active plan in Settings.</p>`;
+                document.getElementById('complete-workout-btn').classList.add('hidden');
+                return;
+            }
+
+            const { week, day } = this.state.currentView;
+            const workout = activePlan.weeks[week]?.[day];
+
+            if (!workout) {
                 workoutTitle.textContent = "No Workout Today";
-                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete. Go to the builder to create one!</p>`;
+                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete.</p>`;
                 document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
             document.getElementById('complete-workout-btn').classList.remove('hidden');
-            const workout = this.state.plan.weeks[weekNumber][dayNumber];
             workoutTitle.textContent = workout.name;
             if (workout.exercises.length === 0) {
                 container.innerHTML = `<p class="placeholder-text">This is a rest day. Enjoy it!</p>`;
@@ -630,23 +673,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const unitLabel = this.state.settings.units.toUpperCase();
             workout.exercises.forEach((ex, exIndex) => {
-                const setsHTML = ex.sets.map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir)).join('');
+                const setsHTML = (ex.sets || []).map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps)).join('');
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = 'exercise-card';
                 exerciseCard.innerHTML = `
                     <div class="exercise-card-header">
                         <h3>${ex.name}</h3>
-                        <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps @ RIR ${ex.targetRIR}</span>
+                        <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps</span>
                     </div>
                     <div class="sets-container" id="sets-for-ex-${exIndex}">
-                        <div class="set-row header">
-                            <div class="set-number">SET</div>
-                            <div class="set-inputs">
-                                <span>WEIGHT (${unitLabel})</span>
-                                <span>REPS</span>
-                                <span>RIR</span>
-                            </div>
-                        </div>
+                        <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS</span></div></div>
                         ${setsHTML}
                     </div>
                     <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
@@ -654,71 +690,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.appendChild(exerciseCard);
             });
         },
-
-        createSetRowHTML(exIndex, setIndex, weight, reps, rir) {
+        createSetRowHTML(exIndex, setIndex, weight, reps) {
             return `
                 <div class="set-row" data-set-index="${setIndex}">
                     <div class="set-number">${setIndex + 1}</div>
                     <div class="set-inputs">
                         <input type="number" class="weight-input" placeholder="-" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
                         <input type="number" class="reps-input" placeholder="-" value="${reps || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                        <input type="number" class="rir-input" placeholder="-" value="${rir || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
                     </div>
                 </div>
             `;
         },
-
         handleSetInput(inputElement) {
             const { exerciseIndex, setIndex } = inputElement.dataset;
             const value = parseFloat(inputElement.value);
-            const property = inputElement.classList.contains('weight-input') ? 'weight' : inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
-            const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
-            if(workout && workout.exercises[exerciseIndex] && workout.exercises[exerciseIndex].sets[setIndex]) {
+            const property = inputElement.classList.contains('weight-input') ? 'weight' : 'reps';
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
+            if(workout?.exercises[exerciseIndex]?.sets[setIndex]) {
                workout.exercises[exerciseIndex].sets[setIndex][property] = isNaN(value) ? '' : value;
             }
         },
-
         addSet(exerciseIndex) {
-            const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
             const exercise = workout.exercises[exerciseIndex];
+            if (!exercise.sets) exercise.sets = [];
             const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-            exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
+            exercise.sets.push({ weight: previousWeight, reps: '' });
             const setContainer = document.getElementById(`sets-for-ex-${exerciseIndex}`);
             const newSetIndex = exercise.sets.length - 1;
-            const newSetHTML = this.createSetRowHTML(exerciseIndex, newSetIndex, previousWeight, '', '');
-            setContainer.insertAdjacentHTML('beforeend', newSetHTML);
+            setContainer.insertAdjacentHTML('beforeend', this.createSetRowHTML(exerciseIndex, newSetIndex, previousWeight, ''));
         },
-
         confirmCompleteWorkout() {
             this.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
                 { text: 'Cancel', class: 'secondary-button' },
                 { text: 'Yes, Complete', class: 'cta-button', action: () => this.completeWorkout() }
             ]);
         },
-
         async completeWorkout() {
+            const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.activePlanId);
+            if (planIndex === -1) return;
+            const activePlan = this.state.allPlans[planIndex];
             const { week, day } = this.state.currentView;
-            const workout = this.state.plan.weeks[week][day];
+            const workout = activePlan.weeks[week][day];
             workout.completed = true;
             workout.completedDate = new Date().toISOString();
-            if (week < this.state.plan.durationWeeks -1 && workout.exercises.length > 0) {
-                this.calculateNextWeekProgression(week);
+            
+            // Calculate and store volume
+            workout.exercises.forEach(ex => {
+                ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
+            });
+
+            if (week < activePlan.durationWeeks -1 && workout.exercises.length > 0) {
+                this.calculateNextWeekProgression(week, activePlan);
             }
-            const dayKeys = Object.keys(this.state.plan.weeks[week]).sort((a,b) => a - b);
+            const dayKeys = Object.keys(activePlan.weeks[week]).sort((a,b) => a - b);
             const currentDayIndex = dayKeys.indexOf(day.toString());
             let nextWeek = week;
             let nextDay = null;
             if (currentDayIndex < dayKeys.length - 1) {
                 nextDay = parseInt(dayKeys[currentDayIndex + 1]);
             } else {
-                if (week < this.state.plan.durationWeeks) {
+                if (week < activePlan.durationWeeks) {
                     nextWeek = week + 1;
-                    const nextWeekDayKeys = Object.keys(this.state.plan.weeks[nextWeek]).sort((a,b) => a - b);
+                    const nextWeekDayKeys = Object.keys(activePlan.weeks[nextWeek]).sort((a,b) => a - b);
                     nextDay = parseInt(nextWeekDayKeys[0]);
                 } else {
                     this.state.currentView = { week: 1, day: 1 };
                     await this.saveStateToFirestore();
-                    this.showModal('Mesocycle Complete!', 'Congratulations! You have finished your training block. Your plan has been reset.', [
+                    this.showModal('Mesocycle Complete!', 'Congratulations! You have finished your training block.', [
                         { text: 'Awesome!', class: 'cta-button', action: () => this.showView('home') }
                     ]);
                     return;
@@ -730,44 +771,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
             ]);
         },
-
-        calculateNextWeekProgression(completedWeekNumber) {
+        calculateNextWeekProgression(completedWeekNumber, plan) {
             const nextWeekNumber = completedWeekNumber + 1;
-            if (!this.state.plan.weeks[nextWeekNumber]) return;
-        
+            if (!plan.weeks[nextWeekNumber]) return;
             const { progressionModel, weightIncrement } = this.state.settings;
-            const REP_RANGE_FLOOR = 8;
-            const REP_RANGE_CEILING = 12;
-        
-            for (const dayKey in this.state.plan.weeks[completedWeekNumber]) {
-                const completedDay = this.state.plan.weeks[completedWeekNumber][dayKey];
-                const nextWeekDay = this.state.plan.weeks[nextWeekNumber][dayKey];
-        
+            for (const dayKey in plan.weeks[completedWeekNumber]) {
+                const completedDay = plan.weeks[completedWeekNumber][dayKey];
+                const nextWeekDay = plan.weeks[nextWeekNumber][dayKey];
                 if (!nextWeekDay) continue;
-        
                 completedDay.exercises.forEach((completedEx) => {
                     const nextWeekEx = nextWeekDay.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
                     if (!nextWeekEx) return;
-        
-                    if (completedEx.sets.length === 0) {
+                    if (!completedEx.sets || completedEx.sets.length === 0) {
                         nextWeekEx.targetLoad = completedEx.targetLoad || null;
-                        nextWeekEx.targetReps = completedEx.targetReps || REP_RANGE_FLOOR;
                         return;
                     }
-        
-                    let successfulSets = 0;
-                    completedEx.sets.forEach(set => {
-                        if (set.reps >= completedEx.targetReps) successfulSets++;
-                    });
-                    const allSetsSuccessful = successfulSets >= completedEx.targetSets;
+                    const allSetsSuccessful = completedEx.sets.every(set => set.reps >= completedEx.targetReps);
                     const lastSetWeight = completedEx.sets[completedEx.sets.length - 1].weight;
-        
                     if (progressionModel === 'double') {
                         if (allSetsSuccessful) {
-                            const newTargetReps = (completedEx.targetReps || REP_RANGE_FLOOR) + 1;
-                            if (newTargetReps > REP_RANGE_CEILING) {
+                            const newTargetReps = (completedEx.targetReps || 8) + 1;
+                            if (newTargetReps > 12) {
                                 nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
-                                nextWeekEx.targetReps = REP_RANGE_FLOOR;
+                                nextWeekEx.targetReps = 8;
                             } else {
                                 nextWeekEx.targetLoad = lastSetWeight;
                                 nextWeekEx.targetReps = newTargetReps;
@@ -776,37 +802,38 @@ document.addEventListener('DOMContentLoaded', () => {
                             nextWeekEx.targetLoad = lastSetWeight;
                             nextWeekEx.targetReps = completedEx.targetReps;
                         }
-                    } else { // Linear Progression
-                        if (allSetsSuccessful) {
-                            nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
-                        } else {
-                            nextWeekEx.targetLoad = lastSetWeight;
-                        }
+                    } else { // Linear
+                        nextWeekEx.targetLoad = allSetsSuccessful ? lastSetWeight + weightIncrement : lastSetWeight;
                         nextWeekEx.targetReps = completedEx.targetReps;
                     }
                 });
             }
         },
 
+        // --- PERFORMANCE & ANALYTICS (NEW & UPDATED) ---
         renderPerformanceSummary() {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            if (!activePlan) {
+                document.getElementById('summary-content').innerHTML = `<p class="placeholder-text">Select an active plan to see its summary.</p>`;
+                return;
+            }
+
             const listContainer = document.getElementById('completed-workouts-list');
             const exerciseSelect = document.getElementById('exercise-tracker-select');
             listContainer.innerHTML = '';
             exerciseSelect.innerHTML = '<option value="">Select an exercise to track</option>';
             const completedWorkouts = [];
             const uniqueExercises = new Set();
-            if (this.state.plan && this.state.plan.weeks) {
-                Object.values(this.state.plan.weeks).forEach(week => {
-                    Object.values(week).forEach(day => {
-                        if (day.completed) {
-                            completedWorkouts.push(day);
-                            day.exercises.forEach(ex => uniqueExercises.add(ex.name));
-                        }
-                    });
+            Object.values(activePlan.weeks).forEach(week => {
+                Object.values(week).forEach(day => {
+                    if (day.completed) {
+                        completedWorkouts.push(day);
+                        day.exercises.forEach(ex => uniqueExercises.add(ex.name));
+                    }
                 });
-            }
+            });
             if (completedWorkouts.length === 0) {
-                listContainer.innerHTML = '<p class="placeholder-text">No completed workouts yet. Go get one done!</p>';
+                listContainer.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
             } else {
                 completedWorkouts.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate))
                     .forEach(workout => {
@@ -823,23 +850,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseSelect.appendChild(option);
             });
             this.renderProgressChart("");
+            this.renderVolumeChart(completedWorkouts);
+            this.renderConsistencyCalendar(completedWorkouts);
         },
-        
+        renderVolumeChart(completedWorkouts) {
+            const ctx = document.getElementById('volume-chart').getContext('2d');
+            if (this.state.volumeChart) this.state.volumeChart.destroy();
+            const volumeByMuscle = {};
+            completedWorkouts.forEach(day => {
+                day.exercises.forEach(ex => {
+                    const muscle = this.capitalize(ex.muscle);
+                    if (!volumeByMuscle[muscle]) volumeByMuscle[muscle] = 0;
+                    volumeByMuscle[muscle] += ex.totalVolume || 0;
+                });
+            });
+            const unitLabel = this.state.settings.units.toUpperCase();
+            this.state.volumeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(volumeByMuscle),
+                    datasets: [{
+                        label: `Total Volume (${unitLabel})`,
+                        data: Object.values(volumeByMuscle),
+                        backgroundColor: 'rgba(255, 107, 53, 0.5)',
+                        borderColor: 'var(--primary-color)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    scales: { y: { ticks: { color: 'var(--text-muted-color)' }, grid: { display: false } }, x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        },
+        renderConsistencyCalendar(completedWorkouts) {
+            const calendarEl = document.getElementById('consistency-calendar');
+            calendarEl.innerHTML = '';
+            const completedDates = new Set(completedWorkouts.map(w => new Date(w.completedDate).toDateString()));
+            const today = new Date();
+            const month = today.getMonth();
+            const year = today.getFullYear();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            calendarEl.innerHTML += `<div class="calendar-header">${today.toLocaleString('default', { month: 'long' })} ${year}</div>`;
+            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            daysOfWeek.forEach(day => { calendarEl.innerHTML += `<div class="calendar-day-name">${day}</div>`; });
+            for (let i = 0; i < firstDay; i++) { calendarEl.innerHTML += `<div></div>`; }
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(year, month, i);
+                const isCompleted = completedDates.has(date.toDateString());
+                calendarEl.innerHTML += `<div class="calendar-day ${isCompleted ? 'completed' : ''}">${i}</div>`;
+            }
+        },
         renderProgressChart(exerciseName) {
             const ctx = document.getElementById('progress-chart').getContext('2d');
             if (this.state.progressChart) this.state.progressChart.destroy();
-            if (!exerciseName) {
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                return;
-            }
+            if (!exerciseName) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); return; }
             const labels = [];
             const dataPoints = [];
-            if (this.state.plan && this.state.plan.weeks) {
-                 Object.values(this.state.plan.weeks).forEach((week, weekIndex) => {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            if (activePlan) {
+                 Object.values(activePlan.weeks).forEach((week, weekIndex) => {
                     Object.values(week).forEach(day => {
                         if (day.completed) {
                             const exercise = day.exercises.find(ex => ex.name === exerciseName);
-                            if (exercise && exercise.sets.length > 0) {
+                            if (exercise && exercise.sets?.length > 0) {
                                 const maxWeight = Math.max(...exercise.sets.map(s => s.weight || 0));
                                 if (maxWeight > 0) {
                                     labels.push(`W${weekIndex + 1}`);
@@ -866,10 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } },
-                        x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } }
-                    },
+                    scales: { y: { beginAtZero: true, ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } }, x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } } },
                     plugins: { legend: { labels: { color: 'var(--text-color)' } } }
                 }
             });
