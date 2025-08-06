@@ -5,6 +5,7 @@
   --primary-color: #ff6b35; /* A strong, energetic orange */
   --secondary-color: #f7c59f;
   --azure-color: #007BFF; /* A vibrant, clear blue for app suggestions */
+  --azure-color-light: #3498DB;
   --background-color: #1a1a1a;
   --surface-color: #2c2c2c;
   --text-color: #f0f0f0;
@@ -103,14 +104,14 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 /* ===========================
   COMPONENTS (Buttons, Modal)
 =========================== */
-.cta-button, .azure-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; }
+.cta-button, .azure-button, .secondary-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
 .cta-button { background-color: var(--primary-color); color: #fff; }
 .cta-button:hover { background-color: #e65c2e; transform: translateY(-2px); }
-.azure-button { background-color: var(--azure-color); color: #fff; }
-.azure-button:hover { background-color: #0056b3; transform: translateY(-2px); }
+.azure-button { background-image: linear-gradient(to right, var(--azure-color) 0%, var(--azure-color-light) 100%); color: #fff; }
+.azure-button:hover { transform: translateY(-2px); }
 
 .button-group { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
-.secondary-button { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-muted-color); }
+.secondary-button { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-muted-color); font-weight: 600; }
 .secondary-button:hover { background-color: var(--surface-color); color: var(--text-color); transform: translateY(-2px); }
 
 .back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-muted-color); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
@@ -203,4 +204,3 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
 
 @media (max-width: 768px) { .container, .dashboard, #daily-workout-view, #performance-summary-view, #settings-view { margin: 1rem auto; padding: 1rem; } .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .back-btn { top: 1rem; left: 1rem; } }
-
