@@ -50,7 +50,23 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 =========================== */
 #home-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 80vh; }
 .home-nav-buttons { display: flex; flex-direction: column; margin-top: 2rem; width: 100%; max-width: 350px; }
-.home-btn { width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; font-size: 1.2rem; }
+/* UPDATED: Home button styles */
+.home-btn { 
+    width: 100%; 
+    padding: 1.2rem; 
+    margin-bottom: 1.5rem; 
+    font-size: 1.2rem; 
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    transition: all 0.2s ease;
+}
+.home-btn:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    transform: translateY(-3px);
+}
+
 .active-plan-display { margin-top: 1rem; color: var(--text-muted-color); font-style: italic; }
 .home-icon-btn { position: absolute; bottom: 2rem; right: 2rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
 .home-icon-btn svg { stroke: var(--text-muted-color); transition: all 0.2s ease; }
