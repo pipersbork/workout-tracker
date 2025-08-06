@@ -124,15 +124,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Builder
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
+            
+            // MODIFIED: Simplified builder event listener with delegation
             this.elements.scheduleContainer.addEventListener('click', (e) => {
+                const dayCard = e.target.closest('.day-card');
+                if (!dayCard) return;
+
+                const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
+                
+                // Handle expanding/collapsing the card
+                if (e.target.closest('.day-header') && dayCard.classList.contains('collapsed')) {
+                    this.toggleDayExpansion(dayIndex);
+                    return;
+                }
+
+                // Handle other button clicks within the card
                 const button = e.target.closest('button');
                 if (!button) return;
-                const { dayIndex, muscleIndex, focus } = button.dataset;
+
+                const { muscleIndex, focus } = button.dataset;
                 if (button.matches('.add-muscle-group-btn')) this.addMuscleGroupToDay(dayIndex);
                 if (button.matches('.delete-day-btn')) this.deleteDayFromBuilder(dayIndex);
                 if (button.matches('.delete-muscle-group-btn')) this.deleteMuscleGroupFromDay(dayIndex, muscleIndex);
                 if (button.matches('.focus-btn')) this.updateMuscleFocus(dayIndex, muscleIndex, focus);
             });
+
             this.elements.scheduleContainer.addEventListener('change', (e) => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
                 if (e.target.matches('.day-label-selector')) this.updateDayLabel(dayIndex, e.target.value);
@@ -143,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Modal
             this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
             this.elements.modal.addEventListener('click', (e) => {
-                if (e.target === this.elements.modal) this.closeModal(); // Close on backdrop click
+                if (e.target === this.elements.modal) this.closeModal();
                 if (e.target.matches('.meso-length-card')) {
                     const length = e.target.dataset.value;
                     this.showModal('Finalize Plan?', `Are you sure you want to create a ${length}-week plan? This will replace your current schedule.`, [
@@ -153,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Card Selections (Onboarding & Settings)
+            // Card Selections
             document.querySelectorAll('.card-group').forEach(group => {
                 group.addEventListener('click', (e) => {
                     const card = e.target.closest('.goal-card');
@@ -192,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // MODIFIED: Replaced alert/confirm with custom modal
         openMesoLengthModal() {
             this.elements.modalBody.innerHTML = `
                 <h2>Select Mesocycle Length</h2>
@@ -204,14 +219,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="goal-card meso-length-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
                 </div>
             `;
-            this.elements.modalActions.innerHTML = ''; // Clear actions for this specific modal
+            this.elements.modalActions.innerHTML = '';
             this.elements.modal.classList.add('active');
         },
 
-        // ADDED: Generic modal function
         showModal(title, message, buttons = []) {
             this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
-            this.elements.modalActions.innerHTML = ''; // Clear previous buttons
+            this.elements.modalActions.innerHTML = '';
             
             if (buttons.length === 0) {
                 buttons.push({ text: 'OK', class: 'cta-button' });
@@ -237,7 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.modal.classList.remove('active');
         },
 
-        // MODIFIED: Added view transition logic
         showView(viewName, skipAnimation = false) {
             const currentViewEl = document.getElementById(this.state.currentViewName + '-container') || document.getElementById(this.state.currentViewName);
             const newViewEl = document.getElementById(viewName + '-container') || document.getElementById(viewName);
@@ -251,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 newViewEl.classList.remove('hidden');
                 
-                // Run any logic needed when the view is shown
                 if (viewName === 'onboarding') this.showStep(this.state.currentStep);
                 else if (viewName === 'workout') this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
                 else if (viewName === 'builder') this.renderBuilder();
@@ -265,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 transition();
             } else {
                 currentViewEl.classList.add('fade-out');
-                setTimeout(transition, 400); // Match CSS animation duration
+                setTimeout(transition, 400);
             }
         },
         
@@ -327,7 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const exerciseSlotsByFocus = { 'Primary': 3, 'Secondary': 2, 'Maintenance': 1 };
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
-                dayCard.className = 'day-card';
+                // MODIFIED: Added expanded/collapsed class and data-day-index
+                dayCard.className = `day-card ${day.isExpanded ? 'expanded' : 'collapsed'}`;
+                dayCard.dataset.dayIndex = dayIndex;
+
                 const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
                     const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
@@ -352,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </select>
                                     ${!isRestDay ? `<div class="focus-buttons">${focusButtons}</div>` : ''}
                                 </div>
-                                <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" aria-label="Delete muscle group">
+                                <button class="delete-btn delete-muscle-group-btn" data-muscle-index="${muscleIndex}" aria-label="Delete muscle group">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                 </button>
                             </div>
@@ -360,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 }).join('');
+
                 dayCard.innerHTML = `
                     <div class="day-header">
                         <select class="builder-select day-label-selector" data-day-index="${dayIndex}">
@@ -372,24 +388,41 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option>
                             <option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
                         </select>
-                        <button class="delete-btn delete-day-btn" data-day-index="${dayIndex}" aria-label="Delete day">
+                        <button class="delete-btn delete-day-btn" aria-label="Delete day">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         </button>
                     </div>
                     <div class="day-content">
                         ${muscleGroupsHTML}
-                        <button class="cta-button secondary-button add-muscle-group-btn" data-day-index="${dayIndex}">+ Add a Muscle Group</button>
+                        <button class="cta-button secondary-button add-muscle-group-btn">+ Add a Muscle Group</button>
                     </div>
                 `;
                 container.appendChild(dayCard);
             });
         },
+        // MODIFIED: Added accordion logic
         addDayToBuilder() { 
+            // Collapse all existing days
+            this.state.builderPlan.days.forEach(day => day.isExpanded = false);
+            
+            // Add a new, expanded day
             this.state.builderPlan.days.push({ 
                 label: 'Add a label', 
-                muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }] 
+                muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }],
+                isExpanded: true // New day is expanded by default
             }); 
             this.renderBuilder(); 
+        },
+        // ADDED: Function to toggle a day's expanded state
+        toggleDayExpansion(dayIndex) {
+            this.state.builderPlan.days.forEach((day, index) => {
+                if (index === dayIndex) {
+                    day.isExpanded = !day.isExpanded; // Toggle the clicked one
+                } else {
+                    day.isExpanded = false; // Collapse others
+                }
+            });
+            this.renderBuilder();
         },
         deleteDayFromBuilder(dayIndex) { this.state.builderPlan.days.splice(dayIndex, 1); this.renderBuilder(); },
         updateDayLabel(dayIndex, newLabel) { this.state.builderPlan.days[dayIndex].label = newLabel; },
@@ -620,7 +653,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setContainer.insertAdjacentHTML('beforeend', newSetHTML);
         },
 
-        // MODIFIED: Replaced confirm with custom modal
         confirmCompleteWorkout() {
             this.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
                 { text: 'Cancel', class: 'secondary-button' },
