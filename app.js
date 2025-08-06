@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             this.elements.workoutView.addEventListener('input', (e) => {
-                if(e.target.matches('.weight-input, .reps-input, .rir-input')) this.handleSetInput(e.target);
+                if(e.target.matches('.weight-input, .rep-rir-input')) this.handleSetInput(e.target);
             });
             
             document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => this.renderProgressChart(e.target.value));
@@ -475,6 +475,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 1; i <= newMeso.durationWeeks; i++) {
                 newMeso.weeks[i] = {};
                 const isDeload = (i === newMeso.durationWeeks);
+                const targetRIR = this.planGenerator.getRirForWeek(i, newMeso.durationWeeks);
+
                 this.state.builderPlan.days.forEach((day, dayIndex) => {
                     newMeso.weeks[i][dayIndex + 1] = {
                         name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
@@ -488,7 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return {
                                         exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 8, targetLoad: null, sets: [],
+                                        targetReps: 8,
+                                        targetRIR: targetRIR,
+                                        targetLoad: null, sets: [],
                                         stallCount: 0 
                                     };
                                 })
@@ -685,9 +689,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const unitLabel = this.state.settings.units.toUpperCase();
             workout.exercises.forEach((ex, exIndex) => {
                 const lastWeekEx = lastWeekWorkout?.exercises.find(e => e.exerciseId === ex.exerciseId);
-                const setsHTML = (ex.sets || []).map((set, setIndex) => {
+                const setsHTML = Array.from({ length: ex.targetSets }).map((_, setIndex) => {
+                    const set = ex.sets[setIndex] || {};
                     const lastWeekSet = lastWeekEx?.sets[setIndex];
-                    return this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir, lastWeekSet);
+                    return this.createSetRowHTML(exIndex, setIndex, set.weight, set.rawInput, lastWeekSet, ex.targetReps, ex.targetRIR);
                 }).join('');
 
                 const exerciseCard = document.createElement('div');
@@ -700,10 +705,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z" stroke-width="0" fill="currentColor"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1 14H8v-2h3v-3H8V9h3V6h2v3h3v2h-3v3h3v2h-3v3h-2v-3z"/></svg>
                             </button>
                         </div>
-                        <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps</span>
+                        <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps @ ${ex.targetRIR} RIR</span>
                     </div>
                     <div class="sets-container" id="sets-for-ex-${exIndex}">
-                        <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS</span><span>RIR</span></div></div>
+                        <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS / RIR</span></div></div>
                         ${setsHTML}
                     </div>
                     <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
@@ -761,34 +766,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.renderDailyWorkout();
         },
-        createSetRowHTML(exIndex, setIndex, weight, reps, rir, lastWeekSet) {
-            const repPlaceholder = lastWeekSet ? (lastWeekSet.reps || '') : '';
+        createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSet, targetReps, targetRIR) {
+            const placeholder = `e.g. ${targetReps} reps or ${targetRIR} RIR`;
             return `
                 <div class="set-row" data-set-index="${setIndex}">
                     <div class="set-number">${setIndex + 1}</div>
                     <div class="set-inputs">
-                        <input type="number" class="weight-input" placeholder="-" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                        <input type="number" class="reps-input" placeholder="${repPlaceholder}" value="${reps || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                        <input type="number" class="rir-input" placeholder="-" value="${rir || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="number" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
                     </div>
                 </div>
             `;
         },
         handleSetInput(inputElement) {
             const { exerciseIndex, setIndex } = inputElement.dataset;
-            const value = parseFloat(inputElement.value);
-            const property = inputElement.classList.contains('weight-input') ? 'weight' : inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
-            
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
             const set = workout?.exercises[exerciseIndex]?.sets[setIndex];
 
-            if(set) {
-               set[property] = isNaN(value) ? '' : value;
-               // Clear the other input if one is filled
-               if (property === 'reps' && set.reps) set.rir = '';
-               if (property === 'rir' && set.rir) set.reps = '';
-               this.renderDailyWorkout(); // Re-render to show the cleared input
+            if (!set) return;
+
+            if (inputElement.classList.contains('weight-input')) {
+                set.weight = parseFloat(inputElement.value) || '';
+            } else if (inputElement.classList.contains('rep-rir-input')) {
+                const value = inputElement.value.toLowerCase();
+                set.rawInput = value;
+
+                const rirMatch = value.match(/(\d+)\s*rir/);
+                if (rirMatch) {
+                    set.rir = parseInt(rirMatch[1]);
+                    set.reps = '';
+                } else {
+                    set.reps = parseInt(value) || '';
+                    set.rir = '';
+                }
             }
         },
         addSet(exerciseIndex) {
@@ -796,9 +807,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
             const exercise = workout.exercises[exerciseIndex];
             if (!exercise.sets) exercise.sets = [];
-            const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-            exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
-            this.renderDailyWorkout();
+            
+            if (exercise.sets.length < exercise.targetSets) {
+                const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
+                exercise.sets.push({ weight: previousWeight, reps: '', rir: '', rawInput: '' });
+                this.renderDailyWorkout();
+            }
         },
         confirmCompleteWorkout() {
             this.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
@@ -1241,6 +1255,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 else split = this.splits.pplTwice(priorityMuscles, baseVolume);
 
                 return { days: split };
+            },
+            
+            getRirForWeek(week, totalWeeks) {
+                if (week === totalWeeks) return 4; // Deload week
+                const progress = (week - 1) / (totalWeeks - 2); 
+                if (totalWeeks <= 5) {
+                    if (week === 1) return 3;
+                    if (week === totalWeeks - 1) return 1;
+                    return 2;
+                } else {
+                    if (week <= 2) return 3;
+                    if (week >= totalWeeks - 2) return 1;
+                    return 2;
+                }
             },
 
             splits: {
