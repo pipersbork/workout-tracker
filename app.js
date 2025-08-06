@@ -816,6 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentDayIndex = dayKeys.indexOf(day.toString());
             let nextWeek = week;
             let nextDay = null;
+
             if (currentDayIndex < dayKeys.length - 1) {
                 nextDay = parseInt(dayKeys[currentDayIndex + 1]);
             } else {
@@ -832,7 +833,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
-            this.state.currentView = { week: nextWeek, day: nextDay };
+            
+            if (nextDay) {
+                this.state.currentView = { week: nextWeek, day: nextDay };
+            }
+            
             await this.saveStateToFirestore();
 
             if (!stalledExercise) {
