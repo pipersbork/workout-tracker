@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         viewMap: {
             onboarding: 'onboarding-container',
             home: 'home-screen',
-            planHub: 'plan-hub-view',
+            planHub: 'plan-hub-view', // NEW
+            templateLibrary: 'template-library-view', // NEW
             customPlanWizard: 'custom-plan-wizard-view',
             builder: 'builder-view',
             workout: 'daily-workout-view',
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             onboardingContainer: document.getElementById('onboarding-container'),
             homeScreen: document.getElementById('home-screen'),
             planHubView: document.getElementById('plan-hub-view'),
+            templateLibraryView: document.getElementById('template-library-view'),
             workoutView: document.getElementById('daily-workout-view'),
             builderView: document.getElementById('builder-view'),
             performanceSummaryView: document.getElementById('performance-summary-view'),
@@ -170,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('backToHomeFromSettings')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromWizard')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromHub')?.addEventListener('click', () => this.showView('home'));
+            document.getElementById('backToHubFromTemplates')?.addEventListener('click', () => this.showView('planHub'));
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
             
@@ -265,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (viewName === 'home') this.renderHomeScreen();
                 else if (viewName === 'onboarding') this.showStep(this.state.currentStep);
                 else if (viewName === 'planHub') this.renderPlanHub();
+                else if (viewName === 'templateLibrary') this.renderTemplateLibrary();
                 else if (viewName === 'workout') this.renderDailyWorkout();
                 else if (viewName === 'builder') this.renderBuilder();
                 else if (viewName === 'performanceSummary') this.renderPerformanceSummary();
@@ -473,8 +477,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 if (selectedAction === 'scratch') this.showView('customPlanWizard');
-                // Future actions like 'template', 'resume', 'copy' will be handled here
+                if (selectedAction === 'template') this.showView('templateLibrary');
+                // Future actions like 'resume', 'copy' will be handled here
             };
+        },
+
+        renderTemplateLibrary() {
+            // This is a placeholder for now. We will build this out next.
+            const container = document.getElementById('template-list-container');
+            container.innerHTML = `<p class="placeholder-text">Template library coming soon!</p>`;
         },
 
         startNewPlan() {
