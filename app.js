@@ -868,9 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.saveStateToFirestore();
 
             if (!stalledExercise) {
-                this.showModal('Workout Complete!', 'Great job! Your progress has been saved.', [
-                    { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
-                ]);
+                 this.showView('home');
             }
         },
         
