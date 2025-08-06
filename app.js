@@ -32,11 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         state: {
-            // Firebase/Auth state
             userId: null,
             isDataLoaded: false,
-
-            // App state
             currentStep: 1,
             totalSteps: 4,
             userSelections: { 
@@ -51,18 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressionModel: 'double',
                 weightIncrement: 5
             },
-            // --- NEW: State for multiple plans ---
             allPlans: [],
             activePlanId: null, 
-            editingPlanId: null, // To track which plan is being edited
-            // ---
+            editingPlanId: null,
             currentView: { week: 1, day: 1 },
             currentViewName: 'onboarding',
             builderPlan: {
                 days: [] 
             },
             exercises: [],
-            // --- NEW: State for new charts ---
             progressChart: null,
             volumeChart: null,
         },
@@ -85,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
             planManagementList: document.getElementById('plan-management-list'),
         },
 
-        // --- INITIALIZATION & AUTHENTICATION ---
         async init() {
             await this.loadExercises();
             this.addEventListeners();
@@ -123,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // --- FIRESTORE DATA HANDLING (UPDATED) ---
         async loadStateFromFirestore() {
             if (!this.state.userId) return;
             const userDocRef = doc(db, "users", this.state.userId);
@@ -136,13 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.allPlans = data.allPlans || [];
                     this.state.activePlanId = data.activePlanId || (this.state.allPlans.length > 0 ? this.state.allPlans[0].id : null);
                     this.state.currentView = data.currentView || this.state.currentView;
-                } else {
-                    console.log("No existing user data. A new profile will be created on first save.");
                 }
                 this.state.isDataLoaded = true;
             } catch (error) {
                 console.error("Error loading state from Firestore:", error);
-                this.showModal("Error", "Could not load your data from the database.");
             }
         },
 
@@ -160,12 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await setDoc(userDocRef, dataToSave);
             } catch (error) {
                 console.error("Error saving state to Firestore:", error);
-                this.showModal("Error", "Could not save your progress. Please check your connection.");
             }
         },
 
         addEventListeners() {
-            // Onboarding
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
@@ -173,20 +160,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.validateStep('style')) this.finishOnboarding();
             });
             document.querySelectorAll('.back-btn-onboarding').forEach(button => button.addEventListener('click', () => this.previousStep()));
-            
-            // Home Screen
             document.getElementById('planMesoBtn')?.addEventListener('click', () => this.handlePlanMesoClick());
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('performanceSummary'));
             document.getElementById('settingsBtn')?.addEventListener('click', () => this.showView('settings'));
-
-            // Back Buttons
             document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromBuilder')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSummary')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSettings')?.addEventListener('click', () => this.showView('home'));
-
-            // Builder
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
             
@@ -214,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value);
             });
 
-            // Modal
             this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
             this.elements.modal.addEventListener('click', (e) => {
                 if (e.target === this.elements.modal) this.closeModal();
@@ -227,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Card Selections
             document.querySelectorAll('.card-group').forEach(group => {
                 group.addEventListener('click', (e) => {
                     const card = e.target.closest('.goal-card');
@@ -240,19 +219,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Workout View
             this.elements.workoutView.addEventListener('click', (e) => {
                 if (e.target.matches('.add-set-btn')) this.addSet(e.target.dataset.exerciseIndex);
                 if (e.target.matches('#complete-workout-btn')) this.confirmCompleteWorkout();
+                // --- NEW: Event listener for swap button ---
+                const swapButton = e.target.closest('.swap-exercise-btn');
+                if (swapButton) {
+                    this.openSwapExerciseModal(swapButton.dataset.exerciseIndex);
+                }
             });
             this.elements.workoutView.addEventListener('input', (e) => {
                 if(e.target.matches('.weight-input, .reps-input')) this.handleSetInput(e.target);
             });
             
-            // Performance Summary
             document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => this.renderProgressChart(e.target.value));
-
-            // Settings
             document.getElementById('units-lbs-btn')?.addEventListener('click', () => this.setUnits('lbs'));
             document.getElementById('units-kg-btn')?.addEventListener('click', () => this.setUnits('kg'));
             document.getElementById('theme-dark-btn')?.addEventListener('click', () => this.setTheme('dark'));
@@ -273,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // --- VIEW RENDERING & NAVIGATION ---
         showView(viewName, skipAnimation = false) {
             const currentViewId = this.viewMap[this.state.currentViewName];
             const newViewId = this.viewMap[viewName];
@@ -316,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // --- MODAL & ONBOARDING ---
         openMesoLengthModal() {
             this.elements.modalBody.innerHTML = `
                 <h2>Select Mesocycle Length</h2>
@@ -396,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.showView('home');
         },
         
-        // --- PLAN MANAGEMENT (NEW & UPDATED) ---
         handlePlanMesoClick() {
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             if (activePlan) {
@@ -418,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const planToEdit = this.state.allPlans.find(p => p.id === planId);
             if (!planToEdit) return;
             this.state.editingPlanId = planId;
-            // Create a deep copy for the builder to avoid modifying the original state directly
             this.state.builderPlan = JSON.parse(JSON.stringify(planToEdit.builderTemplate || { days: [] }));
             this.elements.builderTitle.textContent = `Editing: ${planToEdit.name}`;
             this.showView('builder');
@@ -453,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: planName,
                 startDate: new Date().toISOString(), 
                 durationWeeks: parseInt(mesoLength), 
-                builderTemplate: JSON.parse(JSON.stringify(this.state.builderPlan)), // Save the builder structure
+                builderTemplate: JSON.parse(JSON.stringify(this.state.builderPlan)),
                 weeks: {} 
             };
 
@@ -495,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.showView('home');
         },
 
-        // --- BUILDER METHODS ---
         renderBuilder() {
             const container = this.elements.scheduleContainer;
             container.innerHTML = ''; 
@@ -579,9 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = newExercise; 
         },
         
-        // --- SETTINGS METHODS (UPDATED) ---
         renderSettings() {
-            // Render basic settings
             this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
             this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
             document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
@@ -594,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('prog-double-btn').classList.toggle('active', this.state.settings.progressionModel === 'double');
             document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement));
 
-            // Render plan management list
             this.elements.planManagementList.innerHTML = '';
             if (this.state.allPlans.length === 0) {
                 this.elements.planManagementList.innerHTML = `<p class="placeholder-text">You haven't created any plans yet.</p>`;
@@ -639,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.renderSettings();
         },
 
-        // --- WORKOUT LOGIC (UPDATED) ---
+        // --- NEW & UPDATED WORKOUT LOGIC ---
         renderDailyWorkout() {
             const container = document.getElementById('exercise-list-container');
             const workoutTitle = document.getElementById('workout-day-title');
@@ -678,7 +650,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseCard.className = 'exercise-card';
                 exerciseCard.innerHTML = `
                     <div class="exercise-card-header">
-                        <h3>${ex.name}</h3>
+                        <div class="exercise-title-group">
+                            <h3>${ex.name}</h3>
+                            <button class="swap-exercise-btn" data-exercise-index="${exIndex}" aria-label="Swap Exercise">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z"/><path d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2"/><path d="M8 12h8m-4 4V8"/></svg>
+                            </button>
+                        </div>
                         <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps</span>
                     </div>
                     <div class="sets-container" id="sets-for-ex-${exIndex}">
@@ -689,6 +666,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 container.appendChild(exerciseCard);
             });
+        },
+        openSwapExerciseModal(exerciseIndex) {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
+            const currentExerciseName = workout.exercises[exerciseIndex].name;
+            const exerciseData = this.state.exercises.find(e => e.name === currentExerciseName);
+
+            if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
+                this.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
+                return;
+            }
+
+            const alternativesHTML = exerciseData.alternatives.map(altName => 
+                `<div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0"><h3>${altName}</h3></div>`
+            ).join('');
+
+            this.elements.modalBody.innerHTML = `
+                <h2>Swap ${currentExerciseName}</h2>
+                <p>Choose a replacement exercise:</p>
+                <div class="card-group">${alternativesHTML}</div>
+            `;
+            this.elements.modalActions.innerHTML = '';
+            
+            this.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    this.swapExercise(exerciseIndex, card.dataset.newExerciseName);
+                    this.closeModal();
+                });
+            });
+            
+            this.elements.modal.classList.add('active');
+        },
+
+        swapExercise(exerciseIndex, newExerciseName) {
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
+            const oldExercise = workout.exercises[exerciseIndex];
+            const newExerciseData = this.state.exercises.find(e => e.name === newExerciseName);
+
+            if (!newExerciseData) return;
+
+            workout.exercises[exerciseIndex] = {
+                ...oldExercise, // Keep target sets, reps, etc.
+                name: newExerciseData.name,
+                muscle: newExerciseData.muscle,
+                exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`,
+                sets: [] // Reset sets for the new exercise
+            };
+
+            this.renderDailyWorkout(); // Re-render the view with the updated exercise
         },
         createSetRowHTML(exIndex, setIndex, weight, reps) {
             return `
@@ -737,7 +764,6 @@ document.addEventListener('DOMContentLoaded', () => {
             workout.completed = true;
             workout.completedDate = new Date().toISOString();
             
-            // Calculate and store volume
             workout.exercises.forEach(ex => {
                 ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
             });
@@ -810,7 +836,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // --- PERFORMANCE & ANALYTICS (NEW & UPDATED) ---
         renderPerformanceSummary() {
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             if (!activePlan) {
