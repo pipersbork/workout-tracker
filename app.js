@@ -5,10 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStep: 1,
             totalSteps: 4,
             userSelections: { 
-                goal: "", 
-                experience: "", 
-                style: "", 
-                days: "", 
+                goal: "muscle", 
+                experience: "beginner", 
+                style: "gym", 
+                days: "3", 
+            },
+            settings: {
+                units: 'lbs', // 'lbs' or 'kg'
+                theme: 'dark' // 'dark' or 'light'
             },
             plan: null,
             currentView: { week: 1, day: 1 },
@@ -17,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             allPlans: [],
             exercises: [],
-            progressChart: null, // To hold the chart instance
+            progressChart: null,
         },
 
         elements: {
@@ -26,34 +30,26 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutView: document.getElementById('daily-workout-view'),
             builderView: document.getElementById('builder-view'),
             performanceSummaryView: document.getElementById('performance-summary-view'),
+            settingsView: document.getElementById('settings-view'),
             scheduleContainer: document.getElementById('schedule-container'),
             progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
             modalBody: document.getElementById('modal-body'),
         },
 
-        // Initializes the application
         async init() {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
+            this.applyTheme(); // Apply theme on initial load
+
             if (localStorage.getItem("onboardingCompleted") === "true") {
-                this.state.userSelections = JSON.parse(localStorage.getItem("userSelections"));
-                const savedPlans = JSON.parse(localStorage.getItem("savedPlans"));
-                if (savedPlans && savedPlans.length > 0) {
-                    this.state.plan = savedPlans[0];
-                    this.state.allPlans = savedPlans;
-                } else { 
-                    this.finishOnboarding();
-                    return;
-                }
                 this.showView('home');
             } else {
                 this.showView('onboarding');
             }
         },
 
-        // Fetches the list of exercises from the JSON file
         async loadExercises() {
             try {
                 const response = await fetch('exercises.json');
@@ -65,96 +61,81 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // Loads user data from localStorage
         loadStateFromStorage() {
             const completed = localStorage.getItem("onboardingCompleted");
-            if (completed === "true") {
+            if (completed) {
                 this.state.userSelections = JSON.parse(localStorage.getItem("userSelections")) || this.state.userSelections;
+                this.state.settings = JSON.parse(localStorage.getItem("settings")) || this.state.settings;
                 this.state.allPlans = JSON.parse(localStorage.getItem("savedPlans")) || [];
                 const savedView = JSON.parse(localStorage.getItem("currentView"));
-                if (savedView) {
-                    this.state.currentView = savedView;
-                }
-                 // Set the main plan from allPlans if it exists
-                if (this.state.allPlans.length > 0) {
-                    this.state.plan = this.state.allPlans[0];
-                }
+                if (savedView) this.state.currentView = savedView;
+                if (this.state.allPlans.length > 0) this.state.plan = this.state.allPlans[0];
             }
         },
 
-        // Saves user data to localStorage
         saveStateToStorage() {
             localStorage.setItem("onboardingCompleted", "true");
             localStorage.setItem("userSelections", JSON.stringify(this.state.userSelections));
-            // Make sure the current plan is updated in the allPlans array before saving
+            localStorage.setItem("settings", JSON.stringify(this.state.settings));
             if (this.state.plan) {
                 const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.plan.id);
-                if (planIndex > -1) {
-                    this.state.allPlans[planIndex] = this.state.plan;
-                } else {
-                    this.state.allPlans.push(this.state.plan);
-                }
+                if (planIndex > -1) this.state.allPlans[planIndex] = this.state.plan;
+                else this.state.allPlans.push(this.state.plan);
             }
             localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
 
-        // Central location for all event listeners
         addEventListeners() {
-            // Onboarding Buttons
+            // Onboarding
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
-                if (this.validateStep('style') && this.validateStep('days')) {
-                    this.finishOnboarding();
-                }
+                if (this.validateStep('style') && this.validateStep('days')) this.finishOnboarding();
             });
+            document.querySelectorAll('.back-btn-onboarding').forEach(button => button.addEventListener('click', () => this.previousStep()));
             
-            // Home Screen Buttons
+            // Home Screen
             document.getElementById('startWorkoutBtn')?.addEventListener('click', () => this.showView('workout'));
             document.getElementById('planMesoBtn')?.addEventListener('click', () => this.showView('builder'));
             document.getElementById('reviewWorkoutsBtn')?.addEventListener('click', () => this.showView('performanceSummary'));
+            document.getElementById('settingsBtn')?.addEventListener('click', () => this.showView('settings'));
 
             // Back Buttons
             document.getElementById('backToHomeBtn')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromBuilder')?.addEventListener('click', () => this.showView('home'));
             document.getElementById('backToHomeFromSummary')?.addEventListener('click', () => this.showView('home'));
-            document.querySelectorAll('.back-btn-onboarding').forEach(button => {
-                button.addEventListener('click', () => this.previousStep());
-            });
+            document.getElementById('backToHomeFromSettings')?.addEventListener('click', () => this.showView('home'));
 
-            // Builder Listeners
+            // Builder
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
-
             this.elements.scheduleContainer.addEventListener('click', (e) => {
                 const { dayIndex, muscleIndex, focus } = e.target.dataset;
-                if (e.target.matches('.add-muscle-group-btn')) { this.addMuscleGroupToDay(dayIndex); }
-                if (e.target.matches('.delete-day-btn')) { this.deleteDayFromBuilder(dayIndex); }
-                if (e.target.matches('.delete-muscle-group-btn')) { this.deleteMuscleGroupFromDay(dayIndex, muscleIndex); }
-                if (e.target.matches('.focus-btn')) { this.updateMuscleFocus(dayIndex, muscleIndex, focus); }
+                if (e.target.matches('.add-muscle-group-btn')) this.addMuscleGroupToDay(dayIndex);
+                if (e.target.matches('.delete-day-btn')) this.deleteDayFromBuilder(dayIndex);
+                if (e.target.matches('.delete-muscle-group-btn')) this.deleteMuscleGroupFromDay(dayIndex, muscleIndex);
+                if (e.target.matches('.focus-btn')) this.updateMuscleFocus(dayIndex, muscleIndex, focus);
             });
             this.elements.scheduleContainer.addEventListener('change', (e) => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
-                if (e.target.matches('.day-label-selector')) { this.updateDayLabel(dayIndex, e.target.value); }
-                if (e.target.matches('.muscle-select')) { this.updateMuscleGroup(dayIndex, muscleIndex, e.target.value); }
-                if (e.target.matches('.exercise-select')) { this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value); }
+                if (e.target.matches('.day-label-selector')) this.updateDayLabel(dayIndex, e.target.value);
+                if (e.target.matches('.muscle-select')) this.updateMuscleGroup(dayIndex, muscleIndex, e.target.value);
+                if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value);
             });
 
-            // Modal Listener
+            // Modal
             this.elements.modal.addEventListener('click', (e) => {
-                if (e.target.matches('.close-btn')) { this.closeModal(); }
+                if (e.target.matches('.close-btn')) this.closeModal();
                 if (e.target.matches('.meso-length-card')) {
                     const length = e.target.dataset.value;
                     this.closeModal();
-                    if (confirm('Are you sure you want to proceed with this work routine?')) {
-                        this.finalizeAndStartPlan(length);
-                    }
+                    if (confirm('Are you sure you want to proceed with this work routine?')) this.finalizeAndStartPlan(length);
                 }
             });
 
-            // Onboarding Card Selections
+            // Card Selections (Onboarding & Settings)
             document.querySelectorAll('.card-group').forEach(group => {
                 group.addEventListener('click', (e) => {
                     const card = e.target.closest('.goal-card');
@@ -162,23 +143,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         const field = card.closest('.card-group').dataset.field;
                         const value = card.dataset.value;
                         this.selectCard(card, field, value);
+                        if (field === 'goal' || field === 'experience') this.saveStateToStorage();
                     }
                 });
             });
 
-            // Workout View Listeners
+            // Workout View
             this.elements.workoutView.addEventListener('click', (e) => {
-                if (e.target.matches('.add-set-btn')) { this.addSet(e.target.dataset.exerciseIndex); }
-                if (e.target.matches('#complete-workout-btn')) { this.completeWorkout(); }
+                if (e.target.matches('.add-set-btn')) this.addSet(e.target.dataset.exerciseIndex);
+                if (e.target.matches('#complete-workout-btn')) this.completeWorkout();
             });
             this.elements.workoutView.addEventListener('input', (e) => {
-                if(e.target.matches('.weight-input, .reps-input, .rir-input')) { this.handleSetInput(e.target); }
+                if(e.target.matches('.weight-input, .reps-input, .rir-input')) this.handleSetInput(e.target);
             });
             
-            // Performance Summary Listener
-            document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => {
-                this.renderProgressChart(e.target.value);
-            });
+            // Performance Summary
+            document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => this.renderProgressChart(e.target.value));
+
+            // Settings Toggles
+            document.getElementById('units-lbs-btn')?.addEventListener('click', () => this.setUnits('lbs'));
+            document.getElementById('units-kg-btn')?.addEventListener('click', () => this.setUnits('kg'));
+            document.getElementById('theme-dark-btn')?.addEventListener('click', () => this.setTheme('dark'));
+            document.getElementById('theme-light-btn')?.addEventListener('click', () => this.setTheme('light'));
         },
         
         openMesoLengthModal() {
@@ -201,21 +187,56 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         showView(viewName) {
-            this.elements.onboardingContainer.classList.add('hidden');
-            this.elements.homeScreen.classList.add('hidden');
-            this.elements.workoutView.classList.add('hidden');
-            this.elements.builderView.classList.add('hidden');
-            this.elements.performanceSummaryView.classList.add('hidden');
+            Object.values(this.elements).forEach(el => {
+                if (el.classList.contains('container')) el.classList.add('hidden');
+            });
 
             if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
             else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
             else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
             else if (viewName === 'builder') { this.elements.builderView.classList.remove('hidden'); this.renderBuilder(); }
-            else if (viewName === 'performanceSummary') {
-                this.elements.performanceSummaryView.classList.remove('hidden');
-                this.renderPerformanceSummary();
+            else if (viewName === 'performanceSummary') { this.elements.performanceSummaryView.classList.remove('hidden'); this.renderPerformanceSummary(); }
+            else if (viewName === 'settings') { this.elements.settingsView.classList.remove('hidden'); this.renderSettings(); }
+        },
+        
+        // --- SETTINGS METHODS ---
+        renderSettings() {
+            // Set active cards for goal and experience
+            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal);
+            });
+            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience);
+            });
+
+            // Set active state for toggles
+            document.getElementById('units-lbs-btn').classList.toggle('active', this.state.settings.units === 'lbs');
+            document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
+            document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
+            document.getElementById('theme-light-btn').classList.toggle('active', this.state.settings.theme === 'light');
+        },
+
+        setUnits(unit) {
+            this.state.settings.units = unit;
+            this.saveStateToStorage();
+            this.renderSettings();
+            // Re-render workout view if it's open to update labels
+            if (!this.elements.workoutView.classList.contains('hidden')) {
+                this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
             }
         },
+
+        setTheme(theme) {
+            this.state.settings.theme = theme;
+            this.applyTheme();
+            this.saveStateToStorage();
+            this.renderSettings();
+        },
+
+        applyTheme() {
+            document.body.dataset.theme = this.state.settings.theme;
+        },
+
 
         // --- BUILDER METHODS ---
         renderBuilder() {
@@ -225,40 +246,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
                 return;
             }
-            
-            // UPDATED: Add "Rest Day" to the list of options
             const muscleList = ['Select a Muscle', 'Rest Day 🧘', ...new Set(this.state.exercises.map(ex => ex.muscle))];
             const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(' 🧘', '').replace(/ /g, '')}">${m}</option>`).join('');
-
-            const exerciseSlotsByFocus = { 
-                'Primary': 3, 
-                'Secondary': 2, 
-                'Maintenance': 1 
-            };
-
+            const exerciseSlotsByFocus = { 'Primary': 3, 'Secondary': 2, 'Maintenance': 1 };
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card';
                 const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
                     const exercisesForMuscle = this.state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle);
                     const exerciseOptions = [{name: 'Select an Exercise'}, ...exercisesForMuscle].map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-                    
                     const numSlots = exerciseSlotsByFocus[mg.focus] || 3;
                     const exerciseDropdowns = Array.from({ length: numSlots }).map((_, exerciseSelectIndex) => `
                         <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exerciseSelectIndex}">
                             ${exerciseOptions.replace(`value="${mg.exercises[exerciseSelectIndex]}"`, `value="${mg.exercises[exerciseSelectIndex]}" selected`)}
                         </select>
                     `).join('');
-
                     const focusButtons = ['Primary', 'Secondary', 'Maintenance'].map(focusLevel => `
                         <button class="focus-btn ${mg.focus === focusLevel ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="${focusLevel}">
                             ${focusLevel}
                         </button>
                     `).join('');
-                    
-                    // UPDATED: Conditionally render UI based on whether it's a rest day
                     const isRestDay = mg.muscle === 'restday';
-
                     return `
                         <div class="muscle-group-block">
                             <div class="muscle-group-header">
@@ -297,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         addDayToBuilder() { 
-            // UPDATED: Add a day with one muscle group block already open
             this.state.builderPlan.days.push({ 
                 label: 'Add a label', 
                 muscleGroups: [{ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] }] 
@@ -327,21 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Please add at least one day to your plan before saving.");
                 return;
             }
-            const newMeso = {
-                id: `meso_${Date.now()}`,
-                startDate: new Date().toISOString(),
-                durationWeeks: parseInt(mesoLength) || 6,
-                goal: 'custom',
-                experience: this.state.userSelections.experience,
-                weeks: {}
-            };
-            
-            const focusSetMap = { 
-                'Primary': 5,
-                'Secondary': 4,
-                'Maintenance': 2
-            };
-
+            const newMeso = { id: `meso_${Date.now()}`, startDate: new Date().toISOString(), durationWeeks: parseInt(mesoLength) || 6, goal: 'custom', experience: this.state.userSelections.experience, weeks: {} };
+            const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
             for (let i = 1; i <= newMeso.durationWeeks; i++) {
                 newMeso.weeks[i] = {};
                 const isDeload = (i === newMeso.durationWeeks);
@@ -349,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     newMeso.weeks[i][dayIndex + 1] = {
                         name: day.label === 'Add a label' ? `Day ${dayIndex + 1}` : day.label,
                         completed: false,
-                        // UPDATED: Filter out rest days and unused exercise slots when finalizing the plan
                         exercises: day.muscleGroups
                             .filter(mg => mg.muscle !== 'restday')
                             .flatMap(mg => 
@@ -357,15 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const exerciseDetails = this.state.exercises.find(e => e.name === exName) || {};
                                     const setsPerExercise = focusSetMap[mg.focus] || 3;
                                     return {
-                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`,
-                                        name: exName,
-                                        muscle: exerciseDetails.muscle || 'Unknown',
-                                        type: mg.focus,
+                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 10,
-                                        targetRIR: isDeload ? 4 : 2,
-                                        targetLoad: null,
-                                        sets: []
+                                        targetReps: 10, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
                                     };
                                 })
                         )
@@ -389,42 +376,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const percentage = ((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100;
             this.elements.progress.style.width = `${percentage}%`;
         },
-        nextStep() {
-            if (this.state.currentStep < this.state.totalSteps) {
-                this.state.currentStep++;
-                this.showStep(this.state.currentStep);
-            }
-        },
-        previousStep() {
-            if (this.state.currentStep > 1) {
-                this.state.currentStep--;
-                this.showStep(this.state.currentStep);
-            }
-        },
+        nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
+        previousStep() { if (this.state.currentStep > 1) { this.state.currentStep--; this.showStep(this.state.currentStep); } },
         validateStep(field) {
-            if (!this.state.userSelections[field]) {
-                alert("Please select an option before continuing.");
-                return false;
-            }
+            if (!this.state.userSelections[field]) { alert("Please select an option before continuing."); return false; }
             return true;
         },
-        validateAndProceed(field) {
-            if (this.validateStep(field)) {
-                this.nextStep();
-            }
-        },
+        validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
         selectCard(element, field, value) {
             this.state.userSelections[field] = value;
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
         },
         finishOnboarding() {
-            this.state.plan = this.generateMesocycle(
-                this.state.userSelections.goal,
-                this.state.userSelections.experience,
-                this.state.userSelections.days,
-                6
-            );
+            this.state.plan = this.generateMesocycle(this.state.userSelections.goal, this.state.userSelections.experience, this.state.userSelections.days, 6);
             this.state.allPlans.push(this.state.plan);
             this.saveStateToStorage();
             this.showView('home');
@@ -498,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutDate.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             if (!this.state.plan || !this.state.plan.weeks[weekNumber] || !this.state.plan.weeks[weekNumber][dayNumber]) {
                 workoutTitle.textContent = "No Workout Today";
-                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete. Go to "Plan Mesocycle" to build your schedule.</p>`;
+                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete.</p>`;
                 document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
@@ -507,9 +472,10 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutTitle.textContent = workout.name;
             if (workout.exercises.length === 0) {
                 container.innerHTML = `<p class="placeholder-text">This is a rest day. Enjoy it!</p>`;
-                document.getElementById('complete-workout-btn').classList.remove('hidden'); // Allow completing rest days
+                document.getElementById('complete-workout-btn').classList.remove('hidden');
                 return;
             }
+            const unitLabel = this.state.settings.units.toUpperCase();
             workout.exercises.forEach((ex, exIndex) => {
                 const setsHTML = ex.sets.map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir)).join('');
                 const exerciseCard = document.createElement('div');
@@ -523,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="set-row header">
                             <div class="set-number">SET</div>
                             <div class="set-inputs">
-                                <span>WEIGHT (LBS)</span>
+                                <span>WEIGHT (${unitLabel})</span>
                                 <span>REPS</span>
                                 <span>RIR</span>
                             </div>
@@ -552,8 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleSetInput(inputElement) {
             const { exerciseIndex, setIndex } = inputElement.dataset;
             const value = parseFloat(inputElement.value);
-            const property = inputElement.classList.contains('weight-input') ? 'weight' :
-                             inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
+            const property = inputElement.classList.contains('weight-input') ? 'weight' : inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
             if(workout && workout.exercises[exerciseIndex] && workout.exercises[exerciseIndex].sets[setIndex]) {
                workout.exercises[exerciseIndex].sets[setIndex][property] = value;
@@ -577,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const workout = this.state.plan.weeks[week][day];
             workout.completed = true;
             workout.completedDate = new Date().toISOString();
-
             if (week < this.state.plan.durationWeeks -1 && workout.exercises.length > 0) {
                 this.calculateNextWeekProgression(week);
             }
@@ -609,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateNextWeekProgression(completedWeekNumber) {
             const nextWeekNumber = completedWeekNumber + 1;
             if (!this.state.plan.weeks[nextWeekNumber]) return;
+            const weightIncrement = this.state.settings.units === 'lbs' ? 5 : 2.5; // 5lbs or 2.5kg
             for (const dayKey in this.state.plan.weeks[completedWeekNumber]) {
                 const completedDay = this.state.plan.weeks[completedWeekNumber][dayKey];
                 const nextWeekDay = this.state.plan.weeks[nextWeekNumber][dayKey];
@@ -627,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         lastSetWeight = set.weight;
                     });
                     if (successfulSets >= completedEx.targetSets) {
-                        nextWeekEx.targetLoad = lastSetWeight + 5;
+                        nextWeekEx.targetLoad = lastSetWeight + weightIncrement;
                     } else {
                         nextWeekEx.targetLoad = lastSetWeight;
                     }
@@ -635,16 +600,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // --- PERFORMANCE SUMMARY METHODS ---
         renderPerformanceSummary() {
             const listContainer = document.getElementById('completed-workouts-list');
             const exerciseSelect = document.getElementById('exercise-tracker-select');
             listContainer.innerHTML = '';
             exerciseSelect.innerHTML = '<option value="">Select an exercise to track</option>';
-
             const completedWorkouts = [];
             const uniqueExercises = new Set();
-
             if (this.state.plan && this.state.plan.weeks) {
                 Object.values(this.state.plan.weeks).forEach(week => {
                     Object.values(week).forEach(day => {
@@ -655,7 +617,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
             }
-
             if (completedWorkouts.length === 0) {
                 listContainer.innerHTML = '<p class="placeholder-text">No completed workouts yet. Go get one done!</p>';
             } else {
@@ -663,38 +624,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     .forEach(workout => {
                         const workoutItem = document.createElement('div');
                         workoutItem.className = 'summary-item';
-                        workoutItem.innerHTML = `
-                            <h4>${workout.name}</h4>
-                            <p>${new Date(workout.completedDate).toLocaleDateString()}</p>
-                        `;
+                        workoutItem.innerHTML = `<h4>${workout.name}</h4><p>${new Date(workout.completedDate).toLocaleDateString()}</p>`;
                         listContainer.appendChild(workoutItem);
                     });
             }
-
             uniqueExercises.forEach(exName => {
                 const option = document.createElement('option');
                 option.value = exName;
                 option.textContent = exName;
                 exerciseSelect.appendChild(option);
             });
-            
             this.renderProgressChart("");
         },
         
         renderProgressChart(exerciseName) {
             const ctx = document.getElementById('progress-chart').getContext('2d');
-            
-            if (this.state.progressChart) {
-                this.state.progressChart.destroy();
-            }
-
-            if (!exerciseName) {
-                return;
-            }
-
+            if (this.state.progressChart) this.state.progressChart.destroy();
+            if (!exerciseName) return;
             const labels = [];
             const dataPoints = [];
-
             if (this.state.plan && this.state.plan.weeks) {
                  Object.values(this.state.plan.weeks).forEach((week, weekIndex) => {
                     Object.values(week).forEach(day => {
@@ -711,13 +659,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
             }
-
+            const unitLabel = this.state.settings.units.toUpperCase();
             this.state.progressChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: `Max Weight for ${exerciseName} (LBS)`,
+                        label: `Max Weight for ${exerciseName} (${unitLabel})`,
                         data: dataPoints,
                         borderColor: 'var(--primary-color)',
                         backgroundColor: 'rgba(255, 107, 53, 0.2)',
@@ -726,39 +674,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: 'var(--text-muted-color)' },
-                            grid: { color: 'var(--border-color)' }
-                        },
-                        x: {
-                            ticks: { color: 'var(--text-muted-color)' },
-                            grid: { color: 'var(--border-color)' }
-                        }
+                        y: { beginAtZero: true, ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } },
+                        x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } }
                     },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'var(--text-color)'
-                            }
-                        }
-                    }
+                    plugins: { legend: { labels: { color: 'var(--text-color)' } } }
                 }
             });
         },
-
 
         capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
     };
     
     for (const key in app) {
-        if (typeof app[key] === 'function') {
-            app[key] = app[key].bind(app);
-        }
+        if (typeof app[key] === 'function') app[key] = app[key].bind(app);
     }
     
     app.init();
 });
+
