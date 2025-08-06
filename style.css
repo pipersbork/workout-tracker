@@ -11,8 +11,25 @@
 --border-color: #444;
 --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
+
+/* Light Theme Variables */
+body[data-theme="light"] {
+--background-color: #f0f2f5;
+--surface-color: #ffffff;
+--text-color: #1c1e21;
+--text-muted-color: #606770;
+--border-color: #dddfe2;
+}
+
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-family); background-color: var(--background-color); color: var(--text-color); line-height: 1.6; }
+body { 
+    font-family: var(--font-family); 
+    background-color: var(--background-color); 
+    color: var(--text-color); 
+    line-height: 1.6; 
+    transition: background-color 0.3s, color 0.3s;
+}
 /* ===========================
   CORE FUNCTIONAL STYLES
 =========================== */
@@ -22,8 +39,8 @@ body { font-family: var(--font-family); background-color: var(--background-color
 /* ===========================
   LAYOUT & CONTAINER
 =========================== */
-.container, .dashboard, #daily-workout-view, #performance-summary-view { max-width: 800px; margin: 2rem auto; padding: 2rem; position: relative; }
-#daily-workout-view { padding-bottom: 100px; }
+.container, .dashboard, #daily-workout-view, #performance-summary-view, #settings-view { max-width: 800px; margin: 2rem auto; padding: 2rem; position: relative; }
+#daily-workout-view, #settings-view { padding-bottom: 100px; }
 h2, h3 { margin-bottom: 1rem; font-weight: 600; }
 p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 /* ===========================
@@ -32,6 +49,11 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 #home-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 80vh; }
 .home-nav-buttons { display: flex; flex-direction: column; margin-top: 2rem; width: 100%; max-width: 350px; }
 .home-btn { width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; font-size: 1.2rem; }
+.home-icon-btn { position: absolute; top: 2rem; right: 2rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-muted-color); border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
+.home-icon-btn:hover { background-color: var(--border-color); color: var(--text-color); }
+.home-icon-btn svg { stroke: var(--text-muted-color); transition: stroke 0.2s; }
+.home-icon-btn:hover svg { stroke: var(--text-color); }
+
 /* ===========================
   ONBOARDING STYLES
 =========================== */
@@ -121,7 +143,29 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .chart-container { position: relative; height: 300px; width: 100%; }
 
 /* ===========================
+  SETTINGS STYLES
+=========================== */
+.settings-section { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+.settings-section h3 { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+.settings-section .card-group { margin-bottom: 0; }
+.settings-section .goal-card h3 { font-size: 1rem; }
+.settings-section .goal-card .icon { font-size: 2rem; }
+
+.settings-label { display: block; font-size: 0.9rem; color: var(--text-muted-color); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+
+.toggle-switch { display: flex; background-color: var(--background-color); border-radius: 8px; padding: 4px; }
+.toggle-btn { flex: 1; padding: 0.75rem; border: none; background-color: transparent; color: var(--text-muted-color); font-family: var(--font-family); font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+.toggle-btn.active { background-color: var(--primary-color); color: #fff; }
+
+
+/* ===========================
   ANIMATIONS & RESPONSIVENESS
 =========================== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 768px) { .container, .dashboard, #daily-workout-view, #performance-summary-view { margin: 1rem auto; padding: 1rem; } .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .back-btn { top: 1rem; left: 1rem; } }
+@media (max-width: 768px) { 
+    .container, .dashboard, #daily-workout-view, #performance-summary-view, #settings-view { margin: 1rem auto; padding: 1rem; } 
+    .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } 
+    .back-btn, .home-icon-btn { top: 1rem; left: 1rem; }
+    .home-icon-btn { right: 1rem; left: auto; }
+}
+
