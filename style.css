@@ -4,6 +4,7 @@
 :root {
   --primary-color: #ff6b35; /* A strong, energetic orange */
   --secondary-color: #f7c59f;
+  --azure-color: #007BFF; /* A vibrant, clear blue for app suggestions */
   --background-color: #1a1a1a;
   --surface-color: #2c2c2c;
   --text-color: #f0f0f0;
@@ -49,6 +50,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 #home-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 80vh; }
 .home-nav-buttons { display: flex; flex-direction: column; margin-top: 2rem; width: 100%; max-width: 350px; }
 .home-btn { width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; font-size: 1.2rem; }
+.active-plan-display { margin-top: 1rem; color: var(--text-muted-color); font-style: italic; }
 .home-icon-btn { position: absolute; bottom: 2rem; right: 2rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
 .home-icon-btn svg { stroke: var(--text-muted-color); transition: all 0.2s ease; }
 .home-icon-btn:hover { background: var(--primary-color); border-color: var(--primary-color); }
@@ -68,52 +70,12 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .goal-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
 .goal-card h3 { margin-bottom: 0.25rem; font-size: 1.1rem; color: var(--text-color); }
 .goal-card p { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0; }
-.details-inputs { display: flex; gap: 2rem; justify-content: center; max-width: 400px; margin: 0 auto 2rem auto; }
-.input-group { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.input-group label { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
-.input-group input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
-.input-group input::-webkit-outer-spin-button, .input-group input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.input-group input[type=number] { -moz-appearance: textfield; }
 
-#step2 .card-group,
-#step3 .card-group,
-#step4 .card-group,
-#settings-view .card-group[data-field="goal"],
-#settings-view .card-group[data-field="experience"] {
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-}
-#step2 .goal-card,
-#step3 .goal-card,
-#step4 .goal-card,
-#settings-view .card-group[data-field="goal"] .goal-card,
-#settings-view .card-group[data-field="experience"] .goal-card {
-  padding: 1rem 0.5rem;
-  min-height: 110px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-#step2 .goal-card .icon,
-#step3 .goal-card .icon,
-#step4 .goal-card .icon,
-#settings-view .card-group[data-field="goal"] .goal-card .icon,
-#settings-view .card-group[data-field="experience"] .goal-card .icon {
-  font-size: 2rem;
-}
-#step2 .goal-card h3,
-#step3 .goal-card h3,
-#step4 .goal-card h3,
-#settings-view .card-group[data-field="goal"] .goal-card h3,
-#settings-view .card-group[data-field="experience"] .goal-card h3 {
-  font-size: 0.9rem;
-  margin-bottom: 0;
-}
-#step2 .goal-card p,
-#step3 .goal-card p,
-#step4 .goal-card p {
-  display: none;
-}
+#step2 .card-group, #step3 .card-group, #step4 .card-group, #settings-view .card-group[data-field="goal"], #settings-view .card-group[data-field="experience"] { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+#step2 .goal-card, #step3 .goal-card, #step4 .goal-card, #settings-view .card-group[data-field="goal"] .goal-card, #settings-view .card-group[data-field="experience"] .goal-card { padding: 1rem 0.5rem; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
+#step2 .goal-card .icon, #step3 .goal-card .icon, #step4 .goal-card .icon, #settings-view .card-group[data-field="goal"] .goal-card .icon, #settings-view .card-group[data-field="experience"] .goal-card .icon { font-size: 2rem; }
+#step2 .goal-card h3, #step3 .goal-card h3, #step4 .goal-card h3, #settings-view .card-group[data-field="goal"] .goal-card h3, #settings-view .card-group[data-field="experience"] .goal-card h3 { font-size: 0.9rem; margin-bottom: 0; }
+#step2 .goal-card p, #step3 .goal-card p, #step4 .goal-card p { display: none; }
 
 /* ===========================
   DAILY WORKOUT VIEW STYLES
@@ -123,13 +85,16 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .workout-header p { margin-bottom: 0; color: var(--text-muted-color); }
 .exercise-card { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .exercise-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.exercise-card-header h3 { margin: 0; font-size: 1.5rem; }
+.exercise-title-group { display: flex; align-items: center; gap: 0.75rem; }
+.exercise-title-group h3 { margin: 0; font-size: 1.5rem; }
+.swap-exercise-btn { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
+.swap-exercise-btn:hover { color: var(--secondary-color); }
+.swap-exercise-btn svg { pointer-events: none; }
 .exercise-target { font-size: 0.9rem; color: var(--secondary-color); background-color: rgba(255, 107, 53, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
-.last-time-info { font-size: 0.9rem; color: var(--text-muted-color); padding: 0.75rem; border-top: 1px solid var(--border-color); margin-top: 1rem; text-align: center; }
 .sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
 .sets-container .set-row:last-child { border-bottom: none; }
 .set-number { flex-basis: 50px; font-weight: 600; color: var(--text-muted-color); }
-.set-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; width: 100%; }
+.set-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; }
 .set-row.header .set-inputs span { color: var(--text-muted-color); font-size: 0.9rem; text-align: center; }
 .set-inputs input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
 .add-set-btn { background: none; border: 1px dashed var(--border-color); color: var(--text-muted-color); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
@@ -138,39 +103,20 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 /* ===========================
   COMPONENTS (Buttons, Modal)
 =========================== */
-.cta-button { background-color: var(--primary-color); color: #fff; border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; }
+.cta-button, .azure-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; }
+.cta-button { background-color: var(--primary-color); color: #fff; }
 .cta-button:hover { background-color: #e65c2e; transform: translateY(-2px); }
+.azure-button { background-color: var(--azure-color); color: #fff; }
+.azure-button:hover { background-color: #0056b3; transform: translateY(-2px); }
+
 .button-group { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .secondary-button { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-muted-color); }
 .secondary-button:hover { background-color: var(--surface-color); color: var(--text-color); transform: translateY(-2px); }
 
-.back-btn {
-    position: absolute;
-    top: 1.5rem;
-    left: 1.5rem;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted-color);
-    border-radius: 50%;
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-.back-btn svg {
-    stroke: var(--text-muted-color);
-    transition: all 0.2s ease;
-}
-.back-btn:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-.back-btn:hover svg {
-    stroke: #fff;
-}
+.back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-muted-color); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.back-btn svg { stroke: var(--text-muted-color); transition: all 0.2s ease; }
+.back-btn:hover { background-color: var(--primary-color); border-color: var(--primary-color); }
+.back-btn:hover svg { stroke: #fff; }
 
 .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .modal.active { opacity: 1; pointer-events: auto; }
@@ -180,12 +126,10 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .modal-content .close-btn:hover { color: var(--text-color); }
 .modal .card-group { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
 .modal-body h2 { margin-top: 0.5rem; }
-.modal-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-}
+.modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
+.modal-actions.vertical { flex-direction: column; }
+.modal-actions .cta-button, .modal-actions .secondary-button, .modal-actions .azure-button { width: 100%; padding: 1rem; margin: 0; }
+.modal-input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; margin-top: 1rem; margin-bottom: 1rem; }
 
 /* ===========================
   WORKOUT BUILDER STYLES
@@ -211,23 +155,10 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .focus-btn:hover { background-color: var(--border-color); }
 .focus-btn.active { background-color: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
 
-.day-card.collapsed .day-header {
-    margin-bottom: 0;
-    border-bottom: 1px solid transparent;
-    cursor: pointer;
-}
-.day-content {
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, margin-top 0.4s ease-out;
-    max-height: 1500px; /* Should be larger than any possible content */
-}
-.day-card.collapsed .day-content {
-    max-height: 0;
-    margin-top: 0 !important;
-}
-.day-card.expanded {
-    background-color: var(--background-color);
-}
+.day-card.collapsed .day-header { margin-bottom: 0; border-bottom: 1px solid transparent; cursor: pointer; }
+.day-content { overflow: hidden; transition: max-height 0.4s ease-out, margin-top 0.4s ease-out; max-height: 1500px; }
+.day-card.collapsed .day-content { max-height: 0; margin-top: 0 !important; }
+.day-card.expanded { background-color: var(--background-color); }
 
 /* ===========================
   PERFORMANCE SUMMARY STYLES
@@ -240,68 +171,30 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .summary-item p { margin: 0; color: var(--text-muted-color); }
 #exercise-tracker-select { width: 100%; margin-bottom: 1.5rem; }
 .chart-container { position: relative; height: 300px; width: 100%; }
+#consistency-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
+.calendar-header { grid-column: 1 / -1; font-weight: 600; margin-bottom: 1rem; color: var(--secondary-color); }
+.calendar-day-name { font-size: 0.8rem; color: var(--text-muted-color); }
+.calendar-day { display: flex; justify-content: center; align-items: center; aspect-ratio: 1 / 1; border-radius: 50%; }
+.calendar-day.completed { background-color: var(--primary-color); color: #fff; }
 
 /* ===========================
   SETTINGS VIEW STYLES
 =========================== */
-.settings-section {
-    background-color: var(--surface-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-.settings-section:last-child {
-    margin-bottom: 0;
-}
-.settings-section h3 {
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-}
-.settings-label {
-    display: block;
-    color: var(--text-muted-color);
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-    margin-top: 1.5rem;
-}
-.toggle-switch {
-    display: flex;
-    background-color: var(--background-color);
-    border-radius: 8px;
-    padding: 4px;
-    border: 1px solid var(--border-color);
-}
-.toggle-btn {
-    flex: 1;
-    background-color: transparent;
-    border: none;
-    color: var(--text-muted-color);
-    padding: 0.75rem 0.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: var(--font-family);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-.toggle-btn:hover {
-    background-color: var(--border-color);
-    color: var(--text-color);
-}
-.toggle-btn.active {
-    background-color: var(--primary-color);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
-}
+.settings-section { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+.settings-section:last-child { margin-bottom: 0; }
+.settings-section h3 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+.settings-label { display: block; color: var(--text-muted-color); font-size: 0.9rem; margin-bottom: 0.75rem; margin-top: 1.5rem; }
+.toggle-switch { display: flex; background-color: var(--background-color); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color); }
+.toggle-btn { flex: 1; background-color: transparent; border: none; color: var(--text-muted-color); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; text-align: center; }
+.toggle-btn:hover { background-color: var(--border-color); color: var(--text-color); }
+.toggle-btn.active { background-color: var(--primary-color); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3); }
+#plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
+#plan-management-list .plan-item:last-child { border-bottom: none; }
+#plan-management-list .plan-item.active .plan-name { color: var(--primary-color); font-weight: 600; }
+.plan-actions { display: flex; gap: 0.5rem; }
+.plan-btn { font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px; }
 
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3);
-}
+input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3); }
 
 /* ===========================
   ANIMATIONS & RESPONSIVENESS
