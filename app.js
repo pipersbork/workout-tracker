@@ -390,24 +390,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const usePlanBtn = document.getElementById('use-plan-btn');
             const customizePlanBtn = document.getElementById('customize-plan-btn');
-            let isCustomizing = false;
 
-            usePlanBtn.addEventListener('click', () => {
-                if (isCustomizing) {
+            usePlanBtn.onclick = () => {
+                if (usePlanBtn.classList.contains('azure-button')) {
+                    this.closeModal();
+                    this.openMesoLengthModal();
+                } else {
+                    usePlanBtn.className = 'azure-button';
+                    customizePlanBtn.className = 'secondary-button';
+                }
+            };
+
+            customizePlanBtn.onclick = () => {
+                if (customizePlanBtn.classList.contains('azure-button')) {
                     this.closeModal();
                     this.showView('builder');
                 } else {
-                    this.closeModal();
-                    this.openMesoLengthModal();
+                    customizePlanBtn.className = 'azure-button';
+                    usePlanBtn.className = 'secondary-button';
                 }
-            });
-
-            customizePlanBtn.addEventListener('click', () => {
-                isCustomizing = true;
-                usePlanBtn.textContent = 'Finish Customizing';
-                usePlanBtn.className = 'azure-button';
-                customizePlanBtn.className = 'secondary-button';
-            });
+            };
         },
         
         handlePlanMesoClick() {
