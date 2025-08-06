@@ -97,10 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.showView('onboarding', true);
                     }
                 } else {
-                    signInAnonymously(auth).catch((error) => {
-                        console.error("Anonymous sign-in failed:", error);
-                        this.showModal("Connection Error", "Could not connect to the database. Please refresh the page.");
-                    });
+                    signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
                 }
             });
         },
@@ -112,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.state.exercises = await response.json();
             } catch (error) {
                 console.error("Failed to load exercises.json:", error);
-                this.state.exercises = [];
             }
         },
 
@@ -198,13 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
             this.elements.modal.addEventListener('click', (e) => {
                 if (e.target === this.elements.modal) this.closeModal();
-                if (e.target.matches('.meso-length-card')) {
-                    const length = e.target.dataset.value;
-                    this.showModal('Finalize Plan?', `Are you sure you want to create a ${length}-week plan?`, [
-                        { text: 'Cancel', class: 'secondary-button' },
-                        { text: 'Yes, Create Plan', class: 'cta-button', action: () => this.finalizeAndStartPlan(length) }
-                    ]);
-                }
             });
 
             document.querySelectorAll('.card-group').forEach(group => {
@@ -222,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.workoutView.addEventListener('click', (e) => {
                 if (e.target.matches('.add-set-btn')) this.addSet(e.target.dataset.exerciseIndex);
                 if (e.target.matches('#complete-workout-btn')) this.confirmCompleteWorkout();
-                // --- NEW: Event listener for swap button ---
                 const swapButton = e.target.closest('.swap-exercise-btn');
                 if (swapButton) {
                     this.openSwapExerciseModal(swapButton.dataset.exerciseIndex);
@@ -297,19 +285,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         openMesoLengthModal() {
             this.elements.modalBody.innerHTML = `
-                <h2>Select Mesocycle Length</h2>
-                <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
-                <div class="card-group">
+                <h2>Plan Details</h2>
+                <p>Give your plan a name and select how many weeks it should last. A 1-week deload will be added at the end.</p>
+                <input type="text" id="new-plan-name" class="modal-input" placeholder="e.g., My Summer Bulk">
+                <div class="card-group" id="meso-length-cards">
                     <div class="goal-card meso-length-card" data-value="4" role="button" tabindex="0"><h3>4 Weeks</h3></div>
                     <div class="goal-card meso-length-card" data-value="6" role="button" tabindex="0"><h3>6 Weeks</h3></div>
                     <div class="goal-card meso-length-card" data-value="8" role="button" tabindex="0"><h3>8 Weeks</h3></div>
                 </div>
-                <h2>Plan Name</h2>
-                <input type="text" id="new-plan-name" class="modal-input" placeholder="e.g., My Summer Bulk">
             `;
             this.elements.modalActions.innerHTML = `<button id="save-plan-details-btn" class="cta-button">Save Plan</button>`;
+            
+            this.elements.modal.querySelector('#meso-length-cards').addEventListener('click', e => {
+                const card = e.target.closest('.meso-length-card');
+                if(card) {
+                    this.elements.modal.querySelectorAll('.meso-length-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                }
+            });
+
             document.getElementById('save-plan-details-btn').addEventListener('click', () => {
-                const length = document.querySelector('.meso-length-card.active')?.dataset.value;
+                const length = this.elements.modal.querySelector('.meso-length-card.active')?.dataset.value;
                 const name = document.getElementById('new-plan-name').value;
                 if (!length || !name) {
                     alert('Please select a length and provide a name.');
@@ -368,10 +364,25 @@ document.addEventListener('DOMContentLoaded', () => {
             element.classList.add('active');
             if (shouldSave) await this.saveStateToFirestore();
         },
+        
+        // --- UPDATED: Onboarding now triggers plan generation ---
         async finishOnboarding() {
             this.state.userSelections.onboardingCompleted = true;
             await this.saveStateToFirestore();
-            this.showView('home');
+            
+            // Generate the plan
+            const generatedPlan = this.planGenerator.generate(this.state.userSelections, this.state.exercises);
+            this.state.builderPlan = generatedPlan.builderPlan;
+            
+            // Show confirmation modal
+            this.showModal(
+                "We've Built a Plan For You!",
+                `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>. You can use this plan as is, or customize it to fit your needs.`,
+                [
+                    { text: 'Use This Plan', class: 'cta-button', action: () => this.openMesoLengthModal() },
+                    { text: 'Customize in Builder', class: 'secondary-button', action: () => this.showView('builder') }
+                ]
+            );
         },
         
         handlePlanMesoClick() {
@@ -611,7 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.renderSettings();
         },
 
-        // --- NEW & UPDATED WORKOUT LOGIC ---
         renderDailyWorkout() {
             const container = document.getElementById('exercise-list-container');
             const workoutTitle = document.getElementById('workout-day-title');
@@ -653,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="exercise-title-group">
                             <h3>${ex.name}</h3>
                             <button class="swap-exercise-btn" data-exercise-index="${exIndex}" aria-label="Swap Exercise">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z"/><path d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2"/><path d="M8 12h8m-4 4V8"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z" stroke-width="0" fill="currentColor"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1 14H8v-2h3v-3H8V9h3V6h2v3h3v2h-3v3h3v2h-3v3h-2v-3z"/></svg>
                             </button>
                         </div>
                         <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps</span>
@@ -708,14 +718,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!newExerciseData) return;
 
             workout.exercises[exerciseIndex] = {
-                ...oldExercise, // Keep target sets, reps, etc.
+                ...oldExercise,
                 name: newExerciseData.name,
                 muscle: newExerciseData.muscle,
                 exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`,
-                sets: [] // Reset sets for the new exercise
+                sets: []
             };
 
-            this.renderDailyWorkout(); // Re-render the view with the updated exercise
+            this.renderDailyWorkout();
         },
         createSetRowHTML(exIndex, setIndex, weight, reps) {
             return `
@@ -973,7 +983,122 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
-        capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
+        capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; },
+
+        // --- NEW: The Plan Generator "Brain" ---
+        planGenerator: {
+            generate(userSelections, allExercises) {
+                const { experience, goal, style } = userSelections;
+                const equipmentFilter = this._getEquipmentFilter(style);
+                let template;
+                let description = "";
+
+                // Select the correct template based on experience and goal
+                if (goal === 'muscle') {
+                    if (experience === 'beginner') {
+                        template = this.templates.beginner.muscle;
+                        description = "3-Day Full Body Routine";
+                    } else if (experience === 'experienced') {
+                        template = this.templates.experienced.muscle;
+                        description = "4-Day Upper/Lower Split";
+                    } else { // advanced
+                        template = this.templates.advanced.muscle;
+                        description = "5-Day 'Body Part' Split";
+                    }
+                } else { // Default to a balanced plan for 'cardio' or 'combined' for now
+                    template = this.templates.beginner.combined;
+                    description = "3-Day Full Body & Cardio Plan";
+                }
+
+                const builderPlan = { days: [] };
+                template.days.forEach(dayTemplate => {
+                    const newDay = {
+                        label: dayTemplate.label,
+                        isExpanded: true,
+                        muscleGroups: []
+                    };
+                    dayTemplate.muscles.forEach(muscleGroup => {
+                        const newMuscleGroup = {
+                            muscle: muscleGroup.name.toLowerCase(),
+                            focus: muscleGroup.focus,
+                            exercises: this._getExercisesForMuscle(allExercises, muscleGroup.name, equipmentFilter, muscleGroup.count)
+                        };
+                        newDay.muscleGroups.push(newMuscleGroup);
+                    });
+                    builderPlan.days.push(newDay);
+                });
+                
+                return { builderPlan, description };
+            },
+
+            _getEquipmentFilter(style) {
+                if (style === 'gym') return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
+                if (style === 'home') return ['bodyweight', 'dumbbell'];
+                return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar']; // Hybrid default
+            },
+
+            _getExercisesForMuscle(allExercises, muscle, equipmentFilter, count) {
+                const filtered = allExercises.filter(ex => 
+                    ex.muscle === muscle && 
+                    (ex.equipment.includes('bodyweight') || ex.equipment.some(e => equipmentFilter.includes(e)))
+                );
+                // Shuffle to get variation and take the top 'count'
+                return filtered.sort(() => 0.5 - Math.random()).slice(0, count).map(ex => ex.name);
+            },
+
+            templates: {
+                beginner: {
+                    muscle: {
+                        days: [
+                            { label: 'Day 1: Full Body A', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 2: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 3: Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 5: Full Body C', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
+                        ]
+                    },
+                    combined: {
+                        days: [
+                            { label: 'Day 1: Full Body', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
+                            { label: 'Day 2: Cardio', muscles: [{ name: 'Cardio', focus: 'Primary', count: 1 }] },
+                            { label: 'Day 3: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 4: Full Body', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
+                            { label: 'Day 5: Cardio', muscles: [{ name: 'Cardio', focus: 'Primary', count: 1 }] },
+                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
+                        ]
+                    }
+                },
+                experienced: {
+                    muscle: {
+                        days: [
+                            { label: 'Day 1: Upper A', muscles: [{ name: 'Chest', focus: 'Primary', count: 2 }, { name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Secondary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 2: Lower A', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 3: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 4: Upper B', muscles: [{ name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Primary', count: 2 }, { name: 'Chest', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 5: Lower B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 6: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
+                        ]
+                    }
+                },
+                advanced: {
+                    muscle: {
+                        days: [
+                            { label: 'Day 1: Push', muscles: [{ name: 'Chest', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Primary', count: 2 }, { name: 'Triceps', focus: 'Secondary', count: 2 }] },
+                            { label: 'Day 2: Pull', muscles: [{ name: 'Back', focus: 'Primary', count: 3 }, { name: 'Biceps', focus: 'Secondary', count: 2 }] },
+                            { label: 'Day 3: Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
+                            { label: 'Day 5: Upper', muscles: [{ name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Secondary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 6: Lower', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
+                            { label: 'Day 7: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] }
+                        ]
+                    }
+                }
+            }
+        }
     };
     
     for (const key in app) {
