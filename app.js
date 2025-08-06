@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             plan: null,
             currentView: { week: 1, day: 1 },
+            currentViewName: 'onboarding',
             builderPlan: {
                 days: [] 
             },
@@ -37,18 +38,20 @@ document.addEventListener('DOMContentLoaded', () => {
             progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
             modalBody: document.getElementById('modal-body'),
+            modalActions: document.getElementById('modal-actions'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
         },
 
         async init() {
             await this.loadExercises();
             this.loadStateFromStorage();
             this.addEventListeners();
-            this.applyTheme(); // Apply theme on initial load
+            this.applyTheme();
 
             if (localStorage.getItem("onboardingCompleted") === "true") {
-                this.showView('home');
+                this.showView('home', true); // Skip animation on first load
             } else {
-                this.showView('onboarding');
+                this.showView('onboarding', true); // Skip animation on first load
             }
         },
 
@@ -122,11 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('add-day-btn')?.addEventListener('click', () => this.addDayToBuilder());
             document.getElementById('done-planning-btn')?.addEventListener('click', () => this.openMesoLengthModal());
             this.elements.scheduleContainer.addEventListener('click', (e) => {
-                const { dayIndex, muscleIndex, focus } = e.target.dataset;
-                if (e.target.matches('.add-muscle-group-btn')) this.addMuscleGroupToDay(dayIndex);
-                if (e.target.matches('.delete-day-btn')) this.deleteDayFromBuilder(dayIndex);
-                if (e.target.matches('.delete-muscle-group-btn')) this.deleteMuscleGroupFromDay(dayIndex, muscleIndex);
-                if (e.target.matches('.focus-btn')) this.updateMuscleFocus(dayIndex, muscleIndex, focus);
+                const button = e.target.closest('button');
+                if (!button) return;
+                const { dayIndex, muscleIndex, focus } = button.dataset;
+                if (button.matches('.add-muscle-group-btn')) this.addMuscleGroupToDay(dayIndex);
+                if (button.matches('.delete-day-btn')) this.deleteDayFromBuilder(dayIndex);
+                if (button.matches('.delete-muscle-group-btn')) this.deleteMuscleGroupFromDay(dayIndex, muscleIndex);
+                if (button.matches('.focus-btn')) this.updateMuscleFocus(dayIndex, muscleIndex, focus);
             });
             this.elements.scheduleContainer.addEventListener('change', (e) => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
@@ -136,12 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Modal
+            this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
             this.elements.modal.addEventListener('click', (e) => {
-                if (e.target.matches('.close-btn')) this.closeModal();
+                if (e.target === this.elements.modal) this.closeModal(); // Close on backdrop click
                 if (e.target.matches('.meso-length-card')) {
                     const length = e.target.dataset.value;
-                    this.closeModal();
-                    if (confirm('Are you sure you want to proceed with this work routine?')) this.finalizeAndStartPlan(length);
+                    this.showModal('Finalize Plan?', `Are you sure you want to create a ${length}-week plan? This will replace your current schedule.`, [
+                        { text: 'Cancel', class: 'secondary-button' },
+                        { text: 'Yes, Create Plan', class: 'cta-button', action: () => this.finalizeAndStartPlan(length) }
+                    ]);
                 }
             });
 
@@ -161,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Workout View
             this.elements.workoutView.addEventListener('click', (e) => {
                 if (e.target.matches('.add-set-btn')) this.addSet(e.target.dataset.exerciseIndex);
-                if (e.target.matches('#complete-workout-btn')) this.completeWorkout();
+                if (e.target.matches('#complete-workout-btn')) this.confirmCompleteWorkout();
             });
             this.elements.workoutView.addEventListener('input', (e) => {
                 if(e.target.matches('.weight-input, .reps-input, .rir-input')) this.handleSetInput(e.target);
@@ -184,9 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
+        // MODIFIED: Replaced alert/confirm with custom modal
         openMesoLengthModal() {
-            const modalBody = this.elements.modalBody;
-            modalBody.innerHTML = `
+            this.elements.modalBody.innerHTML = `
                 <h2>Select Mesocycle Length</h2>
                 <p>How many weeks should this training block last? (This includes a 1-week deload at the end)</p>
                 <div class="card-group">
@@ -196,58 +204,89 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="goal-card meso-length-card" data-value="12" role="button" tabindex="0"><h3>12</h3><p>Extended</p></div>
                 </div>
             `;
-            this.elements.modal.classList.remove('hidden');
+            this.elements.modalActions.innerHTML = ''; // Clear actions for this specific modal
+            this.elements.modal.classList.add('active');
+        },
+
+        // ADDED: Generic modal function
+        showModal(title, message, buttons = []) {
+            this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
+            this.elements.modalActions.innerHTML = ''; // Clear previous buttons
+            
+            if (buttons.length === 0) {
+                buttons.push({ text: 'OK', class: 'cta-button' });
+            }
+
+            buttons.forEach(btnInfo => {
+                const button = document.createElement('button');
+                button.textContent = btnInfo.text;
+                button.className = btnInfo.class;
+                button.addEventListener('click', () => {
+                    this.closeModal();
+                    if (btnInfo.action) {
+                        btnInfo.action();
+                    }
+                });
+                this.elements.modalActions.appendChild(button);
+            });
+
+            this.elements.modal.classList.add('active');
         },
 
         closeModal() {
-            this.elements.modal.classList.add('hidden');
+            this.elements.modal.classList.remove('active');
         },
 
-        showView(viewName) {
-            // Hide all main containers
-            this.elements.onboardingContainer.classList.add('hidden');
-            this.elements.homeScreen.classList.add('hidden');
-            this.elements.workoutView.classList.add('hidden');
-            this.elements.builderView.classList.add('hidden');
-            this.elements.performanceSummaryView.classList.add('hidden');
-            this.elements.settingsView.classList.add('hidden');
-        
-            if (viewName === 'onboarding') { this.elements.onboardingContainer.classList.remove('hidden'); this.showStep(this.state.currentStep); } 
-            else if (viewName === 'home') { this.elements.homeScreen.classList.remove('hidden'); } 
-            else if (viewName === 'workout') { this.elements.workoutView.classList.remove('hidden'); this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day); } 
-            else if (viewName === 'builder') { this.elements.builderView.classList.remove('hidden'); this.renderBuilder(); }
-            else if (viewName === 'performanceSummary') { this.elements.performanceSummaryView.classList.remove('hidden'); this.renderPerformanceSummary(); }
-            else if (viewName === 'settings') { this.elements.settingsView.classList.remove('hidden'); this.renderSettings(); }
+        // MODIFIED: Added view transition logic
+        showView(viewName, skipAnimation = false) {
+            const currentViewEl = document.getElementById(this.state.currentViewName + '-container') || document.getElementById(this.state.currentViewName);
+            const newViewEl = document.getElementById(viewName + '-container') || document.getElementById(viewName);
+
+            if (!newViewEl) return;
+
+            const transition = () => {
+                if(currentViewEl) {
+                    currentViewEl.classList.add('hidden');
+                    currentViewEl.classList.remove('fade-out');
+                }
+                newViewEl.classList.remove('hidden');
+                
+                // Run any logic needed when the view is shown
+                if (viewName === 'onboarding') this.showStep(this.state.currentStep);
+                else if (viewName === 'workout') this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
+                else if (viewName === 'builder') this.renderBuilder();
+                else if (viewName === 'performanceSummary') this.renderPerformanceSummary();
+                else if (viewName === 'settings') this.renderSettings();
+
+                this.state.currentViewName = viewName;
+            };
+
+            if (skipAnimation || !currentViewEl || currentViewEl === newViewEl) {
+                transition();
+            } else {
+                currentViewEl.classList.add('fade-out');
+                setTimeout(transition, 400); // Match CSS animation duration
+            }
         },
         
         // --- SETTINGS METHODS ---
         renderSettings() {
-            // Set active cards for goal and experience
-            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => {
-                card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal);
-            });
-            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => {
-                card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience);
-            });
-
-            // Set active state for toggles
+            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
+            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
             document.getElementById('units-lbs-btn').classList.toggle('active', this.state.settings.units === 'lbs');
             document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
             document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
             document.getElementById('theme-light-btn').classList.toggle('active', this.state.settings.theme === 'light');
             document.getElementById('prog-linear-btn').classList.toggle('active', this.state.settings.progressionModel === 'linear');
             document.getElementById('prog-double-btn').classList.toggle('active', this.state.settings.progressionModel === 'double');
-            document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => {
-                btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement);
-            });
+            document.querySelectorAll('#weight-increment-switch .toggle-btn').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === this.state.settings.weightIncrement));
         },
 
         setUnits(unit) {
             this.state.settings.units = unit;
             this.saveStateToStorage();
             this.renderSettings();
-            // Re-render workout view if it's open to update labels
-            if (!this.elements.workoutView.classList.contains('hidden')) {
+            if (this.state.currentViewName === 'workout') {
                 this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
             }
         },
@@ -260,8 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         applyTheme() {
-            // In a real app, you'd toggle a class on the body or change CSS variables
-            console.log(`Applying theme: ${this.state.settings.theme}`);
             document.body.dataset.theme = this.state.settings.theme;
         },
 
@@ -315,7 +352,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </select>
                                     ${!isRestDay ? `<div class="focus-buttons">${focusButtons}</div>` : ''}
                                 </div>
-                                <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">🗑️</button>
+                                <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" aria-label="Delete muscle group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
                             </div>
                             ${!isRestDay && mg.muscle !== 'selectamuscle' ? `<div class="exercise-selection-group"><label>Exercises:</label>${exerciseDropdowns}</div>` : ''}
                         </div>
@@ -333,7 +372,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option>
                             <option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
                         </select>
-                        <button class="delete-btn delete-day-btn" data-day-index="${dayIndex}">🗑️</button>
+                        <button class="delete-btn delete-day-btn" data-day-index="${dayIndex}" aria-label="Delete day">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
                     </div>
                     <div class="day-content">
                         ${muscleGroupsHTML}
@@ -370,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         finalizeAndStartPlan(mesoLength) {
             if (this.state.builderPlan.days.length === 0) {
-                alert("Please add at least one day to your plan before saving.");
+                this.showModal("Incomplete Plan", "Please add at least one day to your plan before saving.");
                 return;
             }
             const newMeso = { id: `meso_${Date.now()}`, startDate: new Date().toISOString(), durationWeeks: parseInt(mesoLength) || 6, goal: 'custom', experience: this.state.userSelections.experience, weeks: {} };
@@ -391,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return {
                                         exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: [] // Start at rep floor
+                                        targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
                                     };
                                 })
                         )
@@ -418,7 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
         previousStep() { if (this.state.currentStep > 1) { this.state.currentStep--; this.showStep(this.state.currentStep); } },
         validateStep(field) {
-            if (!this.state.userSelections[field]) { alert("Please select an option before continuing."); return false; }
+            if (!this.state.userSelections[field]) { 
+                this.showModal('Selection Required', `Please select an option for "${this.capitalize(field)}" before continuing.`);
+                return false; 
+            }
             return true;
         },
         validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
@@ -484,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             workoutExercises.push({
                                 exerciseId: ex.id, name: ex.name, muscle: ex.muscle, type: 'Primary',
                                 targetSets: isDeload ? Math.ceil(targetSets / 2) : targetSets,
-                                targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: [] // Start at rep floor (e.g. 8)
+                                targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
                             });
                         });
                     });
@@ -561,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const property = inputElement.classList.contains('weight-input') ? 'weight' : inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
             const workout = this.state.plan.weeks[this.state.currentView.week][this.state.currentView.day];
             if(workout && workout.exercises[exerciseIndex] && workout.exercises[exerciseIndex].sets[setIndex]) {
-               workout.exercises[exerciseIndex].sets[setIndex][property] = value;
+               workout.exercises[exerciseIndex].sets[setIndex][property] = isNaN(value) ? '' : value;
             }
         },
 
@@ -576,8 +620,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setContainer.insertAdjacentHTML('beforeend', newSetHTML);
         },
 
+        // MODIFIED: Replaced confirm with custom modal
+        confirmCompleteWorkout() {
+            this.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
+                { text: 'Cancel', class: 'secondary-button' },
+                { text: 'Yes, Complete', class: 'cta-button', action: () => this.completeWorkout() }
+            ]);
+        },
+
         completeWorkout() {
-            if (!confirm("Are you sure you want to complete this day?")) return;
             const { week, day } = this.state.currentView;
             const workout = this.state.plan.weeks[week][day];
             workout.completed = true;
@@ -597,17 +648,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const nextWeekDayKeys = Object.keys(this.state.plan.weeks[nextWeek]).sort((a,b) => a - b);
                     nextDay = parseInt(nextWeekDayKeys[0]);
                 } else {
-                    alert("Congratulations! You've completed your mesocycle!");
-                    this.showView('home');
-                    this.state.currentView = { week: 1, day: 1 }; 
+                    this.state.currentView = { week: 1, day: 1 };
                     this.saveStateToStorage();
+                    this.showModal('Mesocycle Complete!', 'Congratulations! You have finished your training block. Your plan has been reset.', [
+                        { text: 'Awesome!', class: 'cta-button', action: () => this.showView('home') }
+                    ]);
                     return;
                 }
             }
             this.state.currentView = { week: nextWeek, day: nextDay };
             this.saveStateToStorage();
-            alert("Day marked as complete! Great job!");
-            this.showView('home');
+            this.showModal('Workout Complete!', 'Great job! Your progress has been saved.', [
+                { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
+            ]);
         },
 
         calculateNextWeekProgression(completedWeekNumber) {
@@ -629,8 +682,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!nextWeekEx) return;
         
                     if (completedEx.sets.length === 0) {
-                        nextWeekEx.targetLoad = completedEx.targetLoad;
-                        nextWeekEx.targetReps = completedEx.targetReps;
+                        nextWeekEx.targetLoad = completedEx.targetLoad || null;
+                        nextWeekEx.targetReps = completedEx.targetReps || REP_RANGE_FLOOR;
                         return;
                     }
         
@@ -707,7 +760,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderProgressChart(exerciseName) {
             const ctx = document.getElementById('progress-chart').getContext('2d');
             if (this.state.progressChart) this.state.progressChart.destroy();
-            if (!exerciseName) return;
+            if (!exerciseName) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                return;
+            }
             const labels = [];
             const dataPoints = [];
             if (this.state.plan && this.state.plan.weeks) {
@@ -760,3 +816,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     app.init();
 });
+
