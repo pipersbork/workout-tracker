@@ -1,10 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const app = {
+        // MODIFIED: Added a viewMap for robust screen switching.
+        viewMap: {
+            onboarding: 'onboarding-container',
+            home: 'home-screen',
+            builder: 'builder-view',
+            workout: 'daily-workout-view',
+            performanceSummary: 'performance-summary-view',
+            settings: 'settings-view',
+        },
+
         state: {
-            // MODIFIED: Simplified onboarding state
             currentStep: 1,
-            totalSteps: 4, // Goal, Experience, Style
+            totalSteps: 4,
             userSelections: { 
                 goal: null, 
                 experience: null, 
@@ -94,9 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.plan.id);
                 if (planIndex > -1) this.state.allPlans[planIndex] = this.state.plan;
                 else this.state.allPlans.push(this.state.plan);
-            } else {
-                 localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             }
+            localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
 
@@ -105,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
-            // MODIFIED: Simplified listener
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
                 if (this.validateStep('style')) {
                     this.finishOnboarding();
@@ -252,11 +259,23 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.modal.classList.remove('active');
         },
 
+        // MODIFIED: Rewritten to use the viewMap for reliability.
         showView(viewName, skipAnimation = false) {
-            const currentViewEl = document.getElementById(this.state.currentViewName + '-container') || document.getElementById(this.state.currentViewName);
-            const newViewEl = document.getElementById(viewName + '-container') || document.getElementById(viewName);
+            const currentViewId = this.viewMap[this.state.currentViewName];
+            const newViewId = this.viewMap[viewName];
 
-            if (!newViewEl) return;
+            if (!newViewId) {
+                console.error(`View "${viewName}" not found in viewMap.`);
+                return;
+            }
+
+            const currentViewEl = document.getElementById(currentViewId);
+            const newViewEl = document.getElementById(newViewId);
+
+            if (!newViewEl) {
+                console.error(`Element with ID "${newViewId}" for view "${viewName}" not found.`);
+                return;
+            }
 
             const transition = () => {
                 if(currentViewEl) {
@@ -264,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentViewEl.classList.remove('fade-out');
                 }
                 newViewEl.classList.remove('hidden');
-                
+
                 if (viewName === 'onboarding') this.showStep(this.state.currentStep);
                 else if (viewName === 'workout') this.renderDailyWorkout(this.state.currentView.week, this.state.currentView.day);
                 else if (viewName === 'builder') this.renderBuilder();
@@ -481,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const newStep = document.getElementById(`step${stepNumber}`);
             if (newStep) {
                 newStep.classList.add('active');
-                 // Re-apply active class to selected cards when showing a step
                 ['goal', 'experience', 'style'].forEach(field => {
                     if (this.state.userSelections[field]) {
                         const card = newStep.querySelector(`.card-group[data-field="${field}"] .goal-card[data-value="${this.state.userSelections[field]}"]`);
@@ -513,13 +531,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.saveStateToStorage();
             }
         },
-        // MODIFIED: Simplified function
+        // MODIFIED: Takes user to the home screen after onboarding.
         finishOnboarding() {
-            this.saveStateToStorage(); // Save the final onboarding choices
-            this.showView('builder'); // Go directly to the builder
+            this.saveStateToStorage();
+            this.showView('home');
         },
-        
-        // REMOVED: The auto plan generation function is no longer needed.
         
         renderDailyWorkout(weekNumber, dayNumber) {
             const container = document.getElementById('exercise-list-container');
@@ -539,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutTitle.textContent = workout.name;
             if (workout.exercises.length === 0) {
                 container.innerHTML = `<p class="placeholder-text">This is a rest day. Enjoy it!</p>`;
-                document.getElementById('complete-workout-btn').classList.add('hidden');
+                document.getElementById('complete-workout-btn').classList.remove('hidden');
                 return;
             }
             const unitLabel = this.state.settings.units.toUpperCase();
