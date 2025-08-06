@@ -50,9 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
             this.applyTheme();
 
             if (localStorage.getItem("onboardingCompleted") === "true") {
-                this.showView('home', true); // Skip animation on first load
+                this.showView('home', true);
             } else {
-                this.showView('onboarding', true); // Skip animation on first load
+                this.showView('onboarding', true);
             }
         },
 
@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStateFromStorage() {
             const completed = localStorage.getItem("onboardingCompleted");
             if (completed) {
+                // For returning users, load their saved selections and settings.
                 const savedUserSelections = JSON.parse(localStorage.getItem("userSelections"));
                 if (savedUserSelections) {
                     this.state.userSelections = { ...this.state.userSelections, ...savedUserSelections };
@@ -106,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
-                if (this.validateStep('style') && this.validateStep('days')) this.finishOnboarding();
+                if (this.validateStep('style') && this.validateStep('days')) {
+                    this.finishOnboarding();
+                }
             });
             document.querySelectorAll('.back-btn-onboarding').forEach(button => button.addEventListener('click', () => this.previousStep()));
             
@@ -151,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
                 if (e.target.matches('.day-label-selector')) this.updateDayLabel(dayIndex, e.target.value);
                 if (e.target.matches('.muscle-select')) this.updateMuscleGroup(dayIndex, muscleIndex, e.target.value);
-                if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, exerciseSelectIndex, e.target.value);
+                if (e.target.matches('.exercise-select')) this.updateExerciseSelection(dayIndex, muscleIndex, e.target.value);
             });
 
             // Modal
@@ -168,14 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Card Selections
-            // MODIFIED: Removed redundant saveStateToStorage call from listener.
             document.querySelectorAll('.card-group').forEach(group => {
                 group.addEventListener('click', (e) => {
                     const card = e.target.closest('.goal-card');
                     if (card) {
                         const field = card.closest('.card-group').dataset.field;
                         const value = card.dataset.value;
-                        this.selectCard(card, field, value);
+                        // MODIFICATION: Determine if state should be saved based on the view.
+                        const shouldSave = card.closest('.view').id === 'settings-view';
+                        this.selectCard(card, field, value, shouldSave);
                     }
                 });
             });
@@ -281,11 +285,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- SETTINGS METHODS ---
         renderSettings() {
-            // Pre-select cards based on current state
+            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
+            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
+            
             document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
             document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
             
-            // Set toggle states
             document.getElementById('units-lbs-btn').classList.toggle('active', this.state.settings.units === 'lbs');
             document.getElementById('units-kg-btn').classList.toggle('active', this.state.settings.units === 'kg');
             document.getElementById('theme-dark-btn').classList.toggle('active', this.state.settings.theme === 'dark');
@@ -473,19 +478,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- ONBOARDING METHODS ---
         showStep(stepNumber) {
-            // Pre-select cards based on current state, if any
-            ['goal', 'experience', 'style', 'days'].forEach(field => {
-                if (this.state.userSelections[field]) {
-                    const group = document.querySelector(`.step.active .card-group[data-field="${field}"]`);
-                    if (group) {
-                        group.querySelectorAll('.goal-card').forEach(card => {
-                            card.classList.toggle('active', card.dataset.value === this.state.userSelections[field]);
-                        });
-                    }
-                }
-            });
             document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-            document.getElementById(`step${stepNumber}`)?.classList.add('active');
+            const newStep = document.getElementById(`step${stepNumber}`);
+            if (newStep) {
+                newStep.classList.add('active');
+            }
             this.updateProgress();
         },
         updateProgress() {
@@ -502,14 +499,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         },
         validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
-        selectCard(element, field, value) {
+        // MODIFIED: Added shouldSave parameter to control when localStorage is written to.
+        selectCard(element, field, value, shouldSave = false) {
             this.state.userSelections[field] = value;
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
-            // During onboarding, we only need to save the final state, but saving here is fine.
-            this.saveStateToStorage();
+            if (shouldSave) {
+                this.saveStateToStorage();
+            }
         },
         finishOnboarding() {
+            // First, set default values if any are still null (for safety)
+            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
+            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
+            this.state.userSelections.style = this.state.userSelections.style || 'gym';
+            this.state.userSelections.days = this.state.userSelections.days || '3';
+
+            // Now, generate the plan and save everything.
             this.state.plan = this.generateMesocycle(this.state.userSelections.goal, this.state.userSelections.experience, this.state.userSelections.days, 6);
             this.state.allPlans.push(this.state.plan);
             this.saveStateToStorage();
