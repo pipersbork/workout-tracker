@@ -316,9 +316,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             this.elements.modal.classList.add('active');
         },
-        showModal(title, message, buttons = []) {
+        // --- UPDATED: showModal now accepts a layout parameter ---
+        showModal(title, message, buttons = [], layout = 'horizontal') {
             this.elements.modalBody.innerHTML = `<h2>${title}</h2><p>${message}</p>`;
             this.elements.modalActions.innerHTML = '';
+            this.elements.modalActions.className = `modal-actions ${layout}`;
+
             if (buttons.length === 0) buttons.push({ text: 'OK', class: 'cta-button' });
             buttons.forEach(btnInfo => {
                 const button = document.createElement('button');
@@ -365,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (shouldSave) await this.saveStateToFirestore();
         },
         
+        // --- UPDATED: Onboarding modal now has new buttons and colors ---
         async finishOnboarding() {
             this.state.userSelections.onboardingCompleted = true;
             await this.saveStateToFirestore();
@@ -372,14 +376,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const generatedPlan = this.planGenerator.generate(this.state.userSelections, this.state.exercises);
             this.state.builderPlan = generatedPlan.builderPlan;
             
-            // --- UPDATED: Swapped button classes for new UI hierarchy ---
             this.showModal(
                 "We've Built a Plan For You!",
-                `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>. You can use this plan as is, or customize it to fit your needs.`,
+                `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>.`,
                 [
-                    { text: 'Use This Plan', class: 'secondary-button', action: () => this.openMesoLengthModal() },
-                    { text: 'Customize in Builder', class: 'cta-button', action: () => this.showView('builder') }
-                ]
+                    { text: 'Use This Plan', class: 'azure-button', action: () => this.openMesoLengthModal() },
+                    { text: 'Customize This Plan', class: 'cta-button', action: () => this.showView('builder') },
+                    { text: 'Design My Own Plan', class: 'cta-button', action: () => this.startNewPlan() }
+                ],
+                'vertical' // New layout parameter
             );
         },
         
@@ -1063,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         priorityMuscles: this.config.priorityMuscles
                     },
                     app.state.exercises,
-                    true // isCustom flag
+                    true
                 );
                 app.state.builderPlan = generatedPlan.builderPlan;
                 app.elements.builderTitle.textContent = "Your Custom Plan";
