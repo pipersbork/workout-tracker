@@ -55,7 +55,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .home-icon-btn:hover svg { stroke: var(--text-color); }
 
 /* ===========================
-  ONBOARDING STYLES
+  ONBOARDING & GENERAL CARD STYLES
 =========================== */
 .main-title { font-size: 2.5rem; font-weight: 700; letter-spacing: 2px; color: var(--primary-color); }
 .divider { height: 2px; width: 60px; background: var(--primary-color); margin: 1rem auto; }
@@ -147,9 +147,30 @@ select.builder-select { background-color: var(--background-color); color: var(--
 =========================== */
 .settings-section { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
 .settings-section h3 { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; }
-.settings-section .card-group { margin-bottom: 0; }
-.settings-section .goal-card h3 { font-size: 1rem; }
-.settings-section .goal-card .icon { font-size: 2rem; }
+
+/* UPDATED: Compact card layout specifically for the settings view */
+#settings-view .card-group {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0;
+}
+#settings-view .goal-card {
+    padding: 1rem 0.5rem;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#settings-view .goal-card .icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+#settings-view .goal-card h3 {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin: 0;
+}
+
 
 .settings-label { display: block; font-size: 0.9rem; color: var(--text-muted-color); margin-top: 1.5rem; margin-bottom: 0.5rem; }
 
