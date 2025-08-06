@@ -488,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return {
                                         exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
                                         targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
-                                        targetReps: 8, targetLoad: null, sets: []
+                                        targetReps: 8, targetLoad: null, sets: [],
+                                        stallCount: 0 // Initialize stall count
                                     };
                                 })
                         )
@@ -805,9 +806,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
             });
 
-            if (week < activePlan.durationWeeks -1 && workout.exercises.length > 0) {
+            const stalledExercise = this.checkForStallAndRecommendDeload(activePlan, week, day);
+
+            if (!stalledExercise && week < activePlan.durationWeeks - 1 && workout.exercises.length > 0) {
                 this.calculateNextWeekProgression(week, activePlan);
             }
+
             const dayKeys = Object.keys(activePlan.weeks[week]).sort((a,b) => a - b);
             const currentDayIndex = dayKeys.indexOf(day.toString());
             let nextWeek = week;
@@ -830,10 +834,78 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             this.state.currentView = { week: nextWeek, day: nextDay };
             await this.saveStateToFirestore();
-            this.showModal('Workout Complete!', 'Great job! Your progress has been saved.', [
-                { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
-            ]);
+
+            if (!stalledExercise) {
+                this.showModal('Workout Complete!', 'Great job! Your progress has been saved.', [
+                    { text: 'OK', class: 'cta-button', action: () => this.showView('home') }
+                ]);
+            }
         },
+        
+        // --- NEW: Dynamic Progression & Deload Logic ---
+        checkForStallAndRecommendDeload(plan, completedWeek, completedDayKey) {
+            if (completedWeek < 2) return null; // Can't stall before week 2
+
+            const completedWorkout = plan.weeks[completedWeek][completedDayKey];
+            const lastWeekWorkout = plan.weeks[completedWeek - 1][completedDayKey];
+            if (!lastWeekWorkout || !lastWeekWorkout.completed) return null;
+
+            let stalledExercise = null;
+
+            for (const ex of completedWorkout.exercises) {
+                if (ex.type !== 'Primary') continue;
+
+                const lastWeekEx = lastWeekWorkout.exercises.find(e => e.exerciseId === ex.exerciseId);
+                if (!lastWeekEx || !lastWeekEx.sets || lastWeekEx.sets.length === 0) continue;
+
+                const maxWeightThisWeek = Math.max(...(ex.sets || []).map(s => s.weight || 0));
+                const maxRepsThisWeek = Math.max(...(ex.sets || []).map(s => s.reps || 0));
+                const maxWeightLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.weight || 0));
+                const maxRepsLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.reps || 0));
+
+                if (maxWeightThisWeek < maxWeightLastWeek || (maxWeightThisWeek === maxWeightLastWeek && maxRepsThisWeek <= maxRepsLastWeek)) {
+                    ex.stallCount = (ex.stallCount || 0) + 1;
+                } else {
+                    ex.stallCount = 0; // Progress was made, reset stall count
+                }
+
+                if (ex.stallCount >= 2) {
+                    stalledExercise = ex;
+                    break; 
+                }
+            }
+
+            if (stalledExercise) {
+                this.showModal(
+                    'Plateau Detected!',
+                    `It looks like you're hitting a plateau on <strong>${stalledExercise.name}</strong>. To help break through, we recommend a deload. Would you like to automatically reduce the target weight by 15% for next week?`,
+                    [
+                        { text: 'No, Thanks', class: 'secondary-button', action: () => this.showView('home') },
+                        { text: 'Yes, Apply Deload', class: 'cta-button', action: () => this.applyDeload(plan, completedWeek, stalledExercise) }
+                    ]
+                );
+            }
+            
+            return stalledExercise;
+        },
+
+        applyDeload(plan, currentWeek, exercise) {
+            const nextWeek = currentWeek + 1;
+            if (!plan.weeks[nextWeek]) return;
+
+            for (const dayKey in plan.weeks[nextWeek]) {
+                const day = plan.weeks[nextWeek][dayKey];
+                const exToDeload = day.exercises.find(e => e.exerciseId === exercise.exerciseId);
+                if (exToDeload) {
+                    const lastWeight = Math.max(...(exercise.sets || []).map(s => s.weight || 0));
+                    exToDeload.targetLoad = Math.round((lastWeight * 0.85) / 5) * 5; // Reduce by 15% and round to nearest 5
+                    exToDeload.stallCount = 0; // Reset stall count after deload
+                }
+            }
+            this.showView('home');
+        },
+
+
         calculateNextWeekProgression(completedWeekNumber, plan) {
             const nextWeekNumber = completedWeekNumber + 1;
             if (!plan.weeks[nextWeekNumber]) return;
