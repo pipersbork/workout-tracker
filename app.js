@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             this.elements.workoutView.addEventListener('input', (e) => {
-                if(e.target.matches('.weight-input, .reps-input')) this.handleSetInput(e.target);
+                if(e.target.matches('.weight-input, .reps-input, .rir-input')) this.handleSetInput(e.target);
             });
             
             document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => this.renderProgressChart(e.target.value));
@@ -667,6 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const { week, day } = this.state.currentView;
             const workout = activePlan.weeks[week]?.[day];
+            const lastWeekWorkout = activePlan.weeks[week - 1]?.[day];
 
             if (!workout) {
                 workoutTitle.textContent = "No Workout Today";
@@ -683,7 +684,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const unitLabel = this.state.settings.units.toUpperCase();
             workout.exercises.forEach((ex, exIndex) => {
-                const setsHTML = (ex.sets || []).map((set, setIndex) => this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps)).join('');
+                const lastWeekEx = lastWeekWorkout?.exercises.find(e => e.exerciseId === ex.exerciseId);
+                const setsHTML = (ex.sets || []).map((set, setIndex) => {
+                    const lastWeekSet = lastWeekEx?.sets[setIndex];
+                    return this.createSetRowHTML(exIndex, setIndex, set.weight, set.reps, set.rir, lastWeekSet);
+                }).join('');
+
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = 'exercise-card';
                 exerciseCard.innerHTML = `
@@ -697,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="exercise-target">${ex.targetSets} Sets &times; ${ex.targetReps} Reps</span>
                     </div>
                     <div class="sets-container" id="sets-for-ex-${exIndex}">
-                        <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS</span></div></div>
+                        <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS</span><span>RIR</span></div></div>
                         ${setsHTML}
                     </div>
                     <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
@@ -755,13 +761,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.renderDailyWorkout();
         },
-        createSetRowHTML(exIndex, setIndex, weight, reps) {
+        createSetRowHTML(exIndex, setIndex, weight, reps, rir, lastWeekSet) {
+            const repPlaceholder = lastWeekSet ? (lastWeekSet.reps || '') : '';
             return `
                 <div class="set-row" data-set-index="${setIndex}">
                     <div class="set-number">${setIndex + 1}</div>
                     <div class="set-inputs">
                         <input type="number" class="weight-input" placeholder="-" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                        <input type="number" class="reps-input" placeholder="-" value="${reps || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="number" class="reps-input" placeholder="${repPlaceholder}" value="${reps || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                        <input type="number" class="rir-input" placeholder="-" value="${rir || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
                     </div>
                 </div>
             `;
@@ -769,11 +777,18 @@ document.addEventListener('DOMContentLoaded', () => {
         handleSetInput(inputElement) {
             const { exerciseIndex, setIndex } = inputElement.dataset;
             const value = parseFloat(inputElement.value);
-            const property = inputElement.classList.contains('weight-input') ? 'weight' : 'reps';
+            const property = inputElement.classList.contains('weight-input') ? 'weight' : inputElement.classList.contains('reps-input') ? 'reps' : 'rir';
+            
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             const workout = activePlan.weeks[this.state.currentView.week][this.state.currentView.day];
-            if(workout?.exercises[exerciseIndex]?.sets[setIndex]) {
-               workout.exercises[exerciseIndex].sets[setIndex][property] = isNaN(value) ? '' : value;
+            const set = workout?.exercises[exerciseIndex]?.sets[setIndex];
+
+            if(set) {
+               set[property] = isNaN(value) ? '' : value;
+               // Clear the other input if one is filled
+               if (property === 'reps' && set.reps) set.rir = '';
+               if (property === 'rir' && set.rir) set.reps = '';
+               this.renderDailyWorkout(); // Re-render to show the cleared input
             }
         },
         addSet(exerciseIndex) {
@@ -782,10 +797,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const exercise = workout.exercises[exerciseIndex];
             if (!exercise.sets) exercise.sets = [];
             const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-            exercise.sets.push({ weight: previousWeight, reps: '' });
-            const setContainer = document.getElementById(`sets-for-ex-${exerciseIndex}`);
-            const newSetIndex = exercise.sets.length - 1;
-            setContainer.insertAdjacentHTML('beforeend', this.createSetRowHTML(exerciseIndex, newSetIndex, previousWeight, ''));
+            exercise.sets.push({ weight: previousWeight, reps: '', rir: '' });
+            this.renderDailyWorkout();
         },
         confirmCompleteWorkout() {
             this.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
@@ -863,11 +876,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!lastWeekEx || !lastWeekEx.sets || lastWeekEx.sets.length === 0) continue;
 
                 const maxWeightThisWeek = Math.max(...(ex.sets || []).map(s => s.weight || 0));
-                const maxRepsThisWeek = Math.max(...(ex.sets || []).map(s => s.reps || 0));
-                const maxWeightLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.weight || 0));
-                const maxRepsLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.reps || 0));
+                const topSetThisWeek = ex.sets.find(s => s.weight === maxWeightThisWeek);
+                const eRepsThisWeek = (topSetThisWeek.reps || 0) + (topSetThisWeek.rir || 0);
 
-                if (maxWeightThisWeek < maxWeightLastWeek || (maxWeightThisWeek === maxWeightLastWeek && maxRepsThisWeek <= maxRepsLastWeek)) {
+                const maxWeightLastWeek = Math.max(...(lastWeekEx.sets || []).map(s => s.weight || 0));
+                const topSetLastWeek = lastWeekEx.sets.find(s => s.weight === maxWeightLastWeek);
+                const eRepsLastWeek = (topSetLastWeek.reps || 0) + (topSetLastWeek.rir || 0);
+
+
+                if (maxWeightThisWeek < maxWeightLastWeek || (maxWeightThisWeek === maxWeightLastWeek && eRepsThisWeek <= eRepsLastWeek)) {
                     ex.stallCount = (lastWeekEx.stallCount || 0) + 1;
                 } else {
                     ex.stallCount = 0;
@@ -925,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         nextWeekEx.targetLoad = completedEx.targetLoad || null;
                         return;
                     }
-                    const allSetsSuccessful = completedEx.sets.every(set => set.reps >= completedEx.targetReps);
+                    const allSetsSuccessful = completedEx.sets.every(set => (set.reps || 0) + (set.rir || 0) >= completedEx.targetReps);
                     const lastSetWeight = completedEx.sets[completedEx.sets.length - 1].weight;
                     if (progressionModel === 'double') {
                         if (allSetsSuccessful) {
