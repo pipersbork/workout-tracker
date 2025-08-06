@@ -2,20 +2,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const app = {
         state: {
+            // MODIFIED: Simplified onboarding state
             currentStep: 1,
-            totalSteps: 4,
-            // MODIFIED: Set initial selections to null to ensure validation works correctly.
+            totalSteps: 4, // Goal, Experience, Style
             userSelections: { 
                 goal: null, 
                 experience: null, 
-                style: null, 
-                days: null, 
+                style: null,
             },
             settings: {
-                units: 'lbs', // 'lbs' or 'kg'
-                theme: 'dark', // 'dark' or 'light'
-                progressionModel: 'double', // 'linear' or 'double'
-                weightIncrement: 5 // 2.5, 5, or 10
+                units: 'lbs',
+                theme: 'dark',
+                progressionModel: 'double',
+                weightIncrement: 5
             },
             plan: null,
             currentView: { week: 1, day: 1 },
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStateFromStorage() {
             const completed = localStorage.getItem("onboardingCompleted");
             if (completed) {
-                // For returning users, load their saved selections and settings.
                 const savedUserSelections = JSON.parse(localStorage.getItem("userSelections"));
                 if (savedUserSelections) {
                     this.state.userSelections = { ...this.state.userSelections, ...savedUserSelections };
@@ -96,8 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const planIndex = this.state.allPlans.findIndex(p => p.id === this.state.plan.id);
                 if (planIndex > -1) this.state.allPlans[planIndex] = this.state.plan;
                 else this.state.allPlans.push(this.state.plan);
+            } else {
+                 localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             }
-            localStorage.setItem("savedPlans", JSON.stringify(this.state.allPlans));
             localStorage.setItem("currentView", JSON.stringify(this.state.currentView));
         },
 
@@ -106,8 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('beginOnboardingBtn')?.addEventListener('click', () => this.nextStep());
             document.getElementById('goalNextBtn')?.addEventListener('click', () => this.validateAndProceed('goal'));
             document.getElementById('experienceNextBtn')?.addEventListener('click', () => this.validateAndProceed('experience'));
+            // MODIFIED: Simplified listener
             document.getElementById('finishOnboardingBtn')?.addEventListener('click', () => {
-                if (this.validateStep('style') && this.validateStep('days')) {
+                if (this.validateStep('style')) {
                     this.finishOnboarding();
                 }
             });
@@ -177,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (card) {
                         const field = card.closest('.card-group').dataset.field;
                         const value = card.dataset.value;
-                        // MODIFICATION: Determine if state should be saved based on the view.
                         const shouldSave = card.closest('.view').id === 'settings-view';
                         this.selectCard(card, field, value, shouldSave);
                     }
@@ -482,6 +481,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const newStep = document.getElementById(`step${stepNumber}`);
             if (newStep) {
                 newStep.classList.add('active');
+                 // Re-apply active class to selected cards when showing a step
+                ['goal', 'experience', 'style'].forEach(field => {
+                    if (this.state.userSelections[field]) {
+                        const card = newStep.querySelector(`.card-group[data-field="${field}"] .goal-card[data-value="${this.state.userSelections[field]}"]`);
+                        if (card) card.classList.add('active');
+                    }
+                });
             }
             this.updateProgress();
         },
@@ -499,7 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         },
         validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
-        // MODIFIED: Added shouldSave parameter to control when localStorage is written to.
         selectCard(element, field, value, shouldSave = false) {
             this.state.userSelections[field] = value;
             element.parentElement.querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
@@ -508,79 +513,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.saveStateToStorage();
             }
         },
+        // MODIFIED: Simplified function
         finishOnboarding() {
-            // First, set default values if any are still null (for safety)
-            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
-            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
-            this.state.userSelections.style = this.state.userSelections.style || 'gym';
-            this.state.userSelections.days = this.state.userSelections.days || '3';
-
-            // Now, generate the plan and save everything.
-            this.state.plan = this.generateMesocycle(this.state.userSelections.goal, this.state.userSelections.experience, this.state.userSelections.days, 6);
-            this.state.allPlans.push(this.state.plan);
-            this.saveStateToStorage();
-            this.showView('home');
+            this.saveStateToStorage(); // Save the final onboarding choices
+            this.showView('builder'); // Go directly to the builder
         },
         
-        // --- PLAN GENERATION & WORKOUT METHODS ---
-        getExercisesByMuscle(muscles, count) {
-            const allExercises = this.state.exercises.filter(ex => muscles.includes(ex.muscle));
-            return allExercises.sort(() => 0.5 - Math.random()).slice(0, count);
-        },
-
-        generateMesocycle(goal, experience, daysPerWeek, mesoLength) {
-            const planTemplates = {
-                '3': { name: "Full Body Split", days: ["Full Body A", "Full Body B", "Full Body C"]},
-                '4': { name: "Upper/Lower Split", days: ["Upper A", "Lower A", "Upper B", "Lower B"]},
-                '5': { name: "Push/Pull/Legs Split", days: ["Push", "Pull", "Legs", "Upper", "Lower"]},
-                '6': { name: "Push/Pull/Legs x2", days: ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"]}
-            };
-            const dayTemplates = {
-                "Full Body A": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Quads"], count: 1}, {muscles: ["Shoulders"], count: 1} ],
-                "Full Body B": [ {muscles: ["Chest", "Back"], count: 1}, {muscles: ["Hamstrings"], count: 1}, {muscles: ["Biceps", "Triceps"], count: 1} ],
-                "Full Body C": [ {muscles: ["Chest"], count: 1}, {muscles: ["Back"], count: 1}, {muscles: ["Quads", "Hamstrings"], count: 1} ],
-                "Upper A": [ {muscles: ["Chest"], count: 2}, {muscles: ["Back"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Biceps"], count: 1}, {muscles: ["Triceps"], count: 1} ],
-                "Lower A": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 2}, {muscles: ["Calves"], count: 1} ],
-                "Upper B": [ {muscles: ["Back"], count: 2}, {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Biceps"], count: 1}, {muscles: ["Triceps"], count: 1} ],
-                "Lower B": [ {muscles: ["Hamstrings"], count: 2}, {muscles: ["Quads"], count: 2}, {muscles: ["Calves"], count: 1} ],
-                "Push": [ {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 2}, {muscles: ["Triceps"], count: 2} ],
-                "Pull": [ {muscles: ["Back"], count: 3}, {muscles: ["Biceps"], count: 2} ],
-                "Legs": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 2}, {muscles: ["Calves"], count: 2} ],
-                "Upper": [ {muscles: ["Chest"], count: 2}, {muscles: ["Back"], count: 2}, {muscles: ["Shoulders", "Biceps", "Triceps"], count: 1} ],
-                "Lower": [ {muscles: ["Quads", "Hamstrings"], count: 2}, {muscles: ["Calves"], count: 1} ],
-                "Push A": [ {muscles: ["Chest"], count: 2}, {muscles: ["Shoulders"], count: 1}, {muscles: ["Triceps"], count: 1} ],
-                "Pull A": [ {muscles: ["Back"], count: 2}, {muscles: ["Biceps"], count: 1} ],
-                "Legs A": [ {muscles: ["Quads"], count: 2}, {muscles: ["Hamstrings"], count: 1} ],
-                "Push B": [ {muscles: ["Shoulders"], count: 2}, {muscles: ["Chest"], count: 1}, {muscles: ["Triceps"], count: 1} ],
-                "Pull B": [ {muscles: ["Back"], count: 2}, {muscles: ["Biceps"], count: 1} ],
-                "Legs B": [ {muscles: ["Hamstrings"], count: 2}, {muscles: ["Quads"], count: 1} ],
-            };
-            const selectedTemplate = planTemplates[daysPerWeek] || planTemplates['3'];
-            const newMeso = { id: `meso_${Date.now()}`, startDate: new Date().toISOString(), durationWeeks: mesoLength, goal, experience, weeks: {} };
-            const setsByExperience = { beginner: 3, experienced: 4, advanced: 4 };
-            const targetSets = setsByExperience[experience] || 3;
-            for (let week = 1; week <= mesoLength; week++) {
-                newMeso.weeks[week] = {};
-                const isDeload = (week === mesoLength);
-                selectedTemplate.days.forEach((dayName, index) => {
-                    const dayNumber = index + 1;
-                    const workoutExercises = [];
-                    const dayComposition = dayTemplates[dayName.replace(/ [AB]$/, '')] || dayTemplates[dayName];
-                    dayComposition.forEach(group => {
-                        this.getExercisesByMuscle(group.muscles, group.count).forEach(ex => {
-                            workoutExercises.push({
-                                exerciseId: ex.id, name: ex.name, muscle: ex.muscle, type: 'Primary',
-                                targetSets: isDeload ? Math.ceil(targetSets / 2) : targetSets,
-                                targetReps: 8, targetRIR: isDeload ? 4 : 2, targetLoad: null, sets: []
-                            });
-                        });
-                    });
-                    newMeso.weeks[week][dayNumber] = { name: dayName, completed: false, exercises: workoutExercises };
-                });
-            }
-            return newMeso;
-        },
-
+        // REMOVED: The auto plan generation function is no longer needed.
+        
         renderDailyWorkout(weekNumber, dayNumber) {
             const container = document.getElementById('exercise-list-container');
             const workoutTitle = document.getElementById('workout-day-title');
@@ -590,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutDate.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             if (!this.state.plan || !this.state.plan.weeks[weekNumber] || !this.state.plan.weeks[weekNumber][dayNumber]) {
                 workoutTitle.textContent = "No Workout Today";
-                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete.</p>`;
+                container.innerHTML = `<p class="placeholder-text">You either have no workout scheduled for today or your plan is incomplete. Go to the builder to create one!</p>`;
                 document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
@@ -599,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workoutTitle.textContent = workout.name;
             if (workout.exercises.length === 0) {
                 container.innerHTML = `<p class="placeholder-text">This is a rest day. Enjoy it!</p>`;
-                document.getElementById('complete-workout-btn').classList.remove('hidden');
+                document.getElementById('complete-workout-btn').classList.add('hidden');
                 return;
             }
             const unitLabel = this.state.settings.units.toUpperCase();
