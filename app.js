@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewMap: {
             onboarding: 'onboarding-container',
             home: 'home-screen',
-            planHub: 'plan-hub-view', // NEW
+            planHub: 'plan-hub-view',
             customPlanWizard: 'custom-plan-wizard-view',
             builder: 'builder-view',
             workout: 'daily-workout-view',
@@ -420,10 +420,63 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         },
         
-        handlePlanMesoClick() {
-            this.showView('planHub');
+        renderPlanHub() {
+            const container = document.getElementById('plan-hub-options');
+            const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
+            let optionsHTML = `
+                <div class="hub-option" data-action="template">
+                    <div class="hub-option-icon">📖</div>
+                    <div class="hub-option-text">
+                        <h3>Start with a Template</h3>
+                        <p>Choose from dozens of evidence-based templates.</p>
+                    </div>
+                </div>
+                <div class="hub-option" data-action="scratch">
+                    <div class="hub-option-icon">✏️</div>
+                    <div class="hub-option-text">
+                        <h3>Start from Scratch</h3>
+                        <p>Use the wizard to design your own custom plan.</p>
+                    </div>
+                </div>
+            `;
+            if (activePlan) {
+                optionsHTML = `
+                    <div class="hub-option" data-action="resume">
+                        <div class="hub-option-icon">▶️</div>
+                        <div class="hub-option-text">
+                            <h3>Resume Current Plan</h3>
+                            <p>Pick up where you left off on "${activePlan.name}".</p>
+                        </div>
+                    </div>
+                    <div class="hub-option" data-action="copy">
+                        <div class="hub-option-icon">🔁</div>
+                        <div class="hub-option-text">
+                            <h3>Copy a Mesocycle</h3>
+                            <p>Start a new plan based on a previous one.</p>
+                        </div>
+                    </div>
+                ` + optionsHTML;
+            }
+            container.innerHTML = optionsHTML;
+            
+            container.querySelectorAll('.hub-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    container.querySelectorAll('.hub-option').forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                });
+            });
+
+            document.getElementById('hub-begin-btn').onclick = () => {
+                const selectedAction = container.querySelector('.hub-option.active')?.dataset.action;
+                if (!selectedAction) {
+                    this.showModal("Selection Required", "Please choose an option to begin.");
+                    return;
+                }
+                if (selectedAction === 'scratch') this.showView('customPlanWizard');
+                // Future actions like 'template', 'resume', 'copy' will be handled here
+            };
         },
-        
+
         startNewPlan() {
             this.state.editingPlanId = null;
             this.showView('customPlanWizard');
