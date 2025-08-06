@@ -14,7 +14,6 @@
 
     <!-- Onboarding Container -->
     <div class="container view" id="onboarding-container">
-        <!-- MODIFIED: Total steps is now 3 -->
         <div class="progress-bar"><div class="progress"></div></div>
         <div class="step active" id="step1">
             <div class="main-title">PROGRESSION</div>
@@ -48,7 +47,6 @@
                 <button class="cta-button" id="experienceNextBtn">Next</button>
             </div>
         </div>
-        <!-- MODIFIED: Renamed step4 to step3 and removed the days per week selection -->
         <div class="step" id="step4">
             <h2>Workout Preferences</h2>
             <p>Select your preferred style:</p>
@@ -73,6 +71,7 @@
             <button class="cta-button home-btn" id="startWorkoutBtn">Start Next Workout</button>
             <button class="cta-button home-btn" id="reviewWorkoutsBtn">Performance Summary</button>
         </div>
+        <div id="active-plan-display" class="active-plan-display"></div>
         <button class="home-icon-btn" id="settingsBtn" aria-label="Settings">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
         </button>
@@ -84,12 +83,12 @@
             <button class="back-btn" id="backToHomeFromBuilder" aria-label="Back to Home">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             </button>
-            <h2>Mesocycle Builder</h2>
+            <h2 id="builder-title">Mesocycle Builder</h2>
         </div>
         <div class="schedule-container" id="schedule-container"></div>
         <div class="builder-actions">
             <button class="cta-button secondary-button" id="add-day-btn">+ Add a Day</button>
-            <button class="cta-button" id="done-planning-btn">Done Planning</button>
+            <button class="cta-button" id="done-planning-btn">Save Plan</button>
         </div>
     </div>
 
@@ -117,9 +116,17 @@
             <h2>Performance Summary</h2>
         </div>
         <div id="summary-content">
+            <!-- NEW: Consistency Calendar -->
             <div class="summary-section">
-                <h3>Completed Workouts</h3>
-                <div id="completed-workouts-list"></div>
+                <h3>Workout Consistency</h3>
+                <div id="consistency-calendar"></div>
+            </div>
+            <!-- NEW: Volume Chart -->
+            <div class="summary-section">
+                <h3>Volume by Muscle Group</h3>
+                <div class="chart-container">
+                    <canvas id="volume-chart"></canvas>
+                </div>
             </div>
             <div class="summary-section">
                 <h3>Track Exercise Progress</h3>
@@ -127,6 +134,10 @@
                 <div class="chart-container">
                     <canvas id="progress-chart"></canvas>
                 </div>
+            </div>
+            <div class="summary-section">
+                <h3>Completed Workouts</h3>
+                <div id="completed-workouts-list"></div>
             </div>
         </div>
     </div>
@@ -140,6 +151,12 @@
             <h2>Settings</h2>
         </div>
         <div id="settings-content">
+            <!-- NEW: Plan Management Section -->
+            <div class="settings-section">
+                <h3>My Plans</h3>
+                <div id="plan-management-list"></div>
+                <button class="cta-button secondary-button" id="create-new-plan-btn">+ Create New Plan</button>
+            </div>
             <div class="settings-section">
                 <h3>Training Goal</h3>
                 <div class="card-group" data-field="goal" id="settings-goal-cards">
