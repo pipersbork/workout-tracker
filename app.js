@@ -42,12 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
         state: {
             userId: null,
             isDataLoaded: false,
-            // Onboarding state is simplified or can be removed later
             userSelections: { 
-                goal: null, 
-                experience: null, 
-                style: null,
-                onboardingCompleted: false // We can still use this to create default settings for a true first-time user
+                goal: 'muscle', 
+                experience: 'beginner', 
+                style: 'gym',
+                onboardingCompleted: false
             },
             settings: {
                 units: 'lbs',
@@ -161,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.activePlanId = data.activePlanId || (this.state.allPlans.length > 0 ? this.state.allPlans[0].id : null);
                     this.state.currentView = data.currentView || this.state.currentView;
                 } else {
-                    // This is a brand new user, so mark onboarding as "complete" by default now
                     this.state.userSelections.onboardingCompleted = true;
                     await this.saveStateToFirestore();
                 }
@@ -213,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     setActivePlan: () => this.setActivePlan(planId),
                     confirmCompleteWorkout: () => this.confirmCompleteWorkout(),
                     closeModal: () => this.closeModal(),
-                    hubBegin: () => this.handleHubBegin(),
                     switchTab: () => this.switchTab(target, tab),
                     selectTemplate: () => this.selectTemplate(templateId),
                 };
@@ -221,6 +218,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (actions[action]) {
                     actions[action]();
                 }
+            });
+
+            this.elements.planHubView.addEventListener('click', e => {
+                const hubOption = e.target.closest('.hub-option');
+                if (!hubOption) return;
+                const hubAction = hubOption.dataset.hubAction;
+                if (hubAction === 'scratch') this.showView('customPlanWizard');
+                if (hubAction === 'template') this.showView('templateLibrary');
             });
 
             this.elements.scheduleContainer.addEventListener('click', (e) => {
@@ -367,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         closeModal() { this.elements.modal.classList.remove('active'); },
-
+        
         async selectCard(element, field, value, shouldSave = false) {
             this.state.userSelections[field] = value;
             element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
@@ -379,46 +384,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('plan-hub-options');
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             let optionsHTML = `
-                <div class="hub-option" data-hub-action="template">
+                <button class="hub-option" data-hub-action="template">
                     <div class="hub-option-icon">📖</div>
                     <div class="hub-option-text"><h3>Start with a Template</h3><p>Choose from dozens of evidence-based templates.</p></div>
-                </div>
-                <div class="hub-option" data-hub-action="scratch">
+                </button>
+                <button class="hub-option" data-hub-action="scratch">
                     <div class="hub-option-icon">✏️</div>
                     <div class="hub-option-text"><h3>Start from Scratch</h3><p>Use the wizard to design your own custom plan.</p></div>
-                </div>
+                </button>
             `;
             if (activePlan) {
                 optionsHTML = `
-                    <div class="hub-option" data-hub-action="resume">
+                    <button class="hub-option" data-hub-action="resume">
                         <div class="hub-option-icon">▶️</div>
                         <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".</p></div>
-                    </div>
-                    <div class="hub-option" data-hub-action="copy">
+                    </button>
+                    <button class="hub-option" data-hub-action="copy">
                         <div class="hub-option-icon">🔁</div>
                         <div class="hub-option-text"><h3>Copy a Mesocycle</h3><p>Start a new plan based on a previous one.</p></div>
-                    </div>
+                    </button>
                 ` + optionsHTML;
             }
             container.innerHTML = optionsHTML;
-            
-            container.querySelectorAll('.hub-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    container.querySelectorAll('.hub-option').forEach(o => o.classList.remove('active'));
-                    option.classList.add('active');
-                });
-            });
-        },
-
-        handleHubBegin() {
-            const container = document.getElementById('plan-hub-options');
-            const selectedAction = container.querySelector('.hub-option.active')?.dataset.hubAction;
-            if (!selectedAction) {
-                this.showModal("Selection Required", "Please choose an option to begin.");
-                return;
-            }
-            if (selectedAction === 'scratch') this.showView('customPlanWizard');
-            if (selectedAction === 'template') this.showView('templateLibrary');
         },
 
         renderTemplateLibrary() {
