@@ -461,7 +461,7 @@ function selectTemplate(templateId) {
     }
 }
 
-// --- NEW: TIMER FUNCTIONS ---
+// --- TIMER FUNCTIONS ---
 
 /** Starts the rest timer. */
 function startTimer() {
@@ -501,6 +501,75 @@ function adjustTimer(amount) {
     }
 }
 
+// --- NEW: NOTE AND HISTORY FUNCTIONS ---
+
+/**
+ * Opens a modal to add or edit a note for a specific set.
+ * @param {string} exerciseIndex - The index of the exercise.
+ * @param {string} setIndex - The index of the set.
+ */
+function openNoteModal(exerciseIndex, setIndex) {
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
+    const set = workout.exercises[exerciseIndex].sets[setIndex] || {};
+    const note = set.note || '';
+
+    ui.showModal(
+        `Note for Set ${parseInt(setIndex) + 1}`,
+        `<textarea id="set-note-input" class="modal-input modal-textarea" placeholder="e.g., Felt strong, add weight next time...">${note}</textarea>`,
+        [
+            { text: 'Cancel', class: 'secondary-button' },
+            {
+                text: 'Save Note',
+                class: 'cta-button',
+                action: () => {
+                    const newNote = document.getElementById('set-note-input').value;
+                    set.note = newNote;
+                    ui.renderDailyWorkout(); // Re-render to show note indicator
+                }
+            }
+        ]
+    );
+}
+
+/**
+ * Gathers and displays the performance history for a specific exercise.
+ * @param {string} exerciseId - The ID of the exercise to show history for.
+ */
+function showHistory(exerciseId) {
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    const exerciseName = state.exercises.find(ex => `ex_${ex.name.replace(/\s+/g, '_')}` === exerciseId)?.name || "Exercise";
+    let historyHTML = '';
+
+    // Iterate through all weeks and days to find completed instances of the exercise
+    for (const week of Object.values(activePlan.weeks).reverse()) {
+        for (const day of Object.values(week).reverse()) {
+            if (day.completed) {
+                const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
+                if (exerciseInstance) {
+                    historyHTML += `<div class="history-item">`;
+                    historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()}</div>`;
+                    exerciseInstance.sets.forEach((set, index) => {
+                        if (set.weight && (set.reps || set.rir)) {
+                            historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
+                            if (set.note) {
+                                historyHTML += `<div class="history-note">"${set.note}"</div>`;
+                            }
+                        }
+                    });
+                    historyHTML += `</div>`;
+                }
+            }
+        }
+    }
+
+    if (!historyHTML) {
+        historyHTML = '<p class="placeholder-text">No completed history for this exercise yet.</p>';
+    }
+
+    ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
+}
+
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -511,7 +580,7 @@ export function initEventListeners() {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, amount } = target.dataset;
+        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, amount, exerciseIndex, setIndex, exerciseId } = target.dataset;
 
         const actions = {
             showView: () => ui.showView(viewName),
@@ -531,9 +600,47 @@ export function initEventListeners() {
             switchTab: () => { /* Logic for switching tabs can be added here if needed */ },
             selectTemplate: () => selectTemplate(templateId),
             finishWizard: () => ui.customPlanWizard.finish(),
-            // NEW: Timer actions
             adjustTimer: () => adjustTimer(parseInt(amount)),
             skipTimer: () => stopTimer(),
+            addSet: () => {
+                const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+                const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
+                const exercise = workout.exercises[exerciseIndex];
+                if (!exercise.sets) exercise.sets = [];
+                if (exercise.sets.length < exercise.targetSets) {
+                    const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
+                    exercise.sets.push({ weight: previousWeight, reps: '', rir: '', rawInput: '' });
+                    ui.renderDailyWorkout();
+                }
+            },
+            swapExercise: () => {
+                const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+                const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
+                const currentExerciseName = workout.exercises[exerciseIndex].name;
+                const exerciseData = state.exercises.find(e => e.name === currentExerciseName);
+
+                if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
+                    ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
+                    return;
+                }
+                const alternativesHTML = exerciseData.alternatives.map(altName => `<div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0"><h3>${altName}</h3></div>`).join('');
+                ui.elements.modalBody.innerHTML = `<h2>Swap ${currentExerciseName}</h2><p>Choose a replacement exercise:</p><div class="card-group">${alternativesHTML}</div>`;
+                ui.elements.modalActions.innerHTML = '';
+                ui.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const newExerciseName = card.dataset.newExerciseName;
+                        const oldExercise = workout.exercises[exerciseIndex];
+                        const newExerciseData = state.exercises.find(e => e.name === newExerciseName);
+                        if (!newExerciseData) return;
+                        workout.exercises[exerciseIndex] = { ...oldExercise, name: newExerciseData.name, muscle: newExerciseData.muscle, exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, sets: [] };
+                        ui.renderDailyWorkout();
+                        ui.closeModal();
+                    });
+                });
+                ui.elements.modal.classList.add('active');
+            },
+            openNoteModal: () => openNoteModal(exerciseIndex, setIndex),
+            showHistory: () => showHistory(exerciseId),
         };
 
         if (actions[action]) {
@@ -598,67 +705,7 @@ export function initEventListeners() {
         if (e.target === ui.elements.modal) ui.closeModal();
     });
 
-    // Event listeners for the daily workout view
-    ui.elements.workoutView.addEventListener('click', (e) => {
-        if (e.target.matches('.add-set-btn')) {
-            const exerciseIndex = e.target.dataset.exerciseIndex;
-            const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-            const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-            const exercise = workout.exercises[exerciseIndex];
-            if (!exercise.sets) exercise.sets = [];
-            
-            if (exercise.sets.length < exercise.targetSets) {
-                const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-                exercise.sets.push({ weight: previousWeight, reps: '', rir: '', rawInput: '' });
-                ui.renderDailyWorkout();
-            }
-        }
-        const swapButton = e.target.closest('.swap-exercise-btn');
-        if (swapButton) {
-            const exerciseIndex = swapButton.dataset.exerciseIndex;
-            const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-            const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-            const currentExerciseName = workout.exercises[exerciseIndex].name;
-            const exerciseData = state.exercises.find(e => e.name === currentExerciseName);
-
-            if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
-                ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
-                return;
-            }
-
-            const alternativesHTML = exerciseData.alternatives.map(altName => 
-                `<div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0"><h3>${altName}</h3></div>`
-            ).join('');
-
-            ui.elements.modalBody.innerHTML = `
-                <h2>Swap ${currentExerciseName}</h2>
-                <p>Choose a replacement exercise:</p>
-                <div class="card-group">${alternativesHTML}</div>
-            `;
-            ui.elements.modalActions.innerHTML = '';
-            
-            ui.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const newExerciseName = card.dataset.newExerciseName;
-                    const oldExercise = workout.exercises[exerciseIndex];
-                    const newExerciseData = state.exercises.find(e => e.name === newExerciseName);
-                    if (!newExerciseData) return;
-
-                    workout.exercises[exerciseIndex] = {
-                        ...oldExercise,
-                        name: newExerciseData.name,
-                        muscle: newExerciseData.muscle,
-                        exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`,
-                        sets: []
-                    };
-                    ui.renderDailyWorkout();
-                    ui.closeModal();
-                });
-            });
-            ui.elements.modal.classList.add('active');
-        }
-    });
-
+    // Event listener for workout view inputs
     ui.elements.workoutView.addEventListener('input', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             const { exerciseIndex, setIndex } = e.target.dataset;
