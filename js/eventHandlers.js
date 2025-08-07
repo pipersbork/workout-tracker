@@ -607,7 +607,7 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
-// --- UPDATED: ONBOARDING FUNCTIONS ---
+// --- ONBOARDING FUNCTIONS ---
 
 /**
  * A wrapper function to handle smooth step transitions.
@@ -634,12 +634,8 @@ function selectOnboardingCard(element, field, value) {
     element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
     
-    // Use the new transition handler for the automatic advance
-    handleStepTransition(() => {
-        if (state.onboarding.currentStep < state.onboarding.totalSteps) {
-            state.onboarding.currentStep++;
-        }
-    });
+    // UPDATED: Use the main nextOnboardingStep function to handle all logic
+    nextOnboardingStep();
 }
 
 /** Moves the user to the next step in the onboarding wizard. */
