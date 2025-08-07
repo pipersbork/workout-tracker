@@ -91,8 +91,9 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .swap-exercise-btn:hover, .history-btn:hover { color: var(--secondary-color); }
 .swap-exercise-btn svg, .history-btn svg { pointer-events: none; }
 .exercise-target { font-size: 0.9rem; color: var(--secondary-color); background-color: rgba(255, 107, 53, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
-.sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+.sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease-in-out; }
 .sets-container .set-row:last-child { border-bottom: none; }
+.sets-container .set-row.active-set { background-color: rgba(255, 107, 53, 0.1); }
 .set-number { flex-basis: 50px; font-weight: 600; color: var(--text-muted-color); }
 .set-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; }
 .set-row.header .set-inputs span { color: var(--text-muted-color); font-size: 0.9rem; text-align: center; }
