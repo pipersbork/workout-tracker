@@ -25,7 +25,6 @@ export const elements = {
     activePlanDisplay: document.getElementById('active-plan-display'),
     builderTitle: document.getElementById('builder-title'),
     planManagementList: document.getElementById('plan-management-list'),
-    // NEW: Timer elements
     restTimerContainer: document.getElementById('rest-timer-container'),
     restTimerDisplay: document.getElementById('rest-timer-display'),
 };
@@ -314,7 +313,7 @@ export function renderDailyWorkout() {
         const setsHTML = Array.from({ length: ex.targetSets }).map((_, setIndex) => {
             const set = ex.sets[setIndex] || {};
             const lastWeekSet = lastWeekEx?.sets[setIndex];
-            return utils.createSetRowHTML(exIndex, setIndex, set.weight, set.rawInput, lastWeekSet, ex.targetReps, ex.targetRIR, week);
+            return utils.createSetRowHTML(exIndex, setIndex, set, lastWeekSet, ex.targetReps, ex.targetRIR, week);
         }).join('');
 
         const exerciseCard = document.createElement('div');
@@ -323,17 +322,27 @@ export function renderDailyWorkout() {
             <div class="exercise-card-header">
                 <div class="exercise-title-group">
                     <h3>${ex.name}</h3>
-                    <button class="swap-exercise-btn" data-exercise-index="${exIndex}" aria-label="Swap Exercise">
+                    <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.883L13.865 6.43L18 7.062L14.938 9.938L15.703 14.117L12 12.2L8.297 14.117L9.062 9.938L6 7.062L10.135 6.43L12 2.883z" stroke-width="0" fill="currentColor"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1 14H8v-2h3v-3H8V9h3V6h2v3h3v2h-3v3h3v2h-3v3h-2v-3z"/></svg>
+                    </button>
+                    <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                     </button>
                 </div>
                 <span class="exercise-target">${ex.targetSets} Sets @ ${ex.targetRIR} RIR</span>
             </div>
             <div class="sets-container" id="sets-for-ex-${exIndex}">
-                <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${state.settings.units.toUpperCase()})</span><span>REPS / RIR</span></div></div>
+                <div class="set-row header">
+                    <div class="set-number">SET</div>
+                    <div class="set-inputs">
+                        <span>WEIGHT (${state.settings.units.toUpperCase()})</span>
+                        <span>REPS / RIR</span>
+                    </div>
+                    <div class="set-actions"></div>
+                </div>
                 ${setsHTML}
             </div>
-            <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
+            <button class="add-set-btn" data-action="addSet" data-exercise-index="${exIndex}">+ Add Set</button>
         `;
         container.appendChild(exerciseCard);
     });
