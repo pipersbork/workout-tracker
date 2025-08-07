@@ -20,29 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Apply the user's saved theme (or default)
         applyTheme();
 
-        // Get the splash screen progress bar element
-        const splashProgressBar = document.querySelector('#step1 .progress');
-
-        // Define the function to transition from the splash screen to the home screen
-        const transitionFromSplash = () => {
-            showView('home');
-        };
-
-        // Show the initial onboarding/splash screen view without animation
-        showView('onboarding', true);
-
-        // Animate the progress bar on the splash screen
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if (splashProgressBar) {
-                    splashProgressBar.style.width = '100%';
-                    // When the progress bar animation ends, transition to the home screen
-                    splashProgressBar.addEventListener('transitionend', transitionFromSplash, { once: true });
-                } else {
-                    // Fallback if the progress bar isn't found
-                    setTimeout(transitionFromSplash, 1200);
-                }
-            }, 100); // A short delay to ensure the view is rendered
-        });
+        // Show the initial view. The showView function already contains the logic
+        // to automatically redirect to 'onboarding' if the user hasn't completed it yet.
+        // We pass 'true' to skip the initial fade-in animation on load.
+        showView('home', true);
     });
 });
