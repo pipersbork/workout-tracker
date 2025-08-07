@@ -270,31 +270,71 @@ function confirmCompleteWorkout() {
 }
 
 /**
+ * NEW: Generates progression suggestions based on completed workout.
+ * @param {object} completedWorkout - The workout that was just finished.
+ * @param {object} nextWeekWorkout - The corresponding workout for the following week.
+ * @returns {Array<object>} An array of suggestion objects.
+ */
+function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
+    if (!nextWeekWorkout) return [];
+
+    const suggestions = [];
+    completedWorkout.exercises.forEach(completedEx => {
+        const nextWeekEx = nextWeekWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
+        if (!nextWeekEx) return;
+
+        let suggestionText = `Maintain ${completedEx.targetLoad || 'current'} ${state.settings.units} for ${completedEx.targetReps} reps.`;
+
+        if (nextWeekEx.targetLoad > completedEx.targetLoad) {
+            suggestionText = `Increase to <strong>${nextWeekEx.targetLoad} ${state.settings.units}</strong> for ${nextWeekEx.targetReps} reps.`;
+        } else if (nextWeekEx.targetReps > completedEx.targetReps) {
+            suggestionText = `Aim for <strong>${nextWeekEx.targetReps} reps</strong> with the same weight.`;
+        }
+        
+        suggestions.push({
+            exerciseName: completedEx.name,
+            suggestion: suggestionText
+        });
+    });
+    return suggestions;
+}
+
+/**
  * Marks a workout as complete, processes the data, and advances the user to the next workout.
  */
 async function completeWorkout() {
     pauseTimer(); // Stop the timer when workout is completed
+    state.workoutSummary.suggestions = []; // Clear old suggestions
+
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
     if (planIndex === -1) return;
+
     const activePlan = state.allPlans[planIndex];
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week][day];
+
+    // Mark workout as complete and calculate volume
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
-
     workout.exercises.forEach(ex => {
         ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
     });
 
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
-
-    // Show summary view BEFORE advancing to the next day
-    ui.showView('workoutSummary');
-
+    
+    // UPDATED: Calculate next week's progression BEFORE generating suggestions
     if (!stalledExercise && week < activePlan.durationWeeks - 1 && workout.exercises.length > 0) {
         calculateNextWeekProgression(week, activePlan);
     }
 
+    // UPDATED: Generate and store suggestions BEFORE showing the summary view
+    const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
+    state.workoutSummary.suggestions = generateProgressionSuggestions(workout, nextWeekWorkout);
+    
+    // Show the summary view
+    ui.showView('workoutSummary');
+
+    // Logic to advance to the next workout day/week
     const dayKeys = Object.keys(activePlan.weeks[week]).sort((a, b) => a - b);
     const currentDayIndex = dayKeys.indexOf(day.toString());
     let nextWeek = week;
@@ -308,8 +348,6 @@ async function completeWorkout() {
             const nextWeekDayKeys = Object.keys(activePlan.weeks[nextWeek] || {}).sort((a, b) => a - b);
             nextDay = nextWeekDayKeys.length > 0 ? parseInt(nextWeekDayKeys[0]) : null;
         } else {
-            // This case might be handled differently now with the summary screen,
-            // but for now, we'll just set it to the beginning.
             state.currentView = { week: 1, day: 1 };
         }
     }
