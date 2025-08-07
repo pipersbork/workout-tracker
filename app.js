@@ -1208,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="settings-section">
                         <h3 id="priority-muscles-title">Any priority muscles? (Select up to 2)</h3>
                         <div class="card-group">
-                            ${['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps'].map(m => `<div class="goal-card muscle-card" data-value="${m}" role="button" tabindex="0"><h3>${m}</h3></div>`).join('')}
+                            ${['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps', 'Glutes', 'Traps', 'Calves'].map(m => `<div class="goal-card muscle-card" data-value="${m}" role="button" tabindex="0"><h3>${m}</h3></div>`).join('')}
                         </div>
                     </div>
                     <div class="wizard-actions">
