@@ -270,7 +270,7 @@ function confirmCompleteWorkout() {
 }
 
 /**
- * NEW: Generates progression suggestions based on completed workout.
+ * Generates progression suggestions based on completed workout.
  * @param {object} completedWorkout - The workout that was just finished.
  * @param {object} nextWeekWorkout - The corresponding workout for the following week.
  * @returns {Array<object>} An array of suggestion objects.
@@ -322,12 +322,12 @@ async function completeWorkout() {
 
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
     
-    // UPDATED: Calculate next week's progression BEFORE generating suggestions
+    // Calculate next week's progression BEFORE generating suggestions
     if (!stalledExercise && week < activePlan.durationWeeks - 1 && workout.exercises.length > 0) {
         calculateNextWeekProgression(week, activePlan);
     }
 
-    // UPDATED: Generate and store suggestions BEFORE showing the summary view
+    // Generate and store suggestions BEFORE showing the summary view
     const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
     state.workoutSummary.suggestions = generateProgressionSuggestions(workout, nextWeekWorkout);
     
@@ -607,7 +607,7 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
-// --- NEW: ONBOARDING FUNCTIONS ---
+// --- UPDATED: ONBOARDING FUNCTIONS ---
 
 /** Handles the logic for selecting a card in the onboarding wizard. */
 function selectOnboardingCard(element, field, value) {
@@ -633,6 +633,16 @@ async function nextOnboardingStep() {
                 ui.showView('home');
             }, 2000);
         }
+    }
+}
+
+/**
+ * NEW: Moves the user to the previous step in the onboarding wizard.
+ */
+function previousOnboardingStep() {
+    if (state.onboarding.currentStep > 1) {
+        state.onboarding.currentStep--;
+        ui.renderOnboardingStep();
     }
 }
 
@@ -711,6 +721,7 @@ export function initEventListeners() {
             showHistory: () => showHistory(exerciseId),
             nextOnboardingStep: () => nextOnboardingStep(),
             selectOnboardingCard: () => selectOnboardingCard(target, field, value),
+            previousOnboardingStep: () => previousOnboardingStep(),
         };
 
         if (actions[action]) {
