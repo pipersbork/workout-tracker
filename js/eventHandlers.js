@@ -735,7 +735,7 @@ export function initEventListeners() {
         }
     });
 
-    // NEW: Add focus and blur listeners for set highlighting
+    // Add focus and blur listeners for set highlighting
     ui.elements.workoutView.addEventListener('focusin', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
