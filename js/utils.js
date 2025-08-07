@@ -35,6 +35,7 @@ export function createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSe
         const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
     }
+    const unitLabel = state.settings.units.toUpperCase();
     return `
         <div class="set-row" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
