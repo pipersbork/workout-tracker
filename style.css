@@ -2,28 +2,44 @@
   ROOT VARIABLES & GLOBAL STYLES
 =========================== */
 :root {
-  --primary-color: #ff6b35; /* A strong, energetic orange */
-  --secondary-color: #f7c59f;
-  --azure-color: #007BFF; /* A vibrant, clear blue for app suggestions */
-  --azure-color-light: #3498DB;
-  --background-color: #1a1a1a;
-  --surface-color: #2c2c2c;
-  --text-color: #f0f0f0;
-  --text-muted-color: #a0a0a0;
-  --border-color: #444;
+  /* High-Energy Focus Palette Tokens */
+  
+  /* Surfaces */
+  --color-surface-primary: #121212;
+  --color-surface-secondary: #1E1E1E;
+  --color-surface-tertiary: #2C2C2E;
+
+  /* Text & Icons */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A9A9A9;
+  --color-text-disabled: #5A5A5A;
+
+  /* Accent & State */
+  --color-accent-primary: #FF7A00;
+  --color-accent-secondary: #FFA500;
+  --color-state-success: #34C759;
+  --color-state-warning: #FFCC00;
+  --color-state-error: #FF3B30;
+
+  /* Borders & Dividers */
+  --color-border-primary: #38383A;
+  
+  /* Font */
   --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 body[data-theme="light"] {
-  --background-color: #f4f4f8;
-  --surface-color: #ffffff;
-  --text-color: #1a1a1a;
-  --text-muted-color: #6c757d;
-  --border-color: #e0e0e0;
+  --color-surface-primary: #F4F4F8;
+  --color-surface-secondary: #FFFFFF;
+  --color-surface-tertiary: #F0F0F0;
+  --color-text-primary: #121212;
+  --color-text-secondary: #6c757d;
+  --color-text-disabled: #C7C7CC;
+  --color-border-primary: #E0E0E0;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-family); background-color: var(--background-color); color: var(--text-color); line-height: 1.6; transition: background-color 0.3s ease, color 0.3s ease; }
+body { font-family: var(--font-family); background-color: var(--color-surface-primary); color: var(--color-text-primary); line-height: 1.6; transition: background-color 0.3s ease, color 0.3s ease; }
 /* ===========================
   CORE FUNCTIONAL STYLES
 =========================== */
@@ -45,61 +61,61 @@ main { max-width: 800px; margin: 0 auto; }
 .container, #daily-workout-view, #performance-summary-view, #settings-view, #workout-summary-view { padding: 2rem; position: relative; }
 #daily-workout-view { padding-bottom: 100px; }
 h2, h3 { margin-bottom: 1rem; font-weight: 600; }
-p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
+p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary); }
 /* ===========================
   HOME SCREEN & ONBOARDING STYLES
 =========================== */
 #onboarding-container, #home-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 100vh; }
-.main-title { font-size: 2.5rem; font-weight: 700; letter-spacing: 2px; color: var(--primary-color); }
-.divider { height: 2px; width: 60px; background: var(--primary-color); margin: 1rem auto; }
-.tagline { font-size: 1rem; color: var(--text-muted-color); margin-bottom: 2rem; }
+.main-title { font-size: 2.5rem; font-weight: 700; letter-spacing: 2px; color: var(--color-accent-primary); }
+.divider { height: 2px; width: 60px; background: var(--color-accent-primary); margin: 1rem auto; }
+.tagline { font-size: 1rem; color: var(--color-text-secondary); margin-bottom: 2rem; }
 .home-nav-buttons { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; width: 100%; max-width: 400px; }
 .home-nav-btn { text-align: left; width: 100%; }
 .home-nav-btn .hub-option-text h3 { font-size: 1.2rem; }
-.active-plan-display { margin-top: 2rem; color: var(--text-muted-color); font-style: italic; }
-.home-icon-btn { position: absolute; bottom: 2rem; right: 2rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
-.home-icon-btn svg { stroke: var(--text-muted-color); transition: all 0.2s ease; }
-.home-icon-btn:hover { background: var(--primary-color); border-color: var(--primary-color); }
+.active-plan-display { margin-top: 2rem; color: var(--color-text-secondary); font-style: italic; }
+.home-icon-btn { position: absolute; bottom: 2rem; right: 2rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
+.home-icon-btn svg { stroke: var(--color-text-secondary); transition: all 0.2s ease; }
+.home-icon-btn:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); }
 .home-icon-btn:hover svg { stroke: #fff; }
 
-.progress-bar { width: 100%; height: 8px; background-color: var(--surface-color); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; }
-.progress { width: 0%; height: 100%; background-color: var(--primary-color); border-radius: 4px; transition: width 1s ease-in-out; }
+.progress-bar { width: 100%; height: 8px; background-color: var(--color-surface-secondary); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; }
+.progress { width: 0%; height: 100%; background-color: var(--color-accent-primary); border-radius: 4px; transition: width 1s ease-in-out; }
 .splash-bar { max-width: 300px; margin: 2rem auto 0 auto; }
 
 .card-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-.goal-card { background-color: var(--surface-color); border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
-.goal-card:hover { transform: translateY(-5px); border-color: var(--secondary-color); }
-.goal-card.active { border-color: var(--primary-color); box-shadow: 0 0 15px rgba(255, 107, 53, 0.3); transform: scale(1.05); }
+.goal-card { background-color: var(--color-surface-secondary); border: 2px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+.goal-card:hover { transform: translateY(-5px); border-color: var(--color-accent-secondary); }
+.goal-card.active { border-color: var(--color-accent-primary); box-shadow: 0 0 15px rgba(255, 122, 0, 0.3); transform: scale(1.05); }
 .goal-card .icon { display: flex; justify-content: center; align-items: center; height: 40px; margin: 0 auto 0.5rem auto; }
 .goal-card .icon img { height: 100%; width: auto; }
-.goal-card h3 { margin-bottom: 0.25rem; font-size: 1.1rem; color: var(--text-color); }
-.goal-card p { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0; }
+.goal-card h3 { margin-bottom: 0.25rem; font-size: 1.1rem; color: var(--color-text-primary); }
+.goal-card p { font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 0; }
 .settings-card-group { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .settings-card-group .goal-card { padding: 1rem 0.5rem; min-height: 110px; display: flex; flex-direction: column; justify-content: center; }
 .settings-card-group .goal-card h3 { font-size: 0.9rem; margin-bottom: 0; }
 /* ===========================
   DAILY WORKOUT VIEW STYLES
 =========================== */
-.workout-header { text-align: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; position: relative; }
+.workout-header { text-align: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 1.5rem; position: relative; }
 .workout-header h2 { margin-bottom: 0.25rem; }
-.workout-header p { margin-bottom: 0; color: var(--text-muted-color); }
-.exercise-card { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.workout-header p { margin-bottom: 0; color: var(--color-text-secondary); }
+.exercise-card { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .exercise-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .exercise-title-group { display: flex; align-items: center; gap: 0.75rem; }
 .exercise-title-group h3 { margin: 0; font-size: 1.5rem; }
-.swap-exercise-btn, .history-btn { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
-.swap-exercise-btn:hover, .history-btn:hover { color: var(--secondary-color); }
+.swap-exercise-btn, .history-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
+.swap-exercise-btn:hover, .history-btn:hover { color: var(--color-accent-secondary); }
 .swap-exercise-btn svg, .history-btn svg { pointer-events: none; }
-.exercise-target { font-size: 0.9rem; color: var(--secondary-color); background-color: rgba(255, 107, 53, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
-.sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease-in-out; }
+.exercise-target { font-size: 0.9rem; color: var(--color-accent-secondary); background-color: rgba(255, 165, 0, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
+.sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-primary); transition: background-color 0.2s ease-in-out; }
 .sets-container .set-row:last-child { border-bottom: none; }
-.sets-container .set-row.active-set { background-color: rgba(255, 107, 53, 0.1); }
-.set-number { flex-basis: 50px; font-weight: 600; color: var(--text-muted-color); }
+.sets-container .set-row.active-set { background-color: rgba(255, 122, 0, 0.1); }
+.set-number { flex-basis: 50px; font-weight: 600; color: var(--color-text-secondary); }
 .set-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; }
-.set-row.header .set-inputs span { color: var(--text-muted-color); font-size: 0.9rem; text-align: center; }
-.set-inputs input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
-.add-set-btn { background: none; border: 1px dashed var(--border-color); color: var(--text-muted-color); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-.add-set-btn:hover { background-color: var(--border-color); color: var(--text-color); }
+.set-row.header .set-inputs span { color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
+.set-inputs input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-border-primary); background-color: var(--color-surface-tertiary); color: var(--color-text-primary); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
+.add-set-btn { background: none; border: 1px dashed var(--color-border-primary); color: var(--color-text-secondary); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+.add-set-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); }
 .workout-actions { margin-top: 2rem; text-align: center; }
 
 /* Styles for Notes and History */
@@ -112,7 +128,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .note-btn {
     background: none;
     border: none;
-    color: var(--text-muted-color);
+    color: var(--color-text-secondary);
     cursor: pointer;
     padding: 0.5rem;
     opacity: 0.5;
@@ -120,7 +136,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 }
 .note-btn.has-note, .note-btn:hover {
     opacity: 1;
-    color: var(--secondary-color);
+    color: var(--color-accent-secondary);
 }
 .modal-textarea {
     width: 100%;
@@ -130,7 +146,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 }
 .history-item {
     padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--color-border-primary);
     font-size: 0.9rem;
 }
 .history-item:last-child {
@@ -138,60 +154,58 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 }
 .history-date {
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--color-text-primary);
 }
 .history-performance {
-    color: var(--text-muted-color);
+    color: var(--color-text-secondary);
 }
 .history-note {
     font-style: italic;
-    color: var(--secondary-color);
+    color: var(--color-accent-secondary);
     margin-top: 0.25rem;
 }
 
 /* ===========================
   COMPONENTS (Buttons, Modal)
 =========================== */
-.cta-button, .azure-button, .secondary-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-.cta-button { background-color: var(--primary-color); color: #fff; }
-.cta-button:hover { background-color: #e65c2e; transform: translateY(-2px); }
-.azure-button { background-image: linear-gradient(to right, var(--azure-color) 0%, var(--azure-color-light) 100%); color: #fff; }
-.azure-button:hover { transform: translateY(-2px); }
+.cta-button, .secondary-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.cta-button { background-color: var(--color-accent-primary); color: #fff; }
+.cta-button:hover { background-color: var(--color-accent-secondary); transform: translateY(-2px); }
 .button-group { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
-.secondary-button { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-muted-color); font-weight: 600; }
-.secondary-button:hover { background-color: var(--surface-color); color: var(--text-color); transform: translateY(-2px); }
-.back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-muted-color); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-.back-btn svg { stroke: var(--text-muted-color); transition: all 0.2s ease; }
-.back-btn:hover { background-color: var(--primary-color); border-color: var(--primary-color); }
+.secondary-button { background-color: transparent; border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); font-weight: 600; }
+.secondary-button:hover { background-color: var(--color-surface-tertiary); color: var(--color-text-primary); transform: translateY(-2px); }
+.back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.back-btn svg { stroke: var(--color-text-secondary); transition: all 0.2s ease; }
+.back-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
 .back-btn:hover svg { stroke: #fff; }
 .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .modal.active { opacity: 1; pointer-events: auto; }
-.modal-content { background-color: var(--surface-color); padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
+.modal-content { background-color: var(--color-surface-secondary); padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
 .modal.active .modal-content { transform: scale(1); }
-.modal-content .close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; transition: color 0.2s ease; }
-.modal-content .close-btn:hover { color: var(--text-color); }
+.modal-content .close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--color-text-secondary); cursor: pointer; transition: color 0.2s ease; }
+.modal-content .close-btn:hover { color: var(--color-text-primary); }
 .modal .card-group { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
 .modal-body h2 { margin-top: 0.5rem; }
 .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .modal-actions.vertical { flex-direction: column; }
-.modal-actions .cta-button, .modal-actions .secondary-button, .modal-actions .azure-button { width: 100%; padding: 1rem; margin: 0; }
-.modal-input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; margin-top: 1rem; margin-bottom: 1rem; }
+.modal-actions .cta-button, .modal-actions .secondary-button { width: 100%; padding: 1rem; margin: 0; }
+.modal-input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-border-primary); background-color: var(--color-surface-tertiary); color: var(--color-text-primary); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; margin-top: 1rem; margin-bottom: 1rem; }
 /* ===========================
   PLAN HUB & TEMPLATE STYLES
 =========================== */
-.hub-option { display: flex; align-items: center; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-family); color: var(--text-color); }
-.hub-option:hover { border-color: var(--primary-color); transform: translateY(-3px); }
-.hub-option.active, .hub-option:active { border-color: var(--primary-color); background-color: var(--border-color); box-shadow: 0 0 15px rgba(255, 107, 53, 0.3); }
-.hub-option-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background-color: var(--background-color); display: flex; justify-content: center; align-items: center; margin-right: 1.5rem; }
+.hub-option { display: flex; align-items: center; background-color: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-family); color: var(--color-text-primary); }
+.hub-option:hover { border-color: var(--color-accent-primary); transform: translateY(-3px); }
+.hub-option.active, .hub-option:active { border-color: var(--color-accent-primary); background-color: var(--color-surface-tertiary); box-shadow: 0 0 15px rgba(255, 122, 0, 0.3); }
+.hub-option-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-surface-primary); display: flex; justify-content: center; align-items: center; margin-right: 1.5rem; }
 .hub-option-icon img { height: 28px; width: 28px; }
-.hub-option-text h3 { margin: 0 0 0.25rem 0; color: var(--text-color); }
-.hub-option-text p { margin: 0; font-size: 0.9rem; color: var(--text-muted-color); }
+.hub-option-text h3 { margin: 0 0 0.25rem 0; color: var(--color-text-primary); }
+.hub-option-text p { margin: 0; font-size: 0.9rem; color: var(--color-text-secondary); }
 .hub-actions { margin-top: 2rem; text-align: center; }
-.header-icon-btn { position: absolute; top: 1.5rem; right: 1.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-muted-color); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-.header-icon-btn:hover { background-color: var(--primary-color); border-color: var(--primary-color); color: #fff; }
-.tab-container { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
-.tab-btn { flex: 1; padding: 1rem; background: none; border: none; color: var(--text-muted-color); cursor: pointer; transition: all 0.2s ease; border-bottom: 2px solid transparent; }
-.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+.header-icon-btn { position: absolute; top: 1.5rem; right: 1.5rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.header-icon-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); color: #fff; }
+.tab-container { display: flex; border-bottom: 1px solid var(--color-border-primary); margin-bottom: 2rem; }
+.tab-btn { flex: 1; padding: 1rem; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: var(--color-accent-primary); border-bottom-color: var(--color-accent-primary); font-weight: 600; }
 /* ===========================
   CUSTOM PLAN WIZARD STYLES
 =========================== */
@@ -204,57 +218,57 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
   WORKOUT BUILDER STYLES
 =========================== */
 .schedule-container { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem; }
-.day-card { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; transition: background-color 0.3s ease; }
-.day-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
-select.builder-select { background-color: var(--background-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 1rem; font-family: var(--font-family); font-size: 1rem; transition: all 0.2s ease; }
+.day-card { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; transition: background-color 0.3s ease; }
+.day-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 1rem; margin-bottom: 1rem; }
+select.builder-select { background-color: var(--color-surface-tertiary); color: var(--color-text-primary); border: 1px solid var(--color-border-primary); border-radius: 8px; padding: 0.5rem 1rem; font-family: var(--font-family); font-size: 1rem; transition: all 0.2s ease; }
 .day-label-selector { font-size: 1.2rem; font-weight: 600; }
-.delete-btn { background: none; border: none; color: var(--text-muted-color); cursor: pointer; transition: color 0.2s ease; padding: 0.5rem; }
-.delete-btn svg { stroke: var(--text-muted-color); transition: stroke 0.2s ease; pointer-events: none; }
-.delete-btn:hover svg { stroke: var(--primary-color); }
-.muscle-group-block { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.delete-btn { background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: color 0.2s ease; padding: 0.5rem; }
+.delete-btn svg { stroke: var(--color-text-secondary); transition: stroke 0.2s ease; pointer-events: none; }
+.delete-btn:hover svg { stroke: var(--color-accent-primary); }
+.muscle-group-block { border: 1px solid var(--color-border-primary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
 .muscle-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .muscle-group-selectors { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; align-items: center; }
 .exercise-selection-group { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
 .add-muscle-group-btn { width: 100%; margin-top: 1rem; }
 .builder-actions { margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; }
 .focus-buttons { display: flex; gap: 0.5rem; }
-.focus-btn { flex: 1; background-color: var(--background-color); border: 1px solid var(--border-color); color: var(--text-muted-color); padding: 0.5rem; border-radius: 8px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; transition: all 0.2s ease; }
-.focus-btn:hover { background-color: var(--border-color); }
-.focus-btn.active { background-color: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
+.focus-btn { flex: 1; background-color: var(--color-surface-tertiary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; transition: all 0.2s ease; }
+.focus-btn:hover { background-color: var(--color-border-primary); }
+.focus-btn.active { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); color: #fff; font-weight: 600; }
 .day-card.collapsed .day-header { margin-bottom: 0; border-bottom: 1px solid transparent; cursor: pointer; }
 .day-content { overflow: hidden; transition: max-height 0.4s ease-out, margin-top 0.4s ease-out; max-height: 1500px; }
 .day-card.collapsed .day-content { max-height: 0; margin-top: 0 !important; }
-.day-card.expanded { background-color: var(--background-color); }
+.day-card.expanded { background-color: var(--color-surface-primary); }
 /* ===========================
   PERFORMANCE SUMMARY STYLES
 =========================== */
-.summary-section { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+.summary-section { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
 #completed-workouts-list { max-height: 300px; overflow-y: auto; padding-right: 1rem; }
-.summary-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
+.summary-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border-primary); }
 .summary-item:last-child { border-bottom: none; }
 .summary-item h4 { margin: 0; font-size: 1.1rem; }
-.summary-item p { margin: 0; color: var(--text-muted-color); }
+.summary-item p { margin: 0; color: var(--color-text-secondary); }
 #exercise-tracker-select { width: 100%; margin-bottom: 1.5rem; }
 .chart-container { position: relative; height: 300px; width: 100%; }
 #consistency-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
-.calendar-header { grid-column: 1 / -1; font-weight: 600; margin-bottom: 1rem; color: var(--secondary-color); }
-.calendar-day-name { font-size: 0.8rem; color: var(--text-muted-color); }
+.calendar-header { grid-column: 1 / -1; font-weight: 600; margin-bottom: 1rem; color: var(--color-accent-secondary); }
+.calendar-day-name { font-size: 0.8rem; color: var(--color-text-secondary); }
 .calendar-day { display: flex; justify-content: center; align-items: center; aspect-ratio: 1 / 1; border-radius: 50%; }
-.calendar-day.completed { background-color: var(--primary-color); color: #fff; }
+.calendar-day.completed { background-color: var(--color-accent-primary); color: #fff; }
 /* ===========================
   SETTINGS VIEW STYLES
 =========================== */
-.settings-section { background-color: var(--surface-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+.settings-section { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
 .settings-section:last-child { margin-bottom: 0; }
-.settings-section h3 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-.settings-label { display: block; color: var(--text-muted-color); font-size: 0.9rem; margin-bottom: 0.75rem; margin-top: 1.5rem; }
-.toggle-switch { display: flex; background-color: var(--background-color); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color); }
-.toggle-btn { flex: 1; background-color: transparent; border: none; color: var(--text-muted-color); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; text-align: center; }
-.toggle-btn:hover { background-color: var(--border-color); color: var(--text-color); }
-.toggle-btn.active { background-color: var(--primary-color); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3); }
-#plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
+.settings-section h3 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 1rem; }
+.settings-label { display: block; color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem; margin-top: 1.5rem; }
+.toggle-switch { display: flex; background-color: var(--color-surface-tertiary); border-radius: 8px; padding: 4px; border: 1px solid var(--color-border-primary); }
+.toggle-btn { flex: 1; background-color: transparent; border: none; color: var(--color-text-secondary); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; text-align: center; }
+.toggle-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); }
+.toggle-btn.active { background-color: var(--color-accent-primary); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(255, 122, 0, 0.3); }
+#plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border-primary); }
 #plan-management-list .plan-item:last-child { border-bottom: none; }
-#plan-management-list .plan-item.active .plan-name-text { color: var(--primary-color); font-weight: 600; }
+#plan-management-list .plan-item.active .plan-name-text { color: var(--color-accent-primary); font-weight: 600; }
 .plan-actions { display: flex; gap: 0.5rem; }
 .plan-btn { font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px; }
 
@@ -262,15 +276,15 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .plan-name-container { flex-grow: 1; }
 .plan-name-input {
     width: calc(100% - 10px);
-    background-color: var(--background-color);
-    color: var(--text-color);
-    border: 1px solid var(--primary-color);
+    background-color: var(--color-surface-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-accent-primary);
     border-radius: 6px;
     padding: 0.25rem 0.5rem;
     font-size: 1rem;
 }
 
-input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3); }
+input:focus, select:focus { outline: none; border-color: var(--color-accent-primary); box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.3); }
 /* ===========================
   ANIMATIONS & RESPONSIVENESS
 =========================== */
@@ -282,7 +296,7 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
   WORKOUT TIMER BAR STYLES
 =========================== */
 .workout-timer-bar {
-    background-color: var(--surface-color);
+    background-color: var(--color-surface-secondary);
     border-radius: 12px;
     padding: 1rem 1.5rem;
     margin-bottom: 2rem;
@@ -299,7 +313,7 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
 #workout-timer-display {
     font-size: 2rem;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--color-accent-primary);
     min-width: 90px;
 }
 .timer-mode-switch {
@@ -314,9 +328,9 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
     gap: 0.5rem;
 }
 .timer-control-btn {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted-color);
+    background-color: var(--color-surface-tertiary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-secondary);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     cursor: pointer;
@@ -325,8 +339,8 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
     transition: all 0.2s ease;
 }
 .timer-control-btn:hover {
-    background-color: var(--border-color);
-    color: var(--text-color);
+    background-color: var(--color-border-primary);
+    color: var(--color-text-primary);
 }
 
 /* ===========================
@@ -339,21 +353,21 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
     margin-bottom: 2.5rem;
 }
 .stat-card {
-    background-color: var(--surface-color);
+    background-color: var(--color-surface-secondary);
     border-radius: 12px;
     padding: 1.5rem;
     text-align: center;
 }
 .stat-card h4 {
     margin-bottom: 0.5rem;
-    color: var(--text-muted-color);
+    color: var(--color-text-secondary);
     font-size: 1rem;
 }
 .stat-card p {
     margin-bottom: 0;
     font-size: 1.75rem;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--color-accent-primary);
 }
 .summary-actions {
     margin-top: 2rem;
