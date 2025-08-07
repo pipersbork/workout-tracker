@@ -735,6 +735,20 @@ export function initEventListeners() {
         }
     });
 
+    // NEW: Add focus and blur listeners for set highlighting
+    ui.elements.workoutView.addEventListener('focusin', (e) => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
+            e.target.closest('.set-row').classList.add('active-set');
+        }
+    });
+
+    ui.elements.workoutView.addEventListener('focusout', (e) => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            e.target.closest('.set-row').classList.remove('active-set');
+        }
+    });
+
     // Event listener for the performance summary exercise tracker
     document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => ui.renderProgressChart(e.target.value));
 
