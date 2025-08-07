@@ -18,15 +18,17 @@
 
         <!-- Onboarding Container -->
         <div class="container view" id="onboarding-container">
-            <div class="progress-bar"><div class="progress"></div></div>
-            <!-- Step 1 is now just a splash screen -->
+            <!-- Step 1 is now the splash screen with a loading bar -->
             <div class="step active" id="step1">
                 <div class="main-title">PROGRESSION</div>
                 <div class="divider"></div>
                 <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-                <!-- The button has been removed -->
+                <div class="progress-bar splash-bar"><div class="progress"></div></div>
             </div>
+            
+            <!-- The rest of the onboarding steps now have their own progress bar -->
             <div class="step" id="step2">
+                <div class="progress-bar"><div class="progress"></div></div>
                 <h2>Your Goal</h2>
                 <p>Select your training focus:</p>
                 <div class="card-group" data-field="goal">
@@ -40,6 +42,7 @@
                 </div>
             </div>
             <div class="step" id="step3">
+                <div class="progress-bar"><div class="progress"></div></div>
                 <h2>Experience Level</h2>
                 <p>Choose your fitness level:</p>
                 <div class="card-group" data-field="experience">
@@ -53,6 +56,7 @@
                 </div>
             </div>
             <div class="step" id="step4">
+                <div class="progress-bar"><div class="progress"></div></div>
                 <h2>Workout Preferences</h2>
                 <p>Select your preferred style:</p>
                 <div class="card-group" data-field="style">
@@ -91,34 +95,171 @@
             </button>
         </div>
 
-        <!-- The rest of the views remain the same -->
         <!-- Plan Hub Screen -->
         <div id="plan-hub-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2>Plan a Mesocycle</h2>
+            </div>
+            <div id="plan-hub-options"></div>
+            <div class="hub-actions">
+                <button class="cta-button" data-action="hubBegin">Begin</button>
+            </div>
         </div>
+
         <!-- Template Library Screen -->
         <div id="template-library-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                 <button class="back-btn" data-action="showView" data-view-name="planHub" aria-label="Back to Plan Hub">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <h2>Templates</h2>
+                <button class="header-icon-btn" data-action="filterTemplates" aria-label="Filter Templates">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                </button>
+            </div>
+            <div class="tab-container">
+                <button class="tab-btn active" data-action="switchTab" data-tab="progression">Progression Templates</button>
+                <button class="tab-btn" data-action="switchTab" data-tab="saved">My Templates</button>
+            </div>
+            <div id="template-list-container"></div>
         </div>
+
         <!-- Custom Plan Wizard Screen -->
         <div id="custom-plan-wizard-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2>Design Your Plan</h2>
+            </div>
+            <div id="custom-wizard-content"></div>
         </div>
+
         <!-- Mesocycle Builder -->
         <div id="builder-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2 id="builder-title">Mesocycle Builder</h2>
+            </div>
+            <div class="schedule-container" id="schedule-container"></div>
+            <div class="builder-actions">
+                <button class="cta-button secondary-button" data-action="addDayToBuilder">+ Add a Day</button>
+                <button class="cta-button" data-action="openMesoLengthModal">Save Plan</button>
+            </div>
         </div>
+
         <!-- Daily Workout View -->
         <div id="daily-workout-view" class="view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2 id="workout-day-title">Workout Title</h2>
+                <p id="workout-date">Date</p>
+            </div>
+            <div id="exercise-list-container"></div>
+            <div class="workout-actions">
+                <button id="complete-workout-btn" class="cta-button" data-action="confirmCompleteWorkout">Complete Workout</button>
+            </div>
         </div>
+
         <!-- Performance Summary View -->
         <section id="performance-summary-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2>Performance Summary</h2>
+            </div>
+            <div id="summary-content">
+                <section class="summary-section">
+                    <h3>Workout Consistency</h3>
+                    <div id="consistency-calendar"></div>
+                </section>
+                <section class="summary-section">
+                    <h3>Volume by Muscle Group</h3>
+                    <div class="chart-container">
+                        <canvas id="volume-chart"></canvas>
+                    </div>
+                </section>
+                <section class="summary-section">
+                    <h3>Track Exercise Progress</h3>
+                    <select id="exercise-tracker-select" class="builder-select"></select>
+                    <div class="chart-container">
+                        <canvas id="progress-chart"></canvas>
+                    </div>
+                </section>
+                <section class="summary-section">
+                    <h3>Completed Workouts</h3>
+                    <div id="completed-workouts-list"></div>
+                </section>
+            </div>
         </section>
+
         <!-- Settings View -->
         <section id="settings-view" class="container view hidden">
-            <!-- ... content ... -->
+            <div class="workout-header">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <h2>Settings</h2>
+            </div>
+            <div id="settings-content">
+                <section class="settings-section">
+                    <h3>My Plans</h3>
+                    <div id="plan-management-list"></div>
+                    <button class="cta-button secondary-button" data-action="showView" data-view-name="planHub">+ Create New Plan</button>
+                </section>
+                <section class="settings-section">
+                    <h3>Training Goal</h3>
+                    <div class="card-group" data-field="goal" id="settings-goal-cards">
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3></div>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Experience Level</h3>
+                    <div class="card-group" data-field="experience" id="settings-experience-cards">
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3></div>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Progression</h3>
+                    <label class="settings-label">Progression Model</label>
+                    <div class="toggle-switch">
+                        <button class="toggle-btn" data-action="setProgressionModel" data-progression="linear">Linear</button>
+                        <button class="toggle-btn" data-action="setProgressionModel" data-progression="double">Double</button>
+                    </div>
+                    <label class="settings-label">Weight Increment</label>
+                    <div class="toggle-switch" id="weight-increment-switch">
+                        <button class="toggle-btn" data-action="setWeightIncrement" data-increment="2.5">2.5</button>
+                        <button class="toggle-btn" data-action="setWeightIncrement" data-increment="5">5</button>
+                        <button class="toggle-btn" data-action="setWeightIncrement" data-increment="10">10</button>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Units</h3>
+                    <div class="toggle-switch">
+                        <button class="toggle-btn" data-action="setUnits" data-unit="lbs">LBS</button>
+                        <button class="toggle-btn" data-action="setUnits" data-unit="kg">KG</button>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Theme</h3>
+                    <div class="toggle-switch">
+                        <button class="toggle-btn" data-action="setTheme" data-theme="dark">Dark</button>
+                        <button class="toggle-btn" data-action="setTheme" data-theme="light">Light</button>
+                    </div>
+                </section>
+            </div>
         </section>
 
     </main>
@@ -132,7 +273,6 @@
         </div>
     </div>
 
-    <!-- Main application script -->
     <script type="module" src="app.js"></script>
 
 </body>
