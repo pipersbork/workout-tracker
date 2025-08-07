@@ -205,9 +205,22 @@ select.builder-select { background-color: var(--background-color); color: var(--
 .toggle-btn.active { background-color: var(--primary-color); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3); }
 #plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
 #plan-management-list .plan-item:last-child { border-bottom: none; }
-#plan-management-list .plan-item.active .plan-name { color: var(--primary-color); font-weight: 600; }
+#plan-management-list .plan-item.active .plan-name-text { color: var(--primary-color); font-weight: 600; }
 .plan-actions { display: flex; gap: 0.5rem; }
 .plan-btn { font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px; }
+
+/* Styles for inline plan name editing */
+.plan-name-container { flex-grow: 1; }
+.plan-name-input {
+    width: calc(100% - 10px);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+}
+
 input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3); }
 /* ===========================
   ANIMATIONS & RESPONSIVENESS
