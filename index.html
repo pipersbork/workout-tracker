@@ -118,6 +118,15 @@
             <div class="workout-actions">
                 <button id="complete-workout-btn" class="cta-button" data-action="confirmCompleteWorkout">Complete Workout</button>
             </div>
+            <!-- NEW: Rest Timer Container -->
+            <div id="rest-timer-container" class="hidden">
+                <div id="rest-timer-display">3:00</div>
+                <div class="rest-timer-actions">
+                    <button class="timer-btn" data-action="adjustTimer" data-amount="-15">-15s</button>
+                    <button class="timer-btn" data-action="skipTimer">Skip</button>
+                    <button class="timer-btn" data-action="adjustTimer" data-amount="15">+15s</button>
+                </div>
+            </div>
         </div>
 
         <!-- Performance Summary View -->
@@ -226,7 +235,6 @@
         </div>
     </div>
 
-    <!-- This is the only change needed in your HTML -->
     <script type="module" src="js/main.js"></script>
 
 </body>
