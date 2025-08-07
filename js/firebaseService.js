@@ -67,8 +67,8 @@ export async function loadStateFromFirestore() {
             state.currentView = data.currentView || state.currentView;
         } else {
             // No document found, so this is a new user.
-            // Mark onboarding as completed and save the initial state.
-            state.userSelections.onboardingCompleted = true;
+            // The default state in state.js already has onboardingCompleted: false,
+            // so we just need to save that initial state.
             await saveStateToFirestore();
         }
         state.isDataLoaded = true;
