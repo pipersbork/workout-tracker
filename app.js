@@ -4,8 +4,6 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- FIREBASE CONFIGURATION ---
-// IMPORTANT: We are temporarily putting the keys back for testing.
-// Before you publish your app publicly, you MUST hide these keys using Vite or another tool.
 const firebaseConfig = {
   apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
@@ -30,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         //================================================================================
 
         viewMap: {
-            onboarding: 'onboarding-container',
+            onboarding: 'onboarding-container', // This is now just the splash screen
             home: 'home-screen',
             planHub: 'plan-hub-view',
             templateLibrary: 'template-library-view',
@@ -44,13 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state: {
             userId: null,
             isDataLoaded: false,
-            currentStep: 1,
-            totalSteps: 4,
+            // Onboarding state is simplified or can be removed later
             userSelections: { 
                 goal: null, 
                 experience: null, 
                 style: null,
-                onboardingCompleted: false
+                onboardingCompleted: false // We can still use this to create default settings for a true first-time user
             },
             settings: {
                 units: 'lbs',
@@ -82,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsView: document.getElementById('settings-view'),
             customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
             scheduleContainer: document.getElementById('schedule-container'),
-            progress: document.querySelector('.progress'),
             modal: document.getElementById('modal'),
             modalBody: document.getElementById('modal-body'),
             modalActions: document.getElementById('modal-actions'),
@@ -110,12 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
                     const splashProgressBar = document.querySelector('#step1 .progress');
         
-                    const transitionToNextView = () => {
-                        if (this.state.userSelections.onboardingCompleted) {
-                            this.showView('home');
-                        } else {
-                            this.nextStep();
-                        }
+                    const transitionFromSplash = () => {
+                        this.showView('home');
                     };
         
                     this.showView('onboarding', true); 
@@ -124,9 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => {
                             if (splashProgressBar) {
                                 splashProgressBar.style.width = '100%';
-                                splashProgressBar.addEventListener('transitionend', transitionToNextView, { once: true });
+                                splashProgressBar.addEventListener('transitionend', transitionFromSplash, { once: true });
                             } else {
-                                setTimeout(transitionToNextView, 1200);
+                                setTimeout(transitionFromSplash, 1200);
                             }
                         }, 100);
                     });
@@ -168,6 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.allPlans = data.allPlans || [];
                     this.state.activePlanId = data.activePlanId || (this.state.allPlans.length > 0 ? this.state.allPlans[0].id : null);
                     this.state.currentView = data.currentView || this.state.currentView;
+                } else {
+                    // This is a brand new user, so mark onboarding as "complete" by default now
+                    this.state.userSelections.onboardingCompleted = true;
+                    await this.saveStateToFirestore();
                 }
                 this.state.isDataLoaded = true;
             } catch (error) {
@@ -204,9 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId } = target.dataset;
 
                 const actions = {
-                    previousStep: () => this.previousStep(),
-                    validateAndProceed: () => this.validateAndProceed(field),
-                    finishOnboarding: () => this.validateStep('style') && this.finishOnboarding(),
                     showView: () => this.showView(viewName),
                     selectCard: () => this.selectCard(target, field, value, shouldSave === 'true'),
                     setTheme: () => this.setTheme(theme),
@@ -291,7 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 newViewEl.classList.remove('hidden');
 
                 if (viewName === 'home') this.renderHomeScreen();
-                else if (viewName === 'onboarding') this.showStep(this.state.currentStep);
                 else if (viewName === 'planHub') this.renderPlanHub();
                 else if (viewName === 'templateLibrary') this.renderTemplateLibrary();
                 else if (viewName === 'workout') this.renderDailyWorkout();
@@ -375,72 +367,12 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         closeModal() { this.elements.modal.classList.remove('active'); },
-        
-        showStep(stepNumber) {
-            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-            const newStep = document.getElementById(`step${stepNumber}`);
-            if (newStep) {
-                newStep.classList.add('active');
-                ['goal', 'experience', 'style'].forEach(field => {
-                    if (this.state.userSelections[field]) {
-                        const card = newStep.querySelector(`.card-group[data-field="${field}"] .goal-card[data-value="${this.state.userSelections[field]}"]`);
-                        if (card) card.classList.add('active');
-                    }
-                });
-            }
-            this.updateProgress();
-        },
 
-        updateProgress() {
-            const progressBar = document.querySelector(`#step${this.state.currentStep} .progress`);
-            if(progressBar) {
-                progressBar.style.width = `${((this.state.currentStep - 2) / (this.state.totalSteps - 2)) * 100}%`;
-            }
-        },
-        
-        nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
-        
-        previousStep() { 
-            if (this.state.currentStep > 2) { 
-                this.state.currentStep--; 
-                this.showStep(this.state.currentStep); 
-            } 
-        },
-        
-        validateStep(field) {
-            if (!this.state.userSelections[field]) { 
-                this.showModal('Selection Required', `Please select an option for "${this.capitalize(field)}" before continuing.`);
-                return false; 
-            }
-            return true;
-        },
-        
-        validateAndProceed(field) { if (this.validateStep(field)) this.nextStep(); },
-        
         async selectCard(element, field, value, shouldSave = false) {
             this.state.userSelections[field] = value;
             element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
             if (shouldSave) await this.saveStateToFirestore();
-        },
-        
-        async finishOnboarding() {
-            this.state.userSelections.onboardingCompleted = true;
-            await this.saveStateToFirestore();
-            
-            const generatedPlan = this.planGenerator.generate(this.state.userSelections, this.state.exercises);
-            this.state.builderPlan = generatedPlan.builderPlan;
-            
-            this.showModal(
-                "We've Built a Plan For You!",
-                `Based on your selections, we've generated a <strong>${generatedPlan.description}</strong>.`,
-                [
-                    { text: 'Use This Plan', class: 'azure-button', action: () => this.openMesoLengthModal() },
-                    { text: 'Customize This Plan', class: 'secondary-button', action: () => this.showView('builder') },
-                    { text: 'Design My Own Plan', class: 'cta-button', action: () => this.showView('customPlanWizard') }
-                ],
-                'vertical'
-            );
         },
         
         renderPlanHub() {
