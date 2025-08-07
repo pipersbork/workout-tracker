@@ -569,6 +569,35 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
+// --- NEW: ONBOARDING FUNCTIONS ---
+
+/** Handles the logic for selecting a card in the onboarding wizard. */
+function selectOnboardingCard(element, field, value) {
+    state.userSelections[field] = value;
+    element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
+    element.classList.add('active');
+    // Automatically move to the next step after a selection
+    setTimeout(() => nextOnboardingStep(), 300);
+}
+
+/** Moves the user to the next step in the onboarding wizard. */
+async function nextOnboardingStep() {
+    if (state.onboarding.currentStep < state.onboarding.totalSteps) {
+        state.onboarding.currentStep++;
+        ui.renderOnboardingStep();
+
+        // If it's the final "calculating" step
+        if (state.onboarding.currentStep === state.onboarding.totalSteps) {
+            state.userSelections.onboardingCompleted = true;
+            await firebase.saveStateToFirestore();
+            // Wait 2 seconds to simulate calculation, then go home
+            setTimeout(() => {
+                ui.showView('home');
+            }, 2000);
+        }
+    }
+}
+
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -642,6 +671,8 @@ export function initEventListeners() {
             },
             openNoteModal: () => openNoteModal(exerciseIndex, setIndex),
             showHistory: () => showHistory(exerciseId),
+            nextOnboardingStep: () => nextOnboardingStep(),
+            selectOnboardingCard: () => selectOnboardingCard(target, field, value),
         };
 
         if (actions[action]) {
