@@ -609,22 +609,47 @@ function showHistory(exerciseId) {
 
 // --- UPDATED: ONBOARDING FUNCTIONS ---
 
+/**
+ * A wrapper function to handle smooth step transitions.
+ * @param {Function} stepChangeLogic - The logic to run after the fade-out (e.g., incrementing the step).
+ */
+function handleStepTransition(stepChangeLogic) {
+    const currentStepEl = document.querySelector('.step.active');
+    if (currentStepEl) {
+        currentStepEl.classList.add('fade-out');
+        setTimeout(() => {
+            stepChangeLogic();
+            ui.renderOnboardingStep();
+        }, 400); // Match animation duration in CSS
+    } else {
+        // If no step is active, just run the logic immediately
+        stepChangeLogic();
+        ui.renderOnboardingStep();
+    }
+}
+
 /** Handles the logic for selecting a card in the onboarding wizard. */
 function selectOnboardingCard(element, field, value) {
     state.userSelections[field] = value;
     element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
-    // Automatically move to the next step after a selection
-    setTimeout(() => nextOnboardingStep(), 300);
+    
+    // Use the new transition handler for the automatic advance
+    handleStepTransition(() => {
+        if (state.onboarding.currentStep < state.onboarding.totalSteps) {
+            state.onboarding.currentStep++;
+        }
+    });
 }
 
 /** Moves the user to the next step in the onboarding wizard. */
 async function nextOnboardingStep() {
-    if (state.onboarding.currentStep < state.onboarding.totalSteps) {
-        state.onboarding.currentStep++;
-        ui.renderOnboardingStep();
-
-        // If it's the final "calculating" step
+    handleStepTransition(async () => {
+        if (state.onboarding.currentStep < state.onboarding.totalSteps) {
+            state.onboarding.currentStep++;
+        }
+        
+        // If it's the final "calculating" step after advancing
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
             state.userSelections.onboardingCompleted = true;
             await firebase.saveStateToFirestore();
@@ -633,17 +658,18 @@ async function nextOnboardingStep() {
                 ui.showView('home');
             }, 2000);
         }
-    }
+    });
 }
 
 /**
- * NEW: Moves the user to the previous step in the onboarding wizard.
+ * Moves the user to the previous step in the onboarding wizard.
  */
 function previousOnboardingStep() {
-    if (state.onboarding.currentStep > 1) {
-        state.onboarding.currentStep--;
-        ui.renderOnboardingStep();
-    }
+    handleStepTransition(() => {
+        if (state.onboarding.currentStep > 1) {
+            state.onboarding.currentStep--;
+        }
+    });
 }
 
 
