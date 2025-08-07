@@ -1422,9 +1422,9 @@ document.addEventListener('DOMContentLoaded', () => {
             getAllTemplates() {
                 // In a real app, this might fetch from a server or another file.
                 return [
-                    { id: 'beginner_muscle', name: 'Beginner Full Body', icon: 'beginner', description: 'A 3-day full body routine for new lifters.', config: this.templates.beginner.muscle },
-                    { id: 'experienced_muscle', name: 'Experienced Upper/Lower', icon: 'experienced', description: 'A 4-day upper/lower split for intermediate lifters.', config: this.templates.experienced.muscle },
-                    { id: 'advanced_muscle', name: 'Advanced Body Part Split', icon: 'advanced', description: 'A 5-day split for advanced lifters focusing on volume.', config: this.templates.advanced.muscle },
+                    { id: 'beginner_muscle', name: 'Beginner Full Body', icon: '🌱', description: 'A 3-day full body routine for new lifters.', config: this.templates.beginner.muscle },
+                    { id: 'experienced_muscle', name: 'Experienced Upper/Lower', icon: '⚡️', description: 'A 4-day upper/lower split for intermediate lifters.', config: this.templates.experienced.muscle },
+                    { id: 'advanced_muscle', name: 'Advanced Body Part Split', icon: '🔥', description: 'A 5-day split for advanced lifters focusing on volume.', config: this.templates.advanced.muscle },
                 ];
             },
 
