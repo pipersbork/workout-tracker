@@ -109,14 +109,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     await this.loadStateFromFirestore();
                     this.applyTheme();
 
-                    if (this.state.userSelections.onboardingCompleted) {
-                        this.showView('home', true);
-                    } else {
-                        this.showView('onboarding', true); // Shows step 1 (splash)
-                        setTimeout(() => {
-                            this.nextStep(); // Automatically move to step 2 after 2 seconds
-                        }, 2000); 
-                    }
+                    // *** NEW LOADING ANIMATION LOGIC ***
+                    this.showView('onboarding', true); // Ensure splash screen is visible
+                    const splashProgressBar = document.querySelector('#step1 .progress');
+
+                    // Force browser to paint the initial state (width: 0%) before animating
+                    setTimeout(() => {
+                        if (splashProgressBar) {
+                            splashProgressBar.style.width = '100%'; // Start the animation
+                        }
+                    }, 100); 
+
+                    // Wait for the animation to finish
+                    setTimeout(() => {
+                        if (this.state.userSelections.onboardingCompleted) {
+                            this.showView('home');
+                        } else {
+                            this.nextStep(); // Move from splash (step 1) to onboarding questions (step 2)
+                        }
+                    }, 1200); // 100ms delay + 1000ms animation + 100ms buffer
+
                 } else {
                     signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
                 }
@@ -377,7 +389,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateProgress();
         },
 
-        updateProgress() { this.elements.progress.style.width = `${((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100}%`; },
+        updateProgress() {
+            const progressBar = document.querySelector(`#step${this.state.currentStep} .progress`);
+            if(progressBar) {
+                progressBar.style.width = `${((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100}%`;
+            }
+        },
         
         nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
         
