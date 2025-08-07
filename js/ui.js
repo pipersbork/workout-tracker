@@ -527,7 +527,6 @@ export function renderWorkoutSummary() {
     document.getElementById('summary-sets').textContent = totalSets;
     document.getElementById('summary-prs').textContent = 0; // Placeholder for now
 
-    // UPDATED: Render progression suggestions
     const suggestionContainer = document.getElementById('summary-progression-list');
     if (state.workoutSummary.suggestions && state.workoutSummary.suggestions.length > 0) {
         suggestionContainer.innerHTML = state.workoutSummary.suggestions.map(s => `
@@ -606,9 +605,15 @@ export function updateTimerDisplay() {
 /** Renders the current step of the onboarding wizard. */
 export function renderOnboardingStep() {
     const { currentStep } = state.onboarding;
-    document.querySelectorAll('#onboarding-container .step').forEach(step => {
+    const allSteps = document.querySelectorAll('#onboarding-container .step');
+    
+    // UPDATED: Added a cleanup step to remove fade-out class
+    allSteps.forEach(step => step.classList.remove('fade-out'));
+
+    allSteps.forEach(step => {
         step.classList.toggle('active', parseInt(step.dataset.step) === currentStep);
     });
+
     updateOnboardingProgress();
 }
 
@@ -666,7 +671,7 @@ export const customPlanWizard = {
     updatePriorityMuscleLimit() {
         const limit = this.getPriorityMuscleLimit();
         document.getElementById('priority-muscles-title').textContent = `Any priority muscles? (Select up to ${limit})`;
-        const selected = this.config.priorityMuscles || [];
+        const selected = this.config.priorityMusacles || [];
         if (selected.length > limit) {
             this.config.priorityMuscles = selected.slice(0, limit);
             document.querySelectorAll('.muscle-card.active').forEach(card => {
