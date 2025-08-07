@@ -17,15 +17,14 @@ export function capitalize(str) {
  * Creates the HTML for a single set row in the daily workout view.
  * @param {number} exIndex - The index of the exercise.
  * @param {number} setIndex - The index of the set.
- * @param {number} weight - The weight for the set.
- * @param {string} rawInput - The raw text input for reps/RIR.
+ * @param {object} set - The set data object, containing weight, rawInput, and note.
  * @param {object} lastWeekSet - The data for the corresponding set from the previous week.
  * @param {number} targetReps - The target number of reps for the set.
  * @param {number} targetRIR - The target Reps in Reserve for the set.
  * @param {number} week - The current week number.
  * @returns {string} The HTML string for the set row.
  */
-export function createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSet, targetReps, targetRIR, week) {
+export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps, targetRIR, week) {
     let placeholder;
     if (week === 1) {
         // For the first week, the placeholder is based on target RIR
@@ -36,12 +35,19 @@ export function createSetRowHTML(exIndex, setIndex, weight, rawInput, lastWeekSe
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
     }
     const unitLabel = state.settings.units.toUpperCase();
+    const hasNote = set.note && set.note.trim() !== '';
+
     return `
         <div class="set-row" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
             <div class="set-inputs">
-                <input type="number" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                <input type="number" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+            </div>
+            <div class="set-actions">
+                <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openNoteModal" data-exercise-index="${exIndex}" data-set-index="${setIndex}" aria-label="Add Note">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
+                </button>
             </div>
         </div>
     `;
