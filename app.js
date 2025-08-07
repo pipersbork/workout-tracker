@@ -24,11 +24,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const app = {
         //================================================================================
-        // STATE & ELEMENTS
+        // ICONS, STATE & ELEMENTS
         //================================================================================
 
+        icons: {
+            muscle: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 .5-.2 1.3-.5 2.2-.3 1-.7 2-1.5 3-1.5 1.5-3.3 2.5-5 2.8M3 21h18M6 21v-4c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v4M12 4V2M6 8V6M18 8V6"></path></svg>`,
+            strength: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="2" y="10" width="2" height="4"></rect><rect x="6" y="9" width="2" height="6"></rect><rect x="16" y="9" width="2" height="6"></rect><rect x="20" y="10" width="2" height="4"></rect></svg>`,
+            endurance: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h12v6a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4v-6z"></path><path d="M8 10V8a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"></path></svg>`,
+            hybrid: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="3"></circle><circle cx="14" cy="14" r="3"></circle><line x1="10" y1="10" x2="14" y2="14"></line></svg>`,
+            beginner: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M12 20V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V8"/></svg>`,
+            experienced: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+            advanced: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5c-1.5 1.5-2.5 3.5-2.5 5.5s1 4 2.5 5.5M10 12c-2-2-3-4-3-6s1-4 3-6"></path><path d="M12 22c4-4 6-8 6-12S16 2 12 2 6 6 6 10s2 8 6 12z"></path></svg>`,
+            play: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+            book: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`,
+            chart: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>`,
+            pencil: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`,
+            copy: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
+            moon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
+        },
+
         viewMap: {
-            onboarding: 'onboarding-container', // This is now just the splash screen
+            onboarding: 'onboarding-container',
             home: 'home-screen',
             planHub: 'plan-hub-view',
             templateLibrary: 'template-library-view',
@@ -389,22 +405,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             let optionsHTML = `
                 <button class="hub-option" data-hub-action="template">
-                    <div class="hub-option-icon">📖</div>
+                    <div class="hub-option-icon">${this.icons.book}</div>
                     <div class="hub-option-text"><h3>Start with a Template</h3><p>Choose from dozens of evidence-based templates.</p></div>
                 </button>
                 <button class="hub-option" data-hub-action="scratch">
-                    <div class="hub-option-icon">✏️</div>
+                    <div class="hub-option-icon">${this.icons.pencil}</div>
                     <div class="hub-option-text"><h3>Start from Scratch</h3><p>Use the wizard to design your own custom plan.</p></div>
                 </button>
             `;
             if (activePlan) {
                 optionsHTML = `
                     <button class="hub-option" data-hub-action="resume">
-                        <div class="hub-option-icon">▶️</div>
+                        <div class="hub-option-icon">${this.icons.play}</div>
                         <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".p></div>
                     </button>
                     <button class="hub-option" data-hub-action="copy">
-                        <div class="hub-option-icon">🔁</div>
+                        <div class="hub-option-icon">${this.icons.copy}</div>
                         <div class="hub-option-text"><h3>Copy a Mesocycle</h3><p>Start a new plan based on a previous one.</p></div>
                     </button>
                 ` + optionsHTML;
@@ -418,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let templatesHTML = progressionTemplates.map(template => `
                 <div class="hub-option" data-action="selectTemplate" data-template-id="${template.id}">
-                    <div class="hub-option-icon">${template.icon || '🏋️'}</div>
+                    <div class="hub-option-icon">${this.icons[template.icon] || this.icons.strength}</div>
                     <div class="hub-option-text"><h3>${template.name}</h3><p>${template.description}</p></div>
                 </div>
             `).join('');
@@ -536,8 +552,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
                 return;
             }
-            const muscleList = ['Select a Muscle', 'Rest Day 🧘', ...new Set(this.state.exercises.map(ex => ex.muscle))];
-            const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(' 🧘', '').replace(/ /g, '')}">${m}</option>`).join('');
+            const muscleList = ['Select a Muscle', 'Rest Day', ...new Set(this.state.exercises.map(ex => ex.muscle))];
+            const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(/ /g, '')}">${m === 'Rest Day' ? m + ' ' + this.icons.moon : m}</option>`).join('');
             const exerciseSlotsByFocus = { 'Primary': 3, 'Secondary': 2, 'Maintenance': 1 };
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
@@ -1389,9 +1405,9 @@ document.addEventListener('DOMContentLoaded', () => {
             getAllTemplates() {
                 // In a real app, this might fetch from a server or another file.
                 return [
-                    { id: 'beginner_muscle', name: 'Beginner Full Body', icon: '🌱', description: 'A 3-day full body routine for new lifters.', config: this.templates.beginner.muscle },
-                    { id: 'experienced_muscle', name: 'Experienced Upper/Lower', icon: '⚡', description: 'A 4-day upper/lower split for intermediate lifters.', config: this.templates.experienced.muscle },
-                    { id: 'advanced_muscle', name: 'Advanced Body Part Split', icon: '🔥', description: 'A 5-day split for advanced lifters focusing on volume.', config: this.templates.advanced.muscle },
+                    { id: 'beginner_muscle', name: 'Beginner Full Body', icon: 'beginner', description: 'A 3-day full body routine for new lifters.', config: this.templates.beginner.muscle },
+                    { id: 'experienced_muscle', name: 'Experienced Upper/Lower', icon: 'experienced', description: 'A 4-day upper/lower split for intermediate lifters.', config: this.templates.experienced.muscle },
+                    { id: 'advanced_muscle', name: 'Advanced Body Part Split', icon: 'advanced', description: 'A 5-day split for advanced lifters focusing on volume.', config: this.templates.advanced.muscle },
                 ];
             },
 
