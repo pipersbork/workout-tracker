@@ -1,7 +1,6 @@
 import { state } from './state.js';
 import { planGenerator } from './planGenerator.js';
 import * as utils from './utils.js';
-import * as actions from './eventHandlers.js';
 
 /**
  * @file ui.js handles all direct DOM manipulation and rendering.
@@ -26,6 +25,9 @@ export const elements = {
     activePlanDisplay: document.getElementById('active-plan-display'),
     builderTitle: document.getElementById('builder-title'),
     planManagementList: document.getElementById('plan-management-list'),
+    // NEW: Timer elements
+    restTimerContainer: document.getElementById('rest-timer-container'),
+    restTimerDisplay: document.getElementById('rest-timer-display'),
 };
 
 // --- VIEW MANAGEMENT ---
@@ -482,7 +484,7 @@ export function renderProgressChart(exerciseName) {
 }
 
 
-// --- MODAL & THEME ---
+// --- MODAL, THEME, & TIMER ---
 
 /**
  * Displays a modal with a title, message, and customizable buttons.
@@ -521,6 +523,15 @@ export function closeModal() {
 /** Applies the current theme (dark/light) to the body element. */
 export function applyTheme() {
     document.body.dataset.theme = state.settings.theme;
+}
+
+/**
+ * Updates the rest timer display with the formatted time.
+ */
+export function updateTimerDisplay() {
+    const minutes = Math.floor(state.restTimer.remaining / 60);
+    const seconds = state.restTimer.remaining % 60;
+    elements.restTimerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 
