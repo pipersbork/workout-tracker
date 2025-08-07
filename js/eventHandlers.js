@@ -461,6 +461,47 @@ function selectTemplate(templateId) {
     }
 }
 
+// --- NEW: TIMER FUNCTIONS ---
+
+/** Starts the rest timer. */
+function startTimer() {
+    stopTimer(); // Ensure no other timer is running
+    state.restTimer.remaining = state.restTimer.defaultTime;
+    ui.updateTimerDisplay();
+    ui.elements.restTimerContainer.classList.remove('hidden');
+
+    state.restTimer.instance = setInterval(() => {
+        state.restTimer.remaining--;
+        ui.updateTimerDisplay();
+        if (state.restTimer.remaining <= 0) {
+            stopTimer();
+            // Optional: Add a sound or visual notification here
+        }
+    }, 1000);
+}
+
+/** Stops the rest timer and hides the timer display. */
+function stopTimer() {
+    clearInterval(state.restTimer.instance);
+    state.restTimer.instance = null;
+    ui.elements.restTimerContainer.classList.add('hidden');
+}
+
+/**
+ * Adjusts the current timer's remaining time.
+ * @param {number} amount - The number of seconds to add or remove.
+ */
+function adjustTimer(amount) {
+    if (state.restTimer.instance) {
+        state.restTimer.remaining += amount;
+        if (state.restTimer.remaining < 0) {
+            state.restTimer.remaining = 0;
+        }
+        ui.updateTimerDisplay();
+    }
+}
+
+
 // --- EVENT LISTENER INITIALIZATION ---
 
 /** Initializes all event listeners for the application. */
@@ -470,7 +511,7 @@ export function initEventListeners() {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId } = target.dataset;
+        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, amount } = target.dataset;
 
         const actions = {
             showView: () => ui.showView(viewName),
@@ -490,6 +531,9 @@ export function initEventListeners() {
             switchTab: () => { /* Logic for switching tabs can be added here if needed */ },
             selectTemplate: () => selectTemplate(templateId),
             finishWizard: () => ui.customPlanWizard.finish(),
+            // NEW: Timer actions
+            adjustTimer: () => adjustTimer(parseInt(amount)),
+            skipTimer: () => stopTimer(),
         };
 
         if (actions[action]) {
@@ -639,6 +683,11 @@ export function initEventListeners() {
                     set.reps = parseInt(value) || '';
                     set.rir = '';
                 }
+            }
+
+            // If both weight and reps/RIR have values, start the timer
+            if (set.weight && (set.reps || set.rir)) {
+                startTimer();
             }
         }
     });
