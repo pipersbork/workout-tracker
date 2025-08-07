@@ -63,5 +63,10 @@ export const state = {
         isRunning: false,    // Is the timer currently running?
         startTime: 0,        // Timestamp when the timer was started/resumed
         timerDuration: 180   // Default duration for the countdown timer
+    },
+
+    // UPDATED: Temporary state for the workout summary screen
+    workoutSummary: {
+        suggestions: []
     }
 };
