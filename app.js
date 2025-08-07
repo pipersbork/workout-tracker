@@ -3,14 +3,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// --- SECURE FIREBASE CONFIGURATION ---
+// --- FIREBASE CONFIGURATION ---
+// IMPORTANT: We are temporarily putting the keys back for testing.
+// Before you publish your app publicly, you MUST hide these keys using Vite or another tool.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
+  authDomain: "progression-700a3.firebaseapp.com",
+  projectId: "progression-700a3",
+  storageBucket: "progression-700a3.firebasestorage.app",
+  messagingSenderId: "525938060953",
+  appId: "1:525938060953:web:e453db795cd89aabc15208"
 };
 
 
@@ -106,30 +108,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     await this.loadStateFromFirestore();
                     this.applyTheme();
         
-                    // *** CORRECTED LOADING ANIMATION LOGIC ***
-                    this.showView('onboarding', true); // Make sure splash screen is visible
                     const splashProgressBar = document.querySelector('#step1 .progress');
         
-                    // This function will run after the loading bar animation is complete
                     const transitionToNextView = () => {
                         if (this.state.userSelections.onboardingCompleted) {
                             this.showView('home');
                         } else {
-                            this.nextStep(); // Move from splash (step 1) to onboarding questions (step 2)
+                            this.nextStep();
                         }
                     };
         
-                    // Wait a tiny moment for the browser to render the initial state
+                    this.showView('onboarding', true); 
+        
                     requestAnimationFrame(() => {
-                        if (splashProgressBar) {
-                            // Set the final width to trigger the CSS transition
-                            splashProgressBar.style.width = '100%';
-                            // Listen for the end of the transition
-                            splashProgressBar.addEventListener('transitionend', transitionToNextView, { once: true });
-                        } else {
-                            // If something went wrong, just proceed after a delay
-                            setTimeout(transitionToNextView, 1200);
-                        }
+                        setTimeout(() => {
+                            if (splashProgressBar) {
+                                splashProgressBar.style.width = '100%';
+                                splashProgressBar.addEventListener('transitionend', transitionToNextView, { once: true });
+                            } else {
+                                setTimeout(transitionToNextView, 1200);
+                            }
+                        }, 100);
                     });
         
                 } else {
@@ -402,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
         
         previousStep() { 
-            // Prevent going back to the splash screen
             if (this.state.currentStep > 2) { 
                 this.state.currentStep--; 
                 this.showStep(this.state.currentStep); 
