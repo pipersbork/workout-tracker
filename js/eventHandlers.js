@@ -183,7 +183,7 @@ async function finalizeAndStartPlan(mesoLength, planName) {
  * Loads an existing plan into the builder for editing.
  * @param {string} planId - The ID of the plan to edit.
  */
-function editPlan(planId) {
+function openBuilderForEdit(planId) {
     const planToEdit = state.allPlans.find(p => p.id === planId);
     if (!planToEdit) return;
     state.editingPlanId = planId;
@@ -191,6 +191,41 @@ function editPlan(planId) {
     ui.elements.builderTitle.textContent = `Editing: ${planToEdit.name}`;
     ui.showView('builder');
 }
+
+/**
+ * Toggles the inline editor for a plan name in the settings list.
+ * @param {string} planId - The ID of the plan to edit the name of.
+ * @param {HTMLElement} button - The button element that was clicked.
+ */
+async function toggleEditPlanName(planId, button) {
+    const planItem = document.querySelector(`.plan-item[data-plan-id="${planId}"]`);
+    const input = planItem.querySelector('.plan-name-input');
+    const text = planItem.querySelector('.plan-name-text');
+
+    const isEditing = button.textContent === 'Save';
+
+    if (isEditing) {
+        const newName = input.value.trim();
+        if (newName) {
+            const plan = state.allPlans.find(p => p.id === planId);
+            if (plan) {
+                plan.name = newName;
+                await firebase.saveStateToFirestore();
+            }
+            text.textContent = newName;
+        }
+        button.textContent = 'Edit';
+    } else {
+        button.textContent = 'Save';
+    }
+
+    input.classList.toggle('hidden');
+    text.classList.toggle('hidden');
+    if (!isEditing) {
+        input.focus();
+    }
+}
+
 
 /**
  * Shows a confirmation modal before deleting a plan.
@@ -446,7 +481,8 @@ export function initEventListeners() {
             setWeightIncrement: () => setWeightIncrement(parseFloat(increment)),
             addDayToBuilder: () => addDayToBuilder(),
             openMesoLengthModal: () => openMesoLengthModal(),
-            editPlan: () => editPlan(planId),
+            openBuilderForEdit: () => openBuilderForEdit(planId),
+            toggleEditPlanName: () => toggleEditPlanName(planId, target),
             confirmDeletePlan: () => confirmDeletePlan(planId),
             setActivePlan: () => setActivePlan(planId),
             confirmCompleteWorkout: () => confirmCompleteWorkout(),
