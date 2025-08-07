@@ -527,8 +527,18 @@ export function renderWorkoutSummary() {
     document.getElementById('summary-sets').textContent = totalSets;
     document.getElementById('summary-prs').textContent = 0; // Placeholder for now
 
-    // Placeholder for progression suggestions
-    document.getElementById('summary-progression-list').innerHTML = `<p class="placeholder-text">Progression logic coming soon!</p>`;
+    // UPDATED: Render progression suggestions
+    const suggestionContainer = document.getElementById('summary-progression-list');
+    if (state.workoutSummary.suggestions && state.workoutSummary.suggestions.length > 0) {
+        suggestionContainer.innerHTML = state.workoutSummary.suggestions.map(s => `
+            <div class="summary-item">
+                <h4>${s.exerciseName}</h4>
+                <p>${s.suggestion}</p>
+            </div>
+        `).join('');
+    } else {
+        suggestionContainer.innerHTML = `<p class="placeholder-text">No specific progression suggestions for next week. Keep up the great work!</p>`;
+    }
 }
 
 
