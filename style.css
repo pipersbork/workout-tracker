@@ -47,6 +47,10 @@ body { font-family: var(--font-family); background-color: var(--color-surface-pr
 .step { display: none; text-align: center; }
 .step.active { display: block; animation: fadeIn 0.4s ease-in-out; }
 
+/* UPDATED: Added fade-out animation for steps */
+.step.fade-out {
+    animation: fadeOut 0.4s ease-in-out;
+}
 
 .view {
     animation: fadeIn 0.4s ease-in-out;
