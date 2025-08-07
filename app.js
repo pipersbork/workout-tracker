@@ -8,7 +8,7 @@ import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/fireb
 // For local development with Vite, create a .env file with VITE_FIREBASE_API_KEY="...".
 // For deployment, set these variables in your hosting provider's settings (e.g., Netlify, Vercel).
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY", // Fallback for environments without .env
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
@@ -25,10 +25,6 @@ const db = getFirestore(firebaseApp);
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    /**
-     * The main application object.
-     * This object encapsulates the entire application's state, elements, and logic.
-     */
     const app = {
         //================================================================================
         // STATE & ELEMENTS
@@ -112,10 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.userId = user.uid;
                     await this.loadStateFromFirestore();
                     this.applyTheme();
+
                     if (this.state.userSelections.onboardingCompleted) {
                         this.showView('home', true);
                     } else {
-                        this.showView('onboarding', true);
+                        this.showView('onboarding', true); // Shows step 1 (splash)
+                        setTimeout(() => {
+                            this.nextStep(); // Automatically move to step 2 after 2 seconds
+                        }, 2000); 
                     }
                 } else {
                     signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId } = target.dataset;
 
                 const actions = {
-                    nextStep: () => this.nextStep(),
                     previousStep: () => this.previousStep(),
                     validateAndProceed: () => this.validateAndProceed(field),
                     finishOnboarding: () => this.validateStep('style') && this.finishOnboarding(),
