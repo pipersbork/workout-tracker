@@ -24,24 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const app = {
         //================================================================================
-        // ICONS, STATE & ELEMENTS
+        // STATE & ELEMENTS
         //================================================================================
-
-        icons: {
-            muscle: 'https://storage.googleapis.com/gemini-prod/images/bicep_emoji.png',
-            strength: 'https://storage.googleapis.com/gemini-prod/images/barbell_emoji.png',
-            endurance: 'https://storage.googleapis.com/gemini-prod/images/kettlebell_emoji.png',
-            hybrid: 'https://storage.googleapis.com/gemini-prod/images/rings_emoji.png',
-            beginner: 'https://storage.googleapis.com/gemini-prod/images/sprout_emoji.png',
-            experienced: 'https://storage.googleapis.com/gemini-prod/images/lightning_emoji.png',
-            advanced: 'https://storage.googleapis.com/gemini-prod/images/flame_emoji.png',
-            play: 'https://storage.googleapis.com/gemini-prod/images/play_emoji.png',
-            book: 'https://storage.googleapis.com/gemini-prod/images/book_emoji.png',
-            chart: 'https://storage.googleapis.com/gemini-prod/images/chart_emoji.png',
-            pencil: 'https://storage.googleapis.com/gemini-prod/images/pencil_emoji.png',
-            copy: 'https://storage.googleapis.com/gemini-prod/images/copy_emoji.png',
-            moon: 'https://storage.googleapis.com/gemini-prod/images/moon_emoji.png',
-        },
 
         viewMap: {
             onboarding: 'onboarding-container',
@@ -328,15 +312,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('#home-screen .home-nav-buttons');
             container.innerHTML = `
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="workout">
-                    <div class="hub-option-icon"><img src="${this.icons.play}" alt="Start workout"></div>
+                    <div class="hub-option-icon">▶️</div>
                     <div class="hub-option-text"><h3>Start Next Workout</h3></div>
                 </button>
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="planHub">
-                    <div class="hub-option-icon"><img src="${this.icons.book}" alt="Plan mesocycle"></div>
+                    <div class="hub-option-icon">📖</div>
                     <div class="hub-option-text"><h3>Plan Mesocycle</h3></div>
                 </button>
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="performanceSummary">
-                    <div class="hub-option-icon"><img src="${this.icons.chart}" alt="Performance summary"></div>
+                    <div class="hub-option-icon">📊</div>
                     <div class="hub-option-text"><h3>Performance Summary</h3></div>
                 </button>
             `;
@@ -421,22 +405,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             let optionsHTML = `
                 <button class="hub-option" data-hub-action="template">
-                    <div class="hub-option-icon"><img src="${this.icons.book}" alt="Template"></div>
+                    <div class="hub-option-icon">📖</div>
                     <div class="hub-option-text"><h3>Start with a Template</h3><p>Choose from dozens of evidence-based templates.</p></div>
                 </button>
                 <button class="hub-option" data-hub-action="scratch">
-                    <div class="hub-option-icon"><img src="${this.icons.pencil}" alt="Scratch"></div>
+                    <div class="hub-option-icon">✏️</div>
                     <div class="hub-option-text"><h3>Start from Scratch</h3><p>Use the wizard to design your own custom plan.</p></div>
                 </button>
             `;
             if (activePlan) {
                 optionsHTML = `
                     <button class="hub-option" data-hub-action="resume">
-                        <div class="hub-option-icon"><img src="${this.icons.play}" alt="Resume"></div>
+                        <div class="hub-option-icon">▶️</div>
                         <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".p></div>
                     </button>
                     <button class="hub-option" data-hub-action="copy">
-                        <div class="hub-option-icon"><img src="${this.icons.copy}" alt="Copy"></div>
+                        <div class="hub-option-icon">🔁</div>
                         <div class="hub-option-text"><h3>Copy a Mesocycle</h3><p>Start a new plan based on a previous one.</p></div>
                     </button>
                 ` + optionsHTML;
@@ -450,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let templatesHTML = progressionTemplates.map(template => `
                 <div class="hub-option" data-action="selectTemplate" data-template-id="${template.id}">
-                    <div class="hub-option-icon"><img src="${this.icons[template.icon]}" alt="${template.name}"></div>
+                    <div class="hub-option-icon">${template.icon}</div>
                     <div class="hub-option-text"><h3>${template.name}</h3><p>${template.description}</p></div>
                 </div>
             `).join('');
@@ -569,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             const muscleList = ['Select a Muscle', 'Rest Day', ...new Set(this.state.exercises.map(ex => ex.muscle))];
-            const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(/ /g, '')}">${m === 'Rest Day' ? m : m}</option>`).join('');
+            const muscleOptions = muscleList.map(m => `<option value="${m.toLowerCase().replace(/ /g, '')}">${m === 'Rest Day' ? m + ' 🌙' : m}</option>`).join('');
             const exerciseSlotsByFocus = { 'Primary': 3, 'Secondary': 2, 'Maintenance': 1 };
             this.state.builderPlan.days.forEach((day, dayIndex) => {
                 const dayCard = document.createElement('div');
@@ -647,17 +631,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSettings() {
             const goalCardsContainer = document.getElementById('settings-goal-cards');
             goalCardsContainer.innerHTML = `
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="strength" role="button" tabindex="0"><div class="icon"><img src="${this.icons.strength}" alt="Get Strong"></div><h3>Get Strong</h3></div>
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="muscle" role="button" tabindex="0"><div class="icon"><img src="${this.icons.muscle}" alt="Build Muscle"></div><h3>Build Muscle</h3></div>
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="endurance" role="button" tabindex="0"><div class="icon"><img src="${this.icons.endurance}" alt="Muscular Endurance"></div><h3>Muscular Endurance</h3></div>
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="cardio" role="button" tabindex="0"><div class="icon"><img src="${this.icons.hybrid}" alt="Cardio Endurance"></div><h3>Cardio Endurance</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Get Strong</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Build Muscle</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="endurance" role="button" tabindex="0"><div class="icon">🏃</div><h3>Muscular Endurance</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="cardio" role="button" tabindex="0"><div class="icon">🔥</div><h3>Cardio Endurance</h3></div>
             `;
 
             const experienceCardsContainer = document.getElementById('settings-experience-cards');
             experienceCardsContainer.innerHTML = `
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><div class="icon"><img src="${this.icons.beginner}" alt="Beginner"></div><h3>Beginner</h3></div>
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="experienced" role="button" tabindex="0"><div class="icon"><img src="${this.icons.experienced}" alt="Experienced"></div><h3>Experienced</h3></div>
-                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><div class="icon"><img src="${this.icons.advanced}" alt="Advanced"></div><h3>Advanced</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡️</div><h3>Experienced</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3></div>
             `;
 
             goalCardsContainer.querySelector(`.goal-card[data-value="${this.state.userSelections.goal}"]`)?.classList.add('active');
@@ -1199,10 +1183,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="settings-section">
                         <h3>What is your primary training goal?</h3>
                         <div class="card-group settings-card-group">
-                            <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon"><img src="${app.icons.strength}" alt="Get Strong"></div><h3>Get Strong</h3></div>
-                            <div class="goal-card focus-card" data-value="muscle" role="button" tabindex="0"><div class="icon"><img src="${app.icons.muscle}" alt="Build Muscle"></div><h3>Build Muscle</h3></div>
-                            <div class="goal-card focus-card" data-value="endurance" role="button" tabindex="0"><div class="icon"><img src="${app.icons.endurance}" alt="Muscular Endurance"></div><h3>Muscular Endurance</h3></div>
-                            <div class="goal-card focus-card" data-value="hybrid" role="button" tabindex="0"><div class="icon"><img src="${app.icons.hybrid}" alt="Hybrid"></div><h3>Hybrid</h3></div>
+                            <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Get Strong</h3></div>
+                            <div class="goal-card focus-card" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Build Muscle</h3></div>
+                            <div class="goal-card focus-card" data-value="endurance" role="button" tabindex="0"><div class="icon">🏃</div><h3>Muscular Endurance</h3></div>
+                            <div class="goal-card focus-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3></div>
                         </div>
                     </div>
                     <div class="settings-section">
