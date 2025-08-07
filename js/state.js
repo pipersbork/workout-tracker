@@ -37,6 +37,12 @@ export const state = {
     // UI and View State
     currentViewName: 'onboarding',
 
+    // NEW: Onboarding Wizard State
+    onboarding: {
+        currentStep: 1,
+        totalSteps: 5,
+    },
+
     // Temporary state for building a new plan
     builderPlan: {
         days: []
@@ -49,7 +55,7 @@ export const state = {
     progressChart: null,
     volumeChart: null,
 
-    // NEW: Workout Timer State (replaces restTimer)
+    // Workout Timer State
     workoutTimer: {
         instance: null,      // Holds the setInterval ID
         elapsed: 0,          // Total elapsed seconds for stopwatch
