@@ -87,9 +87,9 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .exercise-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .exercise-title-group { display: flex; align-items: center; gap: 0.75rem; }
 .exercise-title-group h3 { margin: 0; font-size: 1.5rem; }
-.swap-exercise-btn { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
-.swap-exercise-btn:hover { color: var(--secondary-color); }
-.swap-exercise-btn svg { pointer-events: none; }
+.swap-exercise-btn, .history-btn { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
+.swap-exercise-btn:hover, .history-btn:hover { color: var(--secondary-color); }
+.swap-exercise-btn svg, .history-btn svg { pointer-events: none; }
 .exercise-target { font-size: 0.9rem; color: var(--secondary-color); background-color: rgba(255, 107, 53, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
 .sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
 .sets-container .set-row:last-child { border-bottom: none; }
@@ -100,6 +100,54 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--text-muted-color); }
 .add-set-btn { background: none; border: 1px dashed var(--border-color); color: var(--text-muted-color); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
 .add-set-btn:hover { background-color: var(--border-color); color: var(--text-color); }
 .workout-actions { margin-top: 2rem; text-align: center; }
+
+/* NEW: Styles for Notes and History */
+.set-actions {
+    flex-basis: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.note-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+.note-btn.has-note, .note-btn:hover {
+    opacity: 1;
+    color: var(--secondary-color);
+}
+.modal-textarea {
+    width: 100%;
+    min-height: 100px;
+    margin-top: 1rem;
+    padding: 0.75rem;
+}
+.history-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+.history-item:last-child {
+    border-bottom: none;
+}
+.history-date {
+    font-weight: 600;
+    color: var(--text-color);
+}
+.history-performance {
+    color: var(--text-muted-color);
+}
+.history-note {
+    font-style: italic;
+    color: var(--secondary-color);
+    margin-top: 0.25rem;
+}
+
 /* ===========================
   COMPONENTS (Buttons, Modal)
 =========================== */
@@ -230,7 +278,7 @@ input:focus, select:focus { outline: none; border-color: var(--primary-color); b
 @media (max-width: 768px) { .container, #daily-workout-view, #performance-summary-view, #settings-view { margin: 1rem auto; padding: 1rem; } .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .back-btn { top: 1rem; left: 1rem; } }
 
 /* ===========================
-  NEW: REST TIMER STYLES
+  REST TIMER STYLES
 =========================== */
 #rest-timer-container {
     position: fixed;
