@@ -48,4 +48,11 @@ export const state = {
     // Chart.js instances for the performance summary
     progressChart: null,
     volumeChart: null,
+
+    // NEW: Rest Timer State
+    restTimer: {
+        instance: null,      // Will hold the setInterval ID
+        remaining: 180,      // Remaining time in seconds
+        defaultTime: 180     // Default rest period
+    }
 };
