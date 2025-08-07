@@ -45,7 +45,8 @@ body { font-family: var(--font-family); background-color: var(--color-surface-pr
 =========================== */
 .hidden { display: none !important; }
 .step { display: none; text-align: center; }
-.step.active { display: block; }
+.step.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+
 
 .view {
     animation: fadeIn 0.4s ease-in-out;
@@ -79,7 +80,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .home-icon-btn:hover svg { stroke: #fff; }
 
 .progress-bar { width: 100%; height: 8px; background-color: var(--color-surface-secondary); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; }
-.progress { width: 0%; height: 100%; background-color: var(--color-accent-primary); border-radius: 4px; transition: width 1s ease-in-out; }
+.progress { width: 0%; height: 100%; background-color: var(--color-accent-primary); border-radius: 4px; transition: width 0.5s ease-in-out; }
 .splash-bar { max-width: 300px; margin: 2rem auto 0 auto; }
 
 .card-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
@@ -372,4 +373,24 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
 .summary-actions {
     margin-top: 2rem;
     text-align: center;
+}
+
+/* ===========================
+  ONBOARDING WIZARD STYLES
+=========================== */
+.onboarding-wizard {
+    width: 100%;
+    max-width: 500px;
+}
+.onboarding-wizard .step h3 {
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+}
+.onboarding-wizard .step p {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2.5rem;
+}
+.onboarding-wizard .card-group {
+    grid-template-columns: 1fr;
 }
