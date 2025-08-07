@@ -18,7 +18,7 @@ export const elements = {
     performanceSummaryView: document.getElementById('performance-summary-view'),
     settingsView: document.getElementById('settings-view'),
     customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
-    workoutSummaryView: document.getElementById('workout-summary-view'), // New
+    workoutSummaryView: document.getElementById('workout-summary-view'),
     scheduleContainer: document.getElementById('schedule-container'),
     modal: document.getElementById('modal'),
     modalBody: document.getElementById('modal-body'),
@@ -41,7 +41,7 @@ const viewMap = {
     workout: 'daily-workout-view',
     performanceSummary: 'performance-summary-view',
     settings: 'settings-view',
-    workoutSummary: 'workout-summary-view', // New
+    workoutSummary: 'workout-summary-view',
 };
 
 /**
@@ -50,6 +50,11 @@ const viewMap = {
  * @param {boolean} skipAnimation - If true, the transition will be immediate.
  */
 export function showView(viewName, skipAnimation = false) {
+    // If the user hasn't completed onboarding, force them to the onboarding view
+    if (viewName !== 'onboarding' && !state.userSelections.onboardingCompleted) {
+        viewName = 'onboarding';
+    }
+
     const currentViewId = viewMap[state.currentViewName];
     const newViewId = viewMap[viewName];
     if (!newViewId) {
@@ -81,7 +86,8 @@ export function showView(viewName, skipAnimation = false) {
             case 'performanceSummary': renderPerformanceSummary(); break;
             case 'settings': renderSettings(); break;
             case 'customPlanWizard': customPlanWizard.render(); break;
-            case 'workoutSummary': renderWorkoutSummary(); break; // New
+            case 'workoutSummary': renderWorkoutSummary(); break;
+            case 'onboarding': renderOnboardingStep(); break;
         }
 
         state.currentViewName = viewName;
@@ -421,14 +427,14 @@ function renderVolumeChart(completedWorkouts) {
             datasets: [{
                 label: `Total Volume (${unitLabel})`,
                 data: Object.values(volumeByMuscle),
-                backgroundColor: 'rgba(255, 107, 53, 0.5)',
-                borderColor: 'var(--primary-color)',
+                backgroundColor: 'rgba(255, 122, 0, 0.5)',
+                borderColor: 'var(--color-accent-primary)',
                 borderWidth: 1
             }]
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            scales: { y: { ticks: { color: 'var(--text-muted-color)' }, grid: { display: false } }, x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } } },
+            scales: { y: { ticks: { color: 'var(--color-text-secondary)' }, grid: { display: false } }, x: { ticks: { color: 'var(--color-text-secondary)' }, grid: { color: 'var(--color-border-primary)' } } },
             plugins: { legend: { display: false } }
         }
     });
@@ -487,21 +493,21 @@ export function renderProgressChart(exerciseName) {
             datasets: [{
                 label: `Max Weight for ${exerciseName} (${unitLabel})`,
                 data: dataPoints,
-                borderColor: 'var(--primary-color)',
-                backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                borderColor: 'var(--color-accent-primary)',
+                backgroundColor: 'rgba(255, 122, 0, 0.2)',
                 fill: true,
                 tension: 0.1
             }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } }, x: { ticks: { color: 'var(--text-muted-color)' }, grid: { color: 'var(--border-color)' } } },
-            plugins: { legend: { labels: { color: 'var(--text-color)' } } }
+            scales: { y: { beginAtZero: true, ticks: { color: 'var(--color-text-secondary)' }, grid: { color: 'var(--color-border-primary)' } }, x: { ticks: { color: 'var(--color-text-secondary)' }, grid: { color: 'var(--color-border-primary)' } } },
+            plugins: { legend: { labels: { color: 'var(--color-text-primary)' } } }
         }
     });
 }
 
-/** NEW: Renders the workout summary screen. */
+/** Renders the workout summary screen. */
 export function renderWorkoutSummary() {
     const { week, day } = state.currentView;
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
@@ -584,6 +590,28 @@ export function updateTimerDisplay() {
     const seconds = displaySeconds % 60;
     elements.workoutTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
+
+// --- ONBOARDING WIZARD ---
+
+/** Renders the current step of the onboarding wizard. */
+export function renderOnboardingStep() {
+    const { currentStep } = state.onboarding;
+    document.querySelectorAll('#onboarding-container .step').forEach(step => {
+        step.classList.toggle('active', parseInt(step.dataset.step) === currentStep);
+    });
+    updateOnboardingProgress();
+}
+
+/** Updates the visual progress bar for the onboarding wizard. */
+export function updateOnboardingProgress() {
+    const { currentStep, totalSteps } = state.onboarding;
+    const progressPercent = (currentStep - 1) / (totalSteps - 1) * 100;
+    const progressBar = document.getElementById('onboarding-progress');
+    if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+    }
+}
+
 
 // --- CUSTOM PLAN WIZARD ---
 
