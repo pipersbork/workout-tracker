@@ -374,6 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModal() { this.elements.modal.classList.remove('active'); },
         
         async selectCard(element, field, value, shouldSave = false) {
+            if (value === 'cardio') {
+                this.showModal('Coming Soon!', 'Cardiovascular endurance tracking and programming is a planned feature. Stay tuned!');
+                return;
+            }
             this.state.userSelections[field] = value;
             element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
             element.classList.add('active');
@@ -397,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionsHTML = `
                     <button class="hub-option" data-hub-action="resume">
                         <div class="hub-option-icon">▶️</div>
-                        <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".</p></div>
+                        <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".p></div>
                     </button>
                     <button class="hub-option" data-hub-action="copy">
                         <div class="hub-option-icon">🔁</div>
@@ -609,8 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         renderSettings() {
-            this.state.userSelections.goal = this.state.userSelections.goal || 'muscle';
-            this.state.userSelections.experience = this.state.userSelections.experience || 'beginner';
             document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
             document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
             
