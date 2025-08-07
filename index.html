@@ -114,19 +114,64 @@
                 <h2 id="workout-day-title">Workout Title</h2>
                 <p id="workout-date">Date</p>
             </div>
+
+            <!-- NEW: Workout Timer Bar -->
+            <div class="workout-timer-bar">
+                <div class="timer-display-container">
+                    <span id="workout-timer-display">00:00</span>
+                    <div class="toggle-switch timer-mode-switch">
+                        <button class="toggle-btn active" data-action="setTimerMode" data-mode="stopwatch">Stopwatch</button>
+                        <button class="toggle-btn" data-action="setTimerMode" data-mode="timer">Timer</button>
+                    </div>
+                </div>
+                <div class="timer-controls">
+                    <button class="timer-control-btn" data-action="startTimer">Start</button>
+                    <button class="timer-control-btn" data-action="pauseTimer">Pause</button>
+                    <button class="timer-control-btn" data-action="resetTimer">Reset</button>
+                </div>
+            </div>
+
             <div id="exercise-list-container"></div>
             <div class="workout-actions">
                 <button id="complete-workout-btn" class="cta-button" data-action="confirmCompleteWorkout">Complete Workout</button>
             </div>
-            <div id="rest-timer-container" class="hidden">
-                <div id="rest-timer-display">3:00</div>
-                <div class="rest-timer-actions">
-                    <button class="timer-btn" data-action="adjustTimer" data-amount="-15">-15s</button>
-                    <button class="timer-btn" data-action="skipTimer">Skip</button>
-                    <button class="timer-btn" data-action="adjustTimer" data-amount="15">+15s</button>
+        </div>
+
+        <!-- NEW: Workout Summary View -->
+        <section id="workout-summary-view" class="container view hidden">
+            <div class="workout-header">
+                <h2>Workout Complete!</h2>
+            </div>
+            <div id="summary-content">
+                <div class="summary-stats-grid">
+                    <div class="stat-card">
+                        <h4>Time</h4>
+                        <p id="summary-time">--:--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Volume</h4>
+                        <p id="summary-volume">0 lbs</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Sets</h4>
+                        <p id="summary-sets">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>PRs</h4>
+                        <p id="summary-prs">0</p>
+                    </div>
+                </div>
+                <div class="summary-section">
+                    <h3>Progression Suggestions</h3>
+                    <div id="summary-progression-list">
+                        <p class="placeholder-text">No suggestions right now. Great work!</p>
+                    </div>
+                </div>
+                <div class="summary-actions">
+                    <button class="cta-button" data-action="showView" data-view-name="home">Done</button>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Performance Summary View -->
         <section id="performance-summary-view" class="container view hidden">
