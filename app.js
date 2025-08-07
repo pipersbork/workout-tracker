@@ -325,6 +325,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         renderHomeScreen() {
+            const container = document.querySelector('#home-screen .home-nav-buttons');
+            container.innerHTML = `
+                <button class="hub-option home-nav-btn" data-action="showView" data-view-name="workout">
+                    <div class="hub-option-icon">${this.icons.play}</div>
+                    <div class="hub-option-text"><h3>Start Next Workout</h3></div>
+                </button>
+                <button class="hub-option home-nav-btn" data-action="showView" data-view-name="planHub">
+                    <div class="hub-option-icon">${this.icons.book}</div>
+                    <div class="hub-option-text"><h3>Plan Mesocycle</h3></div>
+                </button>
+                <button class="hub-option home-nav-btn" data-action="showView" data-view-name="performanceSummary">
+                    <div class="hub-option-icon">${this.icons.chart}</div>
+                    <div class="hub-option-text"><h3>Performance Summary</h3></div>
+                </button>
+            `;
+
             const activePlan = this.state.allPlans.find(p => p.id === this.state.activePlanId);
             if (activePlan) {
                 this.elements.activePlanDisplay.textContent = `Active Plan: ${activePlan.name}`;
@@ -629,8 +645,23 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         renderSettings() {
-            document.querySelectorAll('#settings-goal-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.goal));
-            document.querySelectorAll('#settings-experience-cards .goal-card').forEach(card => card.classList.toggle('active', card.dataset.value === this.state.userSelections.experience));
+            const goalCardsContainer = document.getElementById('settings-goal-cards');
+            goalCardsContainer.innerHTML = `
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="strength" role="button" tabindex="0"><div class="icon">${this.icons.strength}</div><h3>Get Strong</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="muscle" role="button" tabindex="0"><div class="icon">${this.icons.muscle}</div><h3>Build Muscle</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="endurance" role="button" tabindex="0"><div class="icon">${this.icons.endurance}</div><h3>Muscular Endurance</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="cardio" role="button" tabindex="0"><div class="icon">${this.icons.hybrid}</div><h3>Cardio Endurance</h3></div>
+            `;
+
+            const experienceCardsContainer = document.getElementById('settings-experience-cards');
+            experienceCardsContainer.innerHTML = `
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><div class="icon">${this.icons.beginner}</div><h3>Beginner</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="experienced" role="button" tabindex="0"><div class="icon">${this.icons.experienced}</div><h3>Experienced</h3></div>
+                <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><div class="icon">${this.icons.advanced}</div><h3>Advanced</h3></div>
+            `;
+
+            goalCardsContainer.querySelector(`.goal-card[data-value="${this.state.userSelections.goal}"]`)?.classList.add('active');
+            experienceCardsContainer.querySelector(`.goal-card[data-value="${this.state.userSelections.experience}"]`)?.classList.add('active');
             
             document.querySelectorAll('[data-action="setUnits"]').forEach(btn => btn.classList.toggle('active', btn.dataset.unit === this.state.settings.units));
             document.querySelectorAll('[data-action="setTheme"]').forEach(btn => btn.classList.toggle('active', btn.dataset.theme === this.state.settings.theme));
@@ -1167,9 +1198,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="settings-section">
                         <h3>What is your primary training goal?</h3>
-                        <div class="card-group">
-                            <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Strength</h3><p>Lower reps (3-5)</p></div>
-                            <div class="goal-card focus-card" data-value="growth" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Growth</h3><p>Higher reps (8-12)</p></div>
+                        <div class="card-group settings-card-group">
+                            <div class="goal-card focus-card" data-value="strength" role="button" tabindex="0"><div class="icon">${app.icons.strength}</div><h3>Get Strong</h3></div>
+                            <div class="goal-card focus-card" data-value="muscle" role="button" tabindex="0"><div class="icon">${app.icons.muscle}</div><h3>Build Muscle</h3></div>
+                            <div class="goal-card focus-card" data-value="endurance" role="button" tabindex="0"><div class="icon">${app.icons.endurance}</div><h3>Muscular Endurance</h3></div>
+                            <div class="goal-card focus-card" data-value="hybrid" role="button" tabindex="0"><div class="icon">${app.icons.hybrid}</div><h3>Hybrid</h3></div>
                         </div>
                     </div>
                     <div class="settings-section">
