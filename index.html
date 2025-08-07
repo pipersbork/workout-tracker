@@ -16,13 +16,57 @@
     <!-- Main container for all app views -->
     <main>
 
-        <!-- Onboarding Container now ONLY contains the splash screen -->
+        <!-- UPDATED: Onboarding Container -->
         <div class="container view" id="onboarding-container">
-            <div class="step active" id="step1">
-                <div class="main-title">PROGRESSION</div>
-                <div class="divider"></div>
-                <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
-                <div class="progress-bar splash-bar"><div class="progress"></div></div>
+            <div class="onboarding-wizard">
+                <div class="progress-bar" id="onboarding-progress-bar">
+                    <div class="progress" id="onboarding-progress"></div>
+                </div>
+
+                <!-- Step 1: Welcome -->
+                <div class="step active" data-step="1">
+                    <h2 class="main-title">Welcome to Progression</h2>
+                    <p>Let's build your perfect workout plan. First, tell us a little about yourself.</p>
+                    <button class="cta-button" data-action="nextOnboardingStep">Get Started</button>
+                </div>
+
+                <!-- Step 2: Goal Setting -->
+                <div class="step" data-step="2">
+                    <h3>What is your primary fitness goal?</h3>
+                    <p>Let's start with your vision! Knowing your main goal helps us build the perfect roadmap to get you there.</p>
+                    <div class="card-group">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="muscle" role="button" tabindex="0"><h3>Build Muscle</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="strength" role="button" tabindex="0"><h3>Get Strong</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="endurance" role="button" tabindex="0"><h3>Improve Endurance</h3></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Experience Level -->
+                <div class="step" data-step="3">
+                    <h3>What is your current fitness experience?</h3>
+                    <p>There's a starting line for everyone. Let us know where you are so we can start you on the right path.</p>
+                    <div class="card-group">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="beginner" role="button" tabindex="0"><h3>Beginner</h3><p>New to structured training</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="experienced" role="button" tabindex="0"><h3>Experienced</h3><p>You know your way around</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="advanced" role="button" tabindex="0"><h3>Advanced</h3><p>You live and breathe fitness</p></div>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Workout Location -->
+                <div class="step" data-step="4">
+                    <h3>Where do you prefer to work out?</h3>
+                    <p>No gym? No problem. We'll build workouts you can do anywhere.</p>
+                    <div class="card-group">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="style" data-value="gym" role="button" tabindex="0"><h3>Gym</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="style" data-value="home" role="button" tabindex="0"><h3>Home</h3></div>
+                    </div>
+                </div>
+
+                <!-- Final Step: Calculating -->
+                <div class="step" data-step="5">
+                    <h2 class="main-title">Calculating Your Plan...</h2>
+                    <p>We're analyzing your answers to create the perfect starting point for your fitness journey.</p>
+                </div>
             </div>
         </div>
 
@@ -115,7 +159,7 @@
                 <p id="workout-date">Date</p>
             </div>
 
-            <!-- NEW: Workout Timer Bar -->
+            <!-- Workout Timer Bar -->
             <div class="workout-timer-bar">
                 <div class="timer-display-container">
                     <span id="workout-timer-display">00:00</span>
@@ -137,7 +181,7 @@
             </div>
         </div>
 
-        <!-- NEW: Workout Summary View -->
+        <!-- Workout Summary View -->
         <section id="workout-summary-view" class="container view hidden">
             <div class="workout-header">
                 <h2>Workout Complete!</h2>
