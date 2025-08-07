@@ -4,9 +4,6 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- SECURE FIREBASE CONFIGURATION ---
-// This now reads from secure environment variables instead of hard-coding keys.
-// For local development with Vite, create a .env file with VITE_FIREBASE_API_KEY="...".
-// For deployment, set these variables in your hosting provider's settings (e.g., Netlify, Vercel).
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -108,27 +105,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.userId = user.uid;
                     await this.loadStateFromFirestore();
                     this.applyTheme();
-
-                    // *** NEW LOADING ANIMATION LOGIC ***
-                    this.showView('onboarding', true); // Ensure splash screen is visible
+        
+                    // *** CORRECTED LOADING ANIMATION LOGIC ***
+                    this.showView('onboarding', true); // Make sure splash screen is visible
                     const splashProgressBar = document.querySelector('#step1 .progress');
-
-                    // Force browser to paint the initial state (width: 0%) before animating
-                    setTimeout(() => {
-                        if (splashProgressBar) {
-                            splashProgressBar.style.width = '100%'; // Start the animation
-                        }
-                    }, 100); 
-
-                    // Wait for the animation to finish
-                    setTimeout(() => {
+        
+                    // This function will run after the loading bar animation is complete
+                    const transitionToNextView = () => {
                         if (this.state.userSelections.onboardingCompleted) {
                             this.showView('home');
                         } else {
                             this.nextStep(); // Move from splash (step 1) to onboarding questions (step 2)
                         }
-                    }, 1200); // 100ms delay + 1000ms animation + 100ms buffer
-
+                    };
+        
+                    // Wait a tiny moment for the browser to render the initial state
+                    requestAnimationFrame(() => {
+                        if (splashProgressBar) {
+                            // Set the final width to trigger the CSS transition
+                            splashProgressBar.style.width = '100%';
+                            // Listen for the end of the transition
+                            splashProgressBar.addEventListener('transitionend', transitionToNextView, { once: true });
+                        } else {
+                            // If something went wrong, just proceed after a delay
+                            setTimeout(transitionToNextView, 1200);
+                        }
+                    });
+        
                 } else {
                     signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
                 }
@@ -392,13 +395,19 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProgress() {
             const progressBar = document.querySelector(`#step${this.state.currentStep} .progress`);
             if(progressBar) {
-                progressBar.style.width = `${((this.state.currentStep - 1) / (this.state.totalSteps - 1)) * 100}%`;
+                progressBar.style.width = `${((this.state.currentStep - 2) / (this.state.totalSteps - 2)) * 100}%`;
             }
         },
         
         nextStep() { if (this.state.currentStep < this.state.totalSteps) { this.state.currentStep++; this.showStep(this.state.currentStep); } },
         
-        previousStep() { if (this.state.currentStep > 1) { this.state.currentStep--; this.showStep(this.state.currentStep); } },
+        previousStep() { 
+            // Prevent going back to the splash screen
+            if (this.state.currentStep > 2) { 
+                this.state.currentStep--; 
+                this.showStep(this.state.currentStep); 
+            } 
+        },
         
         validateStep(field) {
             if (!this.state.userSelections[field]) { 
