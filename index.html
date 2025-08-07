@@ -8,29 +8,24 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Chart.js for graphs and charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <!-- Main container for all app views -->
     <main>
 
-        <!-- UPDATED: Onboarding Container -->
         <div class="container view" id="onboarding-container">
             <div class="onboarding-wizard">
                 <div class="progress-bar" id="onboarding-progress-bar">
                     <div class="progress" id="onboarding-progress"></div>
                 </div>
 
-                <!-- Step 1: Welcome -->
                 <div class="step active" data-step="1">
                     <h2 class="main-title">Welcome to Progression</h2>
                     <p>Let's build your perfect workout plan. First, tell us a little about yourself.</p>
                     <button class="cta-button" data-action="nextOnboardingStep">Get Started</button>
                 </div>
 
-                <!-- Step 2: Goal Setting -->
                 <div class="step" data-step="2">
                     <h3>What is your primary fitness goal?</h3>
                     <p>Let's start with your vision! Knowing your main goal helps us build the perfect roadmap to get you there.</p>
@@ -39,9 +34,11 @@
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="strength" role="button" tabindex="0"><h3>Get Strong</h3></div>
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="endurance" role="button" tabindex="0"><h3>Improve Endurance</h3></div>
                     </div>
+                    <div class="button-group">
+                        <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
+                    </div>
                 </div>
 
-                <!-- Step 3: Experience Level -->
                 <div class="step" data-step="3">
                     <h3>What is your current fitness experience?</h3>
                     <p>There's a starting line for everyone. Let us know where you are so we can start you on the right path.</p>
@@ -50,9 +47,11 @@
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="experienced" role="button" tabindex="0"><h3>Experienced</h3><p>You know your way around</p></div>
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="advanced" role="button" tabindex="0"><h3>Advanced</h3><p>You live and breathe fitness</p></div>
                     </div>
+                    <div class="button-group">
+                        <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
+                    </div>
                 </div>
                 
-                <!-- Step 4: Workout Location -->
                 <div class="step" data-step="4">
                     <h3>Where do you prefer to work out?</h3>
                     <p>No gym? No problem. We'll build workouts you can do anywhere.</p>
@@ -60,9 +59,11 @@
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="style" data-value="gym" role="button" tabindex="0"><h3>Gym</h3></div>
                         <div class="goal-card" data-action="selectOnboardingCard" data-field="style" data-value="home" role="button" tabindex="0"><h3>Home</h3></div>
                     </div>
+                    <div class="button-group">
+                        <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
+                    </div>
                 </div>
 
-                <!-- Final Step: Calculating -->
                 <div class="step" data-step="5">
                     <h2 class="main-title">Calculating Your Plan...</h2>
                     <p>We're analyzing your answers to create the perfect starting point for your fitness journey.</p>
@@ -70,7 +71,6 @@
             </div>
         </div>
 
-        <!-- Home Screen -->
         <div id="home-screen" class="container view hidden">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
@@ -94,7 +94,6 @@
             </button>
         </div>
 
-        <!-- Plan Hub Screen -->
         <div id="plan-hub-view" class="container view hidden">
             <div class="workout-header">
                  <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -105,7 +104,6 @@
             <div id="plan-hub-options"></div>
         </div>
 
-        <!-- Template Library Screen -->
         <div id="template-library-view" class="container view hidden">
             <div class="workout-header">
                  <button class="back-btn" data-action="showView" data-view-name="planHub" aria-label="Back to Plan Hub">
@@ -123,7 +121,6 @@
             <div id="template-list-container"></div>
         </div>
 
-        <!-- Custom Plan Wizard Screen -->
         <div id="custom-plan-wizard-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -134,7 +131,6 @@
             <div id="custom-wizard-content"></div>
         </div>
 
-        <!-- Mesocycle Builder -->
         <div id="builder-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -149,7 +145,6 @@
             </div>
         </div>
 
-        <!-- Daily Workout View -->
         <div id="daily-workout-view" class="view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -159,7 +154,6 @@
                 <p id="workout-date">Date</p>
             </div>
 
-            <!-- Workout Timer Bar -->
             <div class="workout-timer-bar">
                 <div class="timer-display-container">
                     <span id="workout-timer-display">00:00</span>
@@ -181,7 +175,6 @@
             </div>
         </div>
 
-        <!-- Workout Summary View -->
         <section id="workout-summary-view" class="container view hidden">
             <div class="workout-header">
                 <h2>Workout Complete!</h2>
@@ -217,7 +210,6 @@
             </div>
         </section>
 
-        <!-- Performance Summary View -->
         <section id="performance-summary-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -250,7 +242,6 @@
             </div>
         </section>
 
-        <!-- Settings View -->
         <section id="settings-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
@@ -314,7 +305,6 @@
 
     </main>
 
-    <!-- Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" data-action="closeModal">&times;</span>
