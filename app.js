@@ -354,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.className = btnInfo.class;
                 button.addEventListener('click', (e) => {
                     if (btnInfo.action) btnInfo.action(e);
-                    // Default behavior is to close modal unless specified
                     if (!btnInfo.noClose) this.closeModal();
                 });
                 this.elements.modalActions.appendChild(button);
@@ -469,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderTemplateLibrary() {
             const container = document.getElementById('template-list-container');
-            // For now, we only have one type of template. This can be expanded later.
             const progressionTemplates = this.planGenerator.getAllTemplates ? this.planGenerator.getAllTemplates() : [];
 
             let templatesHTML = progressionTemplates.map(template => `
