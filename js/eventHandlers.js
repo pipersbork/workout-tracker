@@ -273,6 +273,7 @@ function confirmCompleteWorkout() {
  * Marks a workout as complete, processes the data, and advances the user to the next workout.
  */
 async function completeWorkout() {
+    pauseTimer(); // Stop the timer when workout is completed
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
     if (planIndex === -1) return;
     const activePlan = state.allPlans[planIndex];
@@ -286,6 +287,9 @@ async function completeWorkout() {
     });
 
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
+
+    // Show summary view BEFORE advancing to the next day
+    ui.showView('workoutSummary');
 
     if (!stalledExercise && week < activePlan.durationWeeks - 1 && workout.exercises.length > 0) {
         calculateNextWeekProgression(week, activePlan);
@@ -304,12 +308,9 @@ async function completeWorkout() {
             const nextWeekDayKeys = Object.keys(activePlan.weeks[nextWeek] || {}).sort((a, b) => a - b);
             nextDay = nextWeekDayKeys.length > 0 ? parseInt(nextWeekDayKeys[0]) : null;
         } else {
+            // This case might be handled differently now with the summary screen,
+            // but for now, we'll just set it to the beginning.
             state.currentView = { week: 1, day: 1 };
-            await firebase.saveStateToFirestore();
-            ui.showModal('Mesocycle Complete!', 'Congratulations! You have finished your training block.', [
-                { text: 'Awesome!', class: 'cta-button', action: () => ui.showView('home') }
-            ]);
-            return;
         }
     }
 
@@ -318,10 +319,6 @@ async function completeWorkout() {
     }
 
     await firebase.saveStateToFirestore();
-
-    if (!stalledExercise) {
-        ui.showView('home');
-    }
 }
 
 /**
@@ -463,45 +460,48 @@ function selectTemplate(templateId) {
 
 // --- TIMER FUNCTIONS ---
 
-/** Starts the rest timer. */
+/** Starts the workout timer. */
 function startTimer() {
-    stopTimer(); // Ensure no other timer is running
-    state.restTimer.remaining = state.restTimer.defaultTime;
-    ui.updateTimerDisplay();
-    ui.elements.restTimerContainer.classList.remove('hidden');
-
-    state.restTimer.instance = setInterval(() => {
-        state.restTimer.remaining--;
-        ui.updateTimerDisplay();
-        if (state.restTimer.remaining <= 0) {
-            stopTimer();
-            // Optional: Add a sound or visual notification here
-        }
-    }, 1000);
+    if (state.workoutTimer.isRunning) return;
+    state.workoutTimer.isRunning = true;
+    state.workoutTimer.startTime = Date.now();
+    state.workoutTimer.instance = setInterval(ui.updateTimerDisplay, 1000);
 }
 
-/** Stops the rest timer and hides the timer display. */
-function stopTimer() {
-    clearInterval(state.restTimer.instance);
-    state.restTimer.instance = null;
-    ui.elements.restTimerContainer.classList.add('hidden');
+/** Pauses the workout timer. */
+function pauseTimer() {
+    if (!state.workoutTimer.isRunning) return;
+    state.workoutTimer.isRunning = false;
+    state.workoutTimer.elapsed += Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
+    clearInterval(state.workoutTimer.instance);
+    ui.updateTimerDisplay();
+}
+
+/** Resets the workout timer. */
+function resetTimer() {
+    state.workoutTimer.isRunning = false;
+    state.workoutTimer.elapsed = 0;
+    state.workoutTimer.startTime = 0;
+    clearInterval(state.workoutTimer.instance);
+    ui.updateTimerDisplay();
 }
 
 /**
- * Adjusts the current timer's remaining time.
- * @param {number} amount - The number of seconds to add or remove.
+ * Sets the timer mode between stopwatch and timer.
+ * @param {string} mode - The mode to switch to ('stopwatch' or 'timer').
  */
-function adjustTimer(amount) {
-    if (state.restTimer.instance) {
-        state.restTimer.remaining += amount;
-        if (state.restTimer.remaining < 0) {
-            state.restTimer.remaining = 0;
-        }
-        ui.updateTimerDisplay();
-    }
+function setTimerMode(mode) {
+    if (state.workoutTimer.mode === mode) return;
+    resetTimer();
+    state.workoutTimer.mode = mode;
+    document.querySelectorAll('[data-action="setTimerMode"]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    ui.updateTimerDisplay();
 }
 
-// --- NEW: NOTE AND HISTORY FUNCTIONS ---
+
+// --- NOTE AND HISTORY FUNCTIONS ---
 
 /**
  * Opens a modal to add or edit a note for a specific set.
@@ -541,7 +541,6 @@ function showHistory(exerciseId) {
     const exerciseName = state.exercises.find(ex => `ex_${ex.name.replace(/\s+/g, '_')}` === exerciseId)?.name || "Exercise";
     let historyHTML = '';
 
-    // Iterate through all weeks and days to find completed instances of the exercise
     for (const week of Object.values(activePlan.weeks).reverse()) {
         for (const day of Object.values(week).reverse()) {
             if (day.completed) {
@@ -580,7 +579,7 @@ export function initEventListeners() {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, amount, exerciseIndex, setIndex, exerciseId } = target.dataset;
+        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, exerciseIndex, setIndex, exerciseId, mode } = target.dataset;
 
         const actions = {
             showView: () => ui.showView(viewName),
@@ -600,8 +599,10 @@ export function initEventListeners() {
             switchTab: () => { /* Logic for switching tabs can be added here if needed */ },
             selectTemplate: () => selectTemplate(templateId),
             finishWizard: () => ui.customPlanWizard.finish(),
-            adjustTimer: () => adjustTimer(parseInt(amount)),
-            skipTimer: () => stopTimer(),
+            startTimer: () => startTimer(),
+            pauseTimer: () => pauseTimer(),
+            resetTimer: () => resetTimer(),
+            setTimerMode: () => setTimerMode(mode),
             addSet: () => {
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
@@ -730,11 +731,6 @@ export function initEventListeners() {
                     set.reps = parseInt(value) || '';
                     set.rir = '';
                 }
-            }
-
-            // If both weight and reps/RIR have values, start the timer
-            if (set.weight && (set.reps || set.rir)) {
-                startTimer();
             }
         }
     });
