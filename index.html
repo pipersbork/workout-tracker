@@ -16,58 +16,13 @@
     <!-- Main container for all app views -->
     <main>
 
-        <!-- Onboarding Container -->
+        <!-- Onboarding Container now ONLY contains the splash screen -->
         <div class="container view" id="onboarding-container">
-            <!-- Step 1 is now the splash screen with a loading bar -->
             <div class="step active" id="step1">
                 <div class="main-title">PROGRESSION</div>
                 <div class="divider"></div>
                 <div class="tagline">BREAK DOWN, BREAK THROUGH</div>
                 <div class="progress-bar splash-bar"><div class="progress"></div></div>
-            </div>
-            
-            <!-- The rest of the onboarding steps now have their own progress bar -->
-            <div class="step" id="step2">
-                <div class="progress-bar"><div class="progress"></div></div>
-                <h2>Your Goal</h2>
-                <p>Select your training focus:</p>
-                <div class="card-group" data-field="goal">
-                    <div class="goal-card" data-action="selectCard" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Muscle Building</h3><p>Strength & Hypertrophy</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="cardio" role="button" tabindex="0"><div class="icon">🏃</div><h3>Cardio</h3><p>Endurance Training</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="combined" role="button" tabindex="0"><div class="icon">🔥</div><h3>Combined</h3><p>Balance Both</p></div>
-                </div>
-                <div class="button-group">
-                    <button class="cta-button secondary-button" data-action="previousStep">Back</button>
-                    <button class="cta-button" data-action="validateAndProceed" data-field="goal">Next</button>
-                </div>
-            </div>
-            <div class="step" id="step3">
-                <div class="progress-bar"><div class="progress"></div></div>
-                <h2>Experience Level</h2>
-                <p>Choose your fitness level:</p>
-                <div class="card-group" data-field="experience">
-                    <div class="goal-card" data-action="selectCard" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3><p>New to training</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3><p>6–18 months</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3><p>18+ months</p></div>
-                </div>
-                <div class="button-group">
-                    <button class="cta-button secondary-button" data-action="previousStep">Back</button>
-                    <button class="cta-button" data-action="validateAndProceed" data-field="experience">Next</button>
-                </div>
-            </div>
-            <div class="step" id="step4">
-                <div class="progress-bar"><div class="progress"></div></div>
-                <h2>Workout Preferences</h2>
-                <p>Select your preferred style:</p>
-                <div class="card-group" data-field="style">
-                    <div class="goal-card" data-action="selectCard" data-value="gym" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Gym</h3><p>Heavy Lifts</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="home" role="button" tabindex="0"><div class="icon">🏠</div><h3>Home</h3><p>Minimal Equipment</p></div>
-                    <div class="goal-card" data-action="selectCard" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3><p>Mix of Both</p></div>
-                </div>
-                <div class="button-group">
-                    <button class="cta-button secondary-button" data-action="previousStep">Back</button>
-                    <button class="cta-button" data-action="finishOnboarding">Create My Plan</button>
-                </div>
             </div>
         </div>
 
