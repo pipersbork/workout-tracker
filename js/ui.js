@@ -255,10 +255,15 @@ export function renderSettings() {
             const isActive = plan.id === state.activePlanId;
             const planItem = document.createElement('div');
             planItem.className = `plan-item ${isActive ? 'active' : ''}`;
+            planItem.dataset.planId = plan.id;
             planItem.innerHTML = `
-                <span class="plan-name">${plan.name}</span>
+                <span class="plan-name-container">
+                    <input type="text" class="plan-name-input hidden" value="${plan.name}" data-plan-id="${plan.id}" />
+                    <span class="plan-name-text">${plan.name}</span>
+                </span>
                 <div class="plan-actions">
-                    <button class="plan-btn" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
+                    <button class="plan-btn" data-action="toggleEditPlanName" data-plan-id="${plan.id}">Edit</button>
+                    <button class="plan-btn" data-action="openBuilderForEdit" data-plan-id="${plan.id}">Build</button>
                     <button class="plan-btn" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
                     <button class="plan-btn" data-action="setActivePlan" data-plan-id="${plan.id}" ${isActive ? 'disabled' : ''}>${isActive ? 'Active' : 'Set Active'}</button>
                 </div>
@@ -301,7 +306,7 @@ export function renderDailyWorkout() {
         document.getElementById('complete-workout-btn').classList.remove('hidden');
         return;
     }
-    const unitLabel = state.settings.units.toUpperCase();
+    
     workout.exercises.forEach((ex, exIndex) => {
         const lastWeekEx = lastWeekWorkout?.exercises.find(e => e.exerciseId === ex.exerciseId);
         const setsHTML = Array.from({ length: ex.targetSets }).map((_, setIndex) => {
@@ -323,7 +328,7 @@ export function renderDailyWorkout() {
                 <span class="exercise-target">${ex.targetSets} Sets @ ${ex.targetRIR} RIR</span>
             </div>
             <div class="sets-container" id="sets-for-ex-${exIndex}">
-                <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${unitLabel})</span><span>REPS / RIR</span></div></div>
+                <div class="set-row header"><div class="set-number">SET</div><div class="set-inputs"><span>WEIGHT (${state.settings.units.toUpperCase()})</span><span>REPS / RIR</span></div></div>
                 ${setsHTML}
             </div>
             <button class="add-set-btn" data-exercise-index="${exIndex}">+ Add Set</button>
