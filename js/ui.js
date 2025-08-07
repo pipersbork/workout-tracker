@@ -18,6 +18,7 @@ export const elements = {
     performanceSummaryView: document.getElementById('performance-summary-view'),
     settingsView: document.getElementById('settings-view'),
     customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
+    workoutSummaryView: document.getElementById('workout-summary-view'), // New
     scheduleContainer: document.getElementById('schedule-container'),
     modal: document.getElementById('modal'),
     modalBody: document.getElementById('modal-body'),
@@ -25,8 +26,7 @@ export const elements = {
     activePlanDisplay: document.getElementById('active-plan-display'),
     builderTitle: document.getElementById('builder-title'),
     planManagementList: document.getElementById('plan-management-list'),
-    restTimerContainer: document.getElementById('rest-timer-container'),
-    restTimerDisplay: document.getElementById('rest-timer-display'),
+    workoutTimerDisplay: document.getElementById('workout-timer-display'),
 };
 
 // --- VIEW MANAGEMENT ---
@@ -41,6 +41,7 @@ const viewMap = {
     workout: 'daily-workout-view',
     performanceSummary: 'performance-summary-view',
     settings: 'settings-view',
+    workoutSummary: 'workout-summary-view', // New
 };
 
 /**
@@ -80,6 +81,7 @@ export function showView(viewName, skipAnimation = false) {
             case 'performanceSummary': renderPerformanceSummary(); break;
             case 'settings': renderSettings(); break;
             case 'customPlanWizard': customPlanWizard.render(); break;
+            case 'workoutSummary': renderWorkoutSummary(); break; // New
         }
 
         state.currentViewName = viewName;
@@ -282,6 +284,13 @@ export function renderDailyWorkout() {
     container.innerHTML = '';
     workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
+    // Reset timer when view loads
+    state.workoutTimer.elapsed = 0;
+    state.workoutTimer.startTime = 0;
+    state.workoutTimer.isRunning = false;
+    clearInterval(state.workoutTimer.instance);
+    updateTimerDisplay();
+
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) {
         workoutTitle.textContent = "No Active Plan";
@@ -492,6 +501,30 @@ export function renderProgressChart(exerciseName) {
     });
 }
 
+/** NEW: Renders the workout summary screen. */
+export function renderWorkoutSummary() {
+    const { week, day } = state.currentView;
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    const workout = activePlan.weeks[week]?.[day];
+
+    if (!workout) return;
+
+    const totalSeconds = state.workoutTimer.elapsed;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
+    const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+
+    document.getElementById('summary-time').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('summary-volume').textContent = `${totalVolume} ${state.settings.units}`;
+    document.getElementById('summary-sets').textContent = totalSets;
+    document.getElementById('summary-prs').textContent = 0; // Placeholder for now
+
+    // Placeholder for progression suggestions
+    document.getElementById('summary-progression-list').innerHTML = `<p class="placeholder-text">Progression logic coming soon!</p>`;
+}
+
 
 // --- MODAL, THEME, & TIMER ---
 
@@ -535,14 +568,22 @@ export function applyTheme() {
 }
 
 /**
- * Updates the rest timer display with the formatted time.
+ * Updates the workout timer display based on the current mode and time.
  */
 export function updateTimerDisplay() {
-    const minutes = Math.floor(state.restTimer.remaining / 60);
-    const seconds = state.restTimer.remaining % 60;
-    elements.restTimerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+    let displaySeconds;
+    if (state.workoutTimer.mode === 'stopwatch') {
+        const currentTime = state.workoutTimer.isRunning ? state.workoutTimer.elapsed + Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : state.workoutTimer.elapsed;
+        displaySeconds = currentTime;
+    } else { // Timer mode
+        const elapsed = state.workoutTimer.isRunning ? Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : 0;
+        displaySeconds = Math.max(0, state.workoutTimer.timerDuration - state.workoutTimer.elapsed - elapsed);
+    }
 
+    const minutes = Math.floor(displaySeconds / 60);
+    const seconds = displaySeconds % 60;
+    elements.workoutTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
 
 // --- CUSTOM PLAN WIZARD ---
 
