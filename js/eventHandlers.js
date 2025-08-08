@@ -10,15 +10,11 @@ import { planGenerator } from './planGenerator.js';
 
 // --- ACTION FUNCTIONS ---
 
-/**
- * Finds the first uncompleted workout in the active plan and sets it as the current view.
- * This ensures the user is always taken to their next available workout.
- */
 function findAndSetNextWorkout() {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan || !activePlan.weeks) {
         ui.showModal("No Active Plan", "You don't have an active workout plan. Please create or select one from the settings.");
-        return false; // Indicate that a workout was not found
+        return false;
     }
 
     const sortedWeeks = Object.keys(activePlan.weeks).sort((a, b) => a - b);
@@ -31,14 +27,13 @@ function findAndSetNextWorkout() {
             const workout = week[dayKey];
             if (!workout.completed) {
                 state.currentView = { week: parseInt(weekKey), day: parseInt(dayKey) };
-                return true; // Workout found
+                return true;
             }
         }
     }
 
-    // If all workouts are completed
     ui.showModal("Plan Complete!", "Congratulations! You've completed all the workouts in this plan. You can start a new one from the settings.", [{ text: 'Go to Settings', class: 'cta-button', action: () => ui.showView('settings') }]);
-    return false; // No workout found
+    return false;
 }
 
 
@@ -197,7 +192,8 @@ async function finalizeAndStartPlanFromBuilder() {
                                 targetReps: 8,
                                 targetRIR: targetRIR,
                                 targetLoad: null, sets: [],
-                                stallCount: 0
+                                stallCount: 0,
+                                note: '' // Add note property to exercise
                             };
                         })
                     )
@@ -596,27 +592,24 @@ function stopRestTimer() {
 
 // --- NOTE AND HISTORY FUNCTIONS ---
 
-function openNoteModal(exerciseIndex, setIndex) {
+function openExerciseNotes(exerciseIndex) {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-    const set = workout.exercises[exerciseIndex].sets[setIndex] || {};
-    const note = set.note || '';
+    const exercise = workout.exercises[exerciseIndex];
+    const note = exercise.note || '';
 
     ui.showModal(
-        `Note for Set ${parseInt(setIndex) + 1}`,
-        `<textarea id="set-note-input" class="modal-input modal-textarea" placeholder="e.g., Felt strong, add weight next time...">${note}</textarea>`,
+        `Notes for ${exercise.name}`,
+        `<textarea id="exercise-note-input" class="modal-input modal-textarea" placeholder="e.g., Felt strong, focus on form...">${note}</textarea>`,
         [
             { text: 'Cancel', class: 'secondary-button' },
             {
                 text: 'Save Note',
                 class: 'cta-button',
                 action: () => {
-                    const newNote = document.getElementById('set-note-input').value;
-                    if (!workout.exercises[exerciseIndex].sets[setIndex]) {
-                         workout.exercises[exerciseIndex].sets[setIndex] = {};
-                    }
-                    workout.exercises[exerciseIndex].sets[setIndex].note = newNote;
-                    ui.renderDailyWorkout();
+                    const newNote = document.getElementById('exercise-note-input').value;
+                    exercise.note = newNote;
+                    ui.renderDailyWorkout(); // Re-render to show the 'has-note' class on the button
                     ui.closeModal();
                 }
             }
@@ -639,12 +632,12 @@ function showHistory(exerciseId) {
                     if (exerciseInstance && exerciseInstance.sets.length > 0) {
                         historyHTML += `<div class="history-item">`;
                         historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()} - ${day.name}</div>`;
+                        if (exerciseInstance.note) {
+                            historyHTML += `<div class="history-note">"${exerciseInstance.note}"</div>`;
+                        }
                         exerciseInstance.sets.forEach((set, index) => {
                             if (set.weight && (set.reps || set.rir)) {
                                 historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
-                                if (set.note) {
-                                    historyHTML += `<div class="history-note">"${set.note}"</div>`;
-                                }
                             }
                         });
                         historyHTML += `</div>`;
@@ -725,7 +718,8 @@ async function nextOnboardingStep() {
                                         targetReps: 8,
                                         targetRIR: targetRIR,
                                         targetLoad: null, sets: [],
-                                        stallCount: 0
+                                        stallCount: 0,
+                                        note: ''
                                     };
                                 })
                             )
@@ -853,10 +847,7 @@ export function initEventListeners() {
                     });
                 });
             },
-            openNoteModal: () => {
-                const { exerciseIndex, setIndex } = dataset;
-                openNoteModal(exerciseIndex, setIndex);
-            },
+            openExerciseNotes: () => openExerciseNotes(dataset.exerciseIndex),
             showHistory: () => showHistory(dataset.exerciseId),
         };
 
