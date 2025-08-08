@@ -26,7 +26,9 @@ export const elements = {
     activePlanDisplay: document.getElementById('active-plan-display'),
     builderTitle: document.getElementById('builder-title'),
     planManagementList: document.getElementById('plan-management-list'),
-    workoutTimerDisplay: document.getElementById('workout-timer-display'),
+    // Updated Timer elements
+    workoutStopwatchDisplay: document.getElementById('workout-stopwatch-display'),
+    restTimerDisplay: document.getElementById('rest-timer-display'),
 };
 
 // --- VIEW MANAGEMENT ---
@@ -290,12 +292,19 @@ export function renderDailyWorkout() {
     container.innerHTML = '';
     workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Reset timer when view loads
+    // Reset stopwatch when view loads
     state.workoutTimer.elapsed = 0;
     state.workoutTimer.startTime = 0;
     state.workoutTimer.isRunning = false;
     clearInterval(state.workoutTimer.instance);
-    updateTimerDisplay();
+    updateStopwatchDisplay();
+
+    // Reset rest timer when view loads
+    state.restTimer.isRunning = false;
+    clearInterval(state.restTimer.instance);
+    state.restTimer.remaining = state.restTimer.duration;
+    updateRestTimerDisplay();
+
 
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) {
@@ -594,22 +603,22 @@ export function applyTheme() {
     document.body.dataset.theme = state.settings.theme;
 }
 
-/**
- * Updates the workout timer display based on the current mode and time.
- */
-export function updateTimerDisplay() {
-    let displaySeconds;
-    if (state.workoutTimer.mode === 'stopwatch') {
-        const currentTime = state.workoutTimer.isRunning ? state.workoutTimer.elapsed + Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : state.workoutTimer.elapsed;
-        displaySeconds = currentTime;
-    } else { // Timer mode
-        const elapsed = state.workoutTimer.isRunning ? Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : 0;
-        displaySeconds = Math.max(0, state.workoutTimer.timerDuration - state.workoutTimer.elapsed - elapsed);
-    }
+/** Updates the workout stopwatch display. */
+export function updateStopwatchDisplay() {
+    const totalSeconds = state.workoutTimer.isRunning 
+        ? state.workoutTimer.elapsed + Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) 
+        : state.workoutTimer.elapsed;
 
-    const minutes = Math.floor(displaySeconds / 60);
-    const seconds = displaySeconds % 60;
-    elements.workoutTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    elements.workoutStopwatchDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/** Updates the rest timer countdown display. */
+export function updateRestTimerDisplay() {
+    const minutes = Math.floor(state.restTimer.remaining / 60);
+    const seconds = state.restTimer.remaining % 60;
+    elements.restTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // --- ONBOARDING WIZARD ---
@@ -619,7 +628,6 @@ export function renderOnboardingStep() {
     const { currentStep } = state.onboarding;
     const allSteps = document.querySelectorAll('#onboarding-container .step');
     
-    // UPDATED: Added a cleanup step to remove fade-out class
     allSteps.forEach(step => step.classList.remove('fade-out'));
 
     allSteps.forEach(step => {
