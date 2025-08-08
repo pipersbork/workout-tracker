@@ -775,8 +775,8 @@ export function initEventListeners() {
         const { action, ...dataset } = target.dataset;
 
         const actions = {
-            nextOnboardingStep,
-            previousOnboardingStep,
+            nextOnboardingStep: () => nextOnboardingStep(),
+            previousOnboardingStep: () => previousOnboardingStep(),
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
                 if (dataset.viewName === 'workout') {
@@ -796,21 +796,21 @@ export function initEventListeners() {
             setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
             setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
             setChartType: () => setChartType(dataset.chartType),
-            addDayToBuilder,
+            addDayToBuilder: () => addDayToBuilder(),
             deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
-            savePlan,
+            savePlan: () => savePlan(),
             savePlanAsTemplate: () => savePlanAsTemplate(dataset.planId),
             openBuilderForEdit: () => openBuilderForEdit(dataset.planId),
             confirmDeletePlan: () => confirmDeletePlan(dataset.planId),
             setActivePlan: () => setActivePlan(dataset.planId),
-            confirmCompleteWorkout,
-            closeModal: ui.closeModal,
+            confirmCompleteWorkout: () => confirmCompleteWorkout(),
+            closeModal: () => ui.closeModal(),
             switchTab: () => ui.renderTemplateLibrary(dataset.tab),
             selectTemplate: () => selectTemplate(dataset.templateId),
             selectSavedTemplate: () => selectSavedTemplate(dataset.templateId),
-            finishWizard: ui.customPlanWizard.finish,
-            startRestTimer,
-            stopRestTimer,
+            finishWizard: () => ui.customPlanWizard.finish(),
+            startRestTimer: () => startRestTimer(),
+            stopRestTimer: () => stopRestTimer(),
             addSet: () => {
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
