@@ -106,7 +106,8 @@ function savePlan() {
 
 async function finalizeAndStartPlanFromBuilder() {
     const planName = document.getElementById('new-plan-name').value.trim();
-    const mesoLength = ui.elements.modal.querySelector('.meso-length-card.active')?.dataset.value;
+    const mesoLengthEl = ui.elements.modal.querySelector('.meso-length-card.active');
+    const mesoLength = mesoLengthEl ? mesoLengthEl.dataset.value : null;
 
     if (!planName) {
         ui.showModal('Input Required', 'Please provide a name for your plan.');
@@ -120,7 +121,7 @@ async function finalizeAndStartPlanFromBuilder() {
         ui.showModal("Incomplete Plan", "Please add at least one day to your plan before saving.");
         return;
     }
-    // New validation check: ensure at least one exercise is selected in the entire plan.
+    
     const hasAtLeastOneExercise = state.builderPlan.days.some(day =>
         day.muscleGroups.some(mg =>
             mg.exercises.some(ex => ex && ex !== 'Select an Exercise')
@@ -141,7 +142,7 @@ async function finalizeAndStartPlanFromBuilder() {
         weeks: {}
     };
 
-    const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
+    const focusSetMap = { 'Primary': 3, 'Secondary': 2 }; // Adjusted set counts for better balance
     for (let i = 1; i <= newMeso.durationWeeks; i++) {
         newMeso.weeks[i] = {};
         const isDeload = (i === newMeso.durationWeeks);
@@ -174,7 +175,9 @@ async function finalizeAndStartPlanFromBuilder() {
 
     if (state.editingPlanId) {
         const planIndex = state.allPlans.findIndex(p => p.id === state.editingPlanId);
-        state.allPlans[planIndex] = newMeso;
+        if (planIndex !== -1) {
+            state.allPlans[planIndex] = newMeso;
+        }
     } else {
         state.allPlans.push(newMeso);
     }
@@ -227,7 +230,8 @@ async function deletePlan(planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
     }
     await firebase.saveState();
-    ui.renderSettings();
+    ui.closeModal(); // Close the confirmation modal
+    ui.renderSettings(); // Re-render the settings view to reflect the change
 }
 
 async function setActivePlan(planId) {
@@ -243,12 +247,6 @@ function confirmCompleteWorkout() {
     ]);
 }
 
-/**
- * Calculates the estimated 1-Rep Max (e1RM) using the Brzycki formula.
- * @param {number} weight - The weight lifted.
- * @param {number} reps - The number of repetitions performed.
- * @returns {number} The calculated e1RM.
- */
 function calculateE1RM(weight, reps) {
     if (!weight || !reps || reps < 1) return 0;
     if (reps === 1) return weight;
@@ -256,32 +254,23 @@ function calculateE1RM(weight, reps) {
     return weight / (1.0278 - 0.0278 * reps);
 }
 
-/**
- * Checks all sets in a completed workout for new Personal Records (PRs).
- * @param {object} completedWorkout - The workout object that was just completed.
- * @returns {number} The count of new PRs achieved in this session.
- */
 function checkForPRs(completedWorkout) {
     let newPRsCount = 0;
     completedWorkout.exercises.forEach(ex => {
         if (!ex.sets || ex.sets.length === 0) return;
 
-        // Find the best set (by e1RM) from the current workout session for this exercise
         const topSetOfTheSession = ex.sets.reduce((best, current) => {
-            // Only consider sets with both weight and an explicit rep count
             if (!current.weight || !current.reps) return best;
             const currentE1RM = calculateE1RM(current.weight, current.reps);
             return currentE1RM > best.e1rm ? { ...current, e1rm: currentE1RM } : best;
         }, { e1rm: 0 });
 
-        if (topSetOfTheSession.e1rm === 0) return; // No valid sets with reps found for this exercise
+        if (topSetOfTheSession.e1rm === 0) return;
 
-        // Find the existing all-time PR for this exercise
         const existingPR = state.personalRecords
             .filter(pr => pr.exerciseId === ex.exerciseId)
             .reduce((max, pr) => (pr.e1rm > max.e1rm ? pr : max), { e1rm: 0 });
 
-        // If the new set is a PR, record it
         if (topSetOfTheSession.e1rm > existingPR.e1rm) {
             newPRsCount++;
             const newPR = {
@@ -294,6 +283,8 @@ function checkForPRs(completedWorkout) {
                 e1rm: Math.round(topSetOfTheSession.e1rm),
                 units: state.settings.units
             };
+            // Remove old PR for the same exercise if it exists
+            state.personalRecords = state.personalRecords.filter(pr => pr.exerciseId !== ex.exerciseId);
             state.personalRecords.push(newPR);
         }
     });
@@ -326,6 +317,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
 
 async function completeWorkout() {
     stopStopwatch();
+    ui.closeModal();
 
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
     if (planIndex === -1) return;
@@ -334,14 +326,12 @@ async function completeWorkout() {
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week][day];
 
-    // Mark workout as complete and calculate volume
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
     workout.exercises.forEach(ex => {
         ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
     });
     
-    // Check for new PRs and store the count for the summary screen
     const newPRsCount = checkForPRs(workout);
     state.workoutSummary.newPRs = newPRsCount;
 
@@ -375,7 +365,6 @@ async function completeWorkout() {
     
     ui.showView('workoutSummary');
 
-    // Logic to advance to the next workout day/week
     const dayKeys = Object.keys(activePlan.weeks[week]).sort((a, b) => a - b);
     const currentDayIndex = dayKeys.indexOf(day.toString());
     let nextWeek = week;
@@ -389,7 +378,6 @@ async function completeWorkout() {
             const nextWeekDayKeys = Object.keys(activePlan.weeks[nextWeek] || {}).sort((a, b) => a - b);
             nextDay = nextWeekDayKeys.length > 0 ? parseInt(nextWeekDayKeys[0]) : null;
         } else {
-            // Meso finished, reset to the beginning (or could show a congrats message)
             state.currentView = { week: 1, day: 1 };
         }
     }
@@ -454,6 +442,7 @@ function applyDeload(plan, currentWeek, exercise) {
             exToDeload.stallCount = 0;
         }
     }
+    ui.closeModal();
     ui.showView('home');
 }
 
@@ -509,7 +498,7 @@ function selectSavedTemplate(templateId) {
     const template = state.savedTemplates.find(t => t.id === templateId);
     if (template) {
         state.builderPlan = JSON.parse(JSON.stringify(template.builderTemplate));
-        state.editingPlanId = null; // Ensure it's treated as a new plan
+        state.editingPlanId = null; 
         ui.elements.builderTitle.textContent = `New Plan from "${template.name}"`;
         ui.showView('builder');
     }
@@ -538,21 +527,21 @@ function setChartType(chartType) {
 function startStopwatch() {
     if (state.workoutTimer.isRunning) return;
     state.workoutTimer.isRunning = true;
-    state.workoutTimer.startTime = Date.now();
+    state.workoutTimer.startTime = Date.now() - (state.workoutTimer.elapsed * 1000); // Resume from elapsed time
     state.workoutTimer.instance = setInterval(ui.updateStopwatchDisplay, 1000);
 }
 
 function stopStopwatch() {
     if (!state.workoutTimer.isRunning) return;
     state.workoutTimer.isRunning = false;
-    state.workoutTimer.elapsed += Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
+    state.workoutTimer.elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
     clearInterval(state.workoutTimer.instance);
     ui.updateStopwatchDisplay();
 }
 
 function startRestTimer() {
     if (state.restTimer.isRunning) return;
-    stopRestTimer();
+    stopRestTimer(); // Clear any existing timer before starting a new one
     state.restTimer.isRunning = true;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
@@ -609,13 +598,15 @@ function showHistory(exerciseId) {
     let historyHTML = '';
 
     if (activePlan && activePlan.weeks) {
-        for (const week of Object.values(activePlan.weeks).reverse()) {
-            for (const day of Object.values(week).reverse()) {
-                if (day.completed) {
+        for (const weekKey in activePlan.weeks) {
+            const week = activePlan.weeks[weekKey];
+            for (const dayKey in week) {
+                const day = week[dayKey];
+                 if (day.completed) {
                     const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
-                    if (exerciseInstance) {
+                    if (exerciseInstance && exerciseInstance.sets.length > 0) {
                         historyHTML += `<div class="history-item">`;
-                        historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()}</div>`;
+                        historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()} - ${day.name}</div>`;
                         exerciseInstance.sets.forEach((set, index) => {
                             if (set.weight && (set.reps || set.rir)) {
                                 historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
@@ -668,19 +659,18 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // --- Generate and save the first plan ---
             const { builderPlan } = planGenerator.generate(state.userSelections, state.exercises);
             
             const newMeso = {
                 id: `meso_${Date.now()}`,
                 name: "My First Plan",
                 startDate: new Date().toISOString(),
-                durationWeeks: 4, // Default to 4 weeks for the first plan
+                durationWeeks: 4,
                 builderTemplate: builderPlan,
                 weeks: {}
             };
 
-            const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
+            const focusSetMap = { 'Primary': 3, 'Secondary': 2 };
             for (let i = 1; i <= newMeso.durationWeeks; i++) {
                 newMeso.weeks[i] = {};
                 const isDeload = (i === newMeso.durationWeeks);
@@ -711,7 +701,6 @@ async function nextOnboardingStep() {
                 });
             }
             
-            // --- Auto-save the new plan as a template ---
             const newTemplate = {
                 id: `template_${newMeso.id}`,
                 name: `${newMeso.name} (Template)`,
@@ -727,12 +716,11 @@ async function nextOnboardingStep() {
             
             await firebase.saveState();
             
-            // --- Show notification and then transition to home screen ---
             setTimeout(() => {
                 ui.showModal(
                     'Plan Generated!',
-                    'A workout based on your answers has been generated for you. Click the settings icon to view/edit the routine or select "Start Next Workout" to begin!',
-                    [{ text: 'Got it!', class: 'cta-button', action: () => ui.showView('home') }]
+                    'Your first workout plan is ready. You can edit it from the settings menu or start your first workout from the home screen.',
+                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
                 );
             }, 1000);
         }
@@ -760,14 +748,12 @@ export function initEventListeners() {
 
         const { action, ...dataset } = target.dataset;
 
-        // A map of all possible actions
         const actions = {
             nextOnboardingStep,
             previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
                 if (dataset.viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
-                else if (dataset.viewName !== 'workout' && state.workoutTimer.isRunning) stopStopwatch();
                 ui.showView(dataset.viewName);
             },
             selectCard: () => selectCard(target, dataset.field, dataset.value, dataset.shouldSave === 'true'),
@@ -776,7 +762,7 @@ export function initEventListeners() {
             setProgressionModel: () => setProgressionModel(dataset.progression),
             setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
             setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
-            setChartType: () => setChartType(dataset.chartType), // Handles chart toggle
+            setChartType: () => setChartType(dataset.chartType),
             addDayToBuilder,
             deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
             savePlan,
@@ -798,10 +784,8 @@ export function initEventListeners() {
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const exercise = workout.exercises[exerciseIndex];
                 if (!exercise.sets) exercise.sets = [];
-                // Find the number of existing sets to correctly create the new one
                 const setIndex = exercise.sets.length;
-                 // Pre-fill the weight from the last set if it exists
-                const lastWeight = setIndex > 0 ? exercise.sets[setIndex - 1].weight : '';
+                const lastWeight = setIndex > 0 ? exercise.sets[setIndex - 1].weight : (exercise.targetLoad || '');
                 exercise.sets.push({ weight: lastWeight, reps: '', rir: '', rawInput: '' });
                 ui.renderDailyWorkout();
             },
@@ -894,9 +878,7 @@ export function initEventListeners() {
             const muscleGroup = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex];
             muscleGroup.focus = focus;
             
-            // Adjust the number of exercise slots based on the new focus
             const exerciseCount = focus === 'Primary' ? 3 : 2;
-            // Trim or pad the exercises array to match the new count
             muscleGroup.exercises = muscleGroup.exercises.slice(0, exerciseCount);
             while (muscleGroup.exercises.length < exerciseCount) {
                 muscleGroup.exercises.push('');
@@ -910,12 +892,17 @@ export function initEventListeners() {
     ui.elements.scheduleContainer.addEventListener('change', (e) => {
         const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
         if (e.target.matches('.muscle-select')) {
-            state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = e.target.value;
-            // Reset exercises when muscle group changes
-            const exerciseCount = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus === 'Primary' ? 3 : 2;
-            state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = Array(exerciseCount).fill('');
-            state.isPlanBuilderDirty = true;
-            ui.renderBuilder();
+            const muscleGroup = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex];
+            const newMuscleValue = e.target.value;
+            
+            // *** FIX: Only reset exercises if the muscle group *actually* changes ***
+            if (muscleGroup.muscle !== newMuscleValue) {
+                muscleGroup.muscle = newMuscleValue;
+                const exerciseCount = muscleGroup.focus === 'Primary' ? 3 : 2;
+                muscleGroup.exercises = Array(exerciseCount).fill('');
+                state.isPlanBuilderDirty = true;
+                ui.renderBuilder();
+            }
         }
         if (e.target.matches('.exercise-select')) {
             state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = e.target.value;
@@ -931,8 +918,9 @@ export function initEventListeners() {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             const { exerciseIndex, setIndex } = e.target.dataset;
             const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-            const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-            const exercise = workout?.exercises[exerciseIndex];
+            const workout = activePlan?.weeks[state.currentView.week][state.currentView.day];
+            if (!workout) return;
+            const exercise = workout.exercises[exerciseIndex];
             if (!exercise) return;
             if (!exercise.sets[setIndex]) exercise.sets[setIndex] = {};
             const set = exercise.sets[setIndex];
@@ -942,24 +930,21 @@ export function initEventListeners() {
             } else if (e.target.classList.contains('rep-rir-input')) {
                 const value = e.target.value.toLowerCase();
                 set.rawInput = value;
-                // Try to parse reps first, then RIR
-                const repMatch = value.match(/^(\d+)/); // Match digits at the start of the string
+                const repMatch = value.match(/^(\d+)/);
                 const rirMatch = value.match(/(\d+)\s*rir/);
                 
                 if (rirMatch) {
                     set.rir = parseInt(rirMatch[1]);
-                     // Get the reps before the 'rir' keyword
                     const repsBeforeRir = value.substring(0, rirMatch.index).trim();
                     set.reps = parseInt(repsBeforeRir) || '';
                 } else if (repMatch) {
                     set.reps = parseInt(repMatch[1]);
-                    set.rir = ''; // Clear rir if reps are entered explicitly without 'rir'
+                    set.rir = '';
                 } else {
                     set.reps = '';
                     set.rir = '';
                 }
 
-                // Auto-start rest timer when a set is logged with weight and reps/rir
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
                 }
@@ -982,39 +967,13 @@ export function initEventListeners() {
 
     ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
         const exerciseName = e.target.value;
-        ui.renderProgressChart(exerciseName);
-        ui.renderE1RMChart(exerciseName);
-    });
-
-
-    ui.elements.customPlanWizardView.addEventListener('click', e => {
-        const wizard = ui.customPlanWizard;
-        const dayCard = e.target.closest('.day-card');
-        if (dayCard) {
-            wizard.config.days = parseInt(dayCard.dataset.value);
-            wizard.updatePriorityMuscleLimit();
-            ui.elements.customPlanWizardView.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
-            dayCard.classList.add('active');
-        }
-        const focusCard = e.target.closest('.focus-card');
-        if (focusCard) {
-            wizard.config.focus = focusCard.dataset.value;
-            ui.elements.customPlanWizardView.querySelectorAll('.focus-card').forEach(c => c.classList.remove('active'));
-            focusCard.classList.add('active');
-        }
-        const muscleCard = e.target.closest('.muscle-card');
-        if (muscleCard) {
-            const muscle = muscleCard.dataset.value;
-            const limit = wizard.getPriorityMuscleLimit();
-            if (muscleCard.classList.contains('active')) {
-                muscleCard.classList.remove('active');
-                wizard.config.priorityMuscles = (wizard.config.priorityMuscles || []).filter(m => m !== muscle);
-            } else {
-                if ((wizard.config.priorityMuscles || []).length < limit) {
-                    muscleCard.classList.add('active');
-                    wizard.config.priorityMuscles = [...(wizard.config.priorityMuscles || []), muscle];
-                }
-            }
+        if (exerciseName) {
+            ui.renderProgressChart(exerciseName);
+            ui.renderE1RMChart(exerciseName);
         }
     });
+
+    // This listener is for a wizard that is not fully implemented.
+    // It can be removed or completed later.
+    // ui.elements.customPlanWizardView.addEventListener('click', e => { ... });
 }
