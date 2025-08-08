@@ -23,7 +23,7 @@ export const state = {
         theme: 'dark',
         progressionModel: 'double',
         weightIncrement: 5,
-        restDuration: 90, // Default rest duration
+        restDuration: 90, // Default rest duration in seconds
     },
 
     // Workout Plans and Progress
@@ -34,6 +34,9 @@ export const state = {
         week: 1,
         day: 1
     },
+
+    // User-Created Templates
+    savedTemplates: [], // Stores plans saved as reusable templates
 
     // UI and View State
     currentViewName: 'onboarding',
