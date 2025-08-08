@@ -6,7 +6,7 @@ import { showModal } from './ui.js';
 
 /**
  * @file firebaseService.js handles all interactions with Firebase,
- * including authentication and Firestore database operations.
+ * including authentication and Firestore database operations, with an offline-first approach.
  */
 
 // --- FIREBASE CONFIGURATION ---
@@ -24,85 +24,124 @@ const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
+// --- LOCAL STORAGE KEY ---
+const LOCAL_STORAGE_KEY = 'progressionAppState';
+
+/**
+ * Saves the essential parts of the application state to both localStorage and Firestore.
+ * This enables offline functionality and cloud backup.
+ */
+export async function saveState() {
+    if (!state.userId) return;
+
+    const dataToSave = {
+        userSelections: state.userSelections,
+        settings: state.settings,
+        allPlans: state.allPlans,
+        savedTemplates: state.savedTemplates,
+        activePlanId: state.activePlanId,
+        currentView: state.currentView,
+        workoutHistory: state.workoutHistory
+    };
+
+    // 1. Save to localStorage immediately for offline access
+    try {
+        const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+        localData[state.userId] = dataToSave;
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
+    } catch (error) {
+        console.error("Error saving state to localStorage:", error);
+    }
+
+    // 2. Save to Firestore for cloud backup. This happens in the background.
+    try {
+        const userDocRef = doc(db, "users", state.userId);
+        await setDoc(userDocRef, dataToSave);
+    } catch (error) {
+        console.error("Error saving state to Firestore:", error);
+        // You could optionally notify the user of a sync failure here
+    }
+}
+
+/**
+ * Loads the application state, prioritizing local data for offline-first speed.
+ * Falls back to Firestore if no local data is available.
+ */
+async function loadInitialState() {
+    if (!state.userId) return;
+
+    let dataLoaded = false;
+
+    // 1. Try to load from localStorage first
+    try {
+        const localDataString = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localDataString) {
+            const allLocalData = JSON.parse(localDataString);
+            const userData = allLocalData[state.userId];
+            if (userData) {
+                state.userSelections = { ...state.userSelections, ...userData.userSelections };
+                state.settings = { ...state.settings, ...userData.settings };
+                state.allPlans = userData.allPlans || [];
+                state.savedTemplates = userData.savedTemplates || [];
+                state.activePlanId = userData.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
+                state.currentView = userData.currentView || state.currentView;
+                state.workoutHistory = userData.workoutHistory || [];
+                dataLoaded = true;
+            }
+        }
+    } catch (error) {
+        console.error("Error loading state from localStorage:", error);
+        localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted data
+    }
+
+    // 2. If no local data, try loading from Firestore
+    if (!dataLoaded) {
+        const userDocRef = doc(db, "users", state.userId);
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                state.userSelections = { ...state.userSelections, ...data.userSelections };
+                state.settings = { ...state.settings, ...data.settings };
+                state.allPlans = data.allPlans || [];
+                state.savedTemplates = data.savedTemplates || [];
+                state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
+                state.currentView = data.currentView || state.currentView;
+                state.workoutHistory = data.workoutHistory || [];
+                // Save the fetched data back to local storage for next time
+                await saveState();
+            } else {
+                // This is a new user. Save the default state.
+                await saveState();
+            }
+        } catch (error) {
+            console.error("Error loading state from Firestore:", error);
+            showModal('Error', 'Could not load your saved data. Please refresh the page.');
+        }
+    }
+
+    state.isDataLoaded = true;
+}
+
 /**
  * Handles the authentication state changes for the user.
- * If a user is logged in, it loads their data. Otherwise, it signs them in anonymously.
  * @param {Function} onAuthenticated - A callback function to run after the user is authenticated and data is loaded.
  */
 export function handleAuthentication(onAuthenticated) {
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // User is signed in.
             state.userId = user.uid;
-            await loadStateFromFirestore();
+            await loadInitialState();
             if (onAuthenticated) {
                 onAuthenticated();
             }
         } else {
-            // User is signed out. Sign in anonymously.
             signInAnonymously(auth).catch((error) => {
                 console.error("Anonymous sign-in failed:", error);
                 showModal('Authentication Error', 'Could not sign in. Please check your connection and try again.');
             });
         }
     });
-}
-
-/**
- * Loads the user's saved state from Firestore and workout history from localStorage.
- * If no state is found, it initializes a default state.
- */
-export async function loadStateFromFirestore() {
-    if (!state.userId) return;
-    const userDocRef = doc(db, "users", state.userId);
-    try {
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Merge fetched data with the default state to prevent errors if some fields are missing
-            state.userSelections = { ...state.userSelections, ...data.userSelections };
-            state.settings = { ...state.settings, ...data.settings };
-            state.allPlans = data.allPlans || [];
-            state.savedTemplates = data.savedTemplates || []; // Load saved templates
-            state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
-            state.currentView = data.currentView || state.currentView;
-        } else {
-            // No document found, so this is a new user.
-            await saveStateToFirestore();
-        }
-
-        const savedHistory = localStorage.getItem('workoutHistory');
-        if (savedHistory) {
-            state.workoutHistory = JSON.parse(savedHistory);
-        }
-
-        state.isDataLoaded = true;
-    } catch (error) {
-        console.error("Error loading state from Firestore:", error);
-        showModal('Error', 'Could not load your saved data. Please refresh the page.');
-    }
-}
-
-/**
- * Saves the current application state to Firestore.
- */
-export async function saveStateToFirestore() {
-    if (!state.userId) return;
-    const userDocRef = doc(db, "users", state.userId);
-    const dataToSave = {
-        userSelections: state.userSelections,
-        settings: state.settings,
-        allPlans: state.allPlans,
-        savedTemplates: state.savedTemplates, // Save templates
-        activePlanId: state.activePlanId,
-        currentView: state.currentView
-    };
-    try {
-        await setDoc(userDocRef, dataToSave);
-    } catch (error) {
-        console.error("Error saving state to Firestore:", error);
-        showModal('Error', 'Could not save your progress. Please check your connection.');
-    }
 }
 
 /**
