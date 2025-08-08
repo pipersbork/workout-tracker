@@ -37,7 +37,7 @@ export const state = {
     // UI and View State
     currentViewName: 'onboarding',
 
-    // NEW: Onboarding Wizard State
+    // Onboarding Wizard State
     onboarding: {
         currentStep: 1,
         totalSteps: 5,
@@ -65,8 +65,11 @@ export const state = {
         timerDuration: 180   // Default duration for the countdown timer
     },
 
-    // UPDATED: Temporary state for the workout summary screen
+    // Temporary state for the workout summary screen
     workoutSummary: {
         suggestions: []
-    }
+    },
+
+    // Holds the chronological history of all completed workouts
+    workoutHistory: [],
 };
