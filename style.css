@@ -5,9 +5,9 @@
   /* High-Energy Focus Palette Tokens */
   
   /* Surfaces */
-  --color-surface-primary: #121212;    /* Deepest background */
-  --color-surface-secondary: #1E1E1E;  /* Cards and components */
-  --color-surface-tertiary: #2C2C2E;   /* Inputs and nested elements */
+  --color-surface-primary: #121212;
+  --color-surface-secondary: #1E1E1E;
+  --color-surface-tertiary: #2C2C2E;
 
   /* Text & Icons */
   --color-text-primary: #FFFFFF;
