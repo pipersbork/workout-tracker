@@ -303,7 +303,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
  * Marks a workout as complete, processes the data, and advances the user to the next workout.
  */
 async function completeWorkout() {
-    pauseTimer();
+    stopStopwatch();
     state.workoutSummary.suggestions = [];
 
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
@@ -319,7 +319,6 @@ async function completeWorkout() {
         ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
     });
 
-    // --- START: ADD NEW HISTORY LOGIC ---
     const totalSeconds = state.workoutTimer.elapsed;
     const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
     const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
@@ -334,12 +333,8 @@ async function completeWorkout() {
         sets: totalSets,
     };
 
-    // Add the new entry to the start of the history array
     state.workoutHistory.unshift(historyEntry);
-
-    // Persist the history to the browser's local storage
     localStorage.setItem('workoutHistory', JSON.stringify(state.workoutHistory));
-    // --- END: ADD NEW HISTORY LOGIC ---
 
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
     
@@ -515,46 +510,50 @@ function selectTemplate(templateId) {
 
 // --- TIMER FUNCTIONS ---
 
-/** Starts the workout timer. */
-function startTimer() {
+/** Starts the main workout stopwatch. */
+function startStopwatch() {
     if (state.workoutTimer.isRunning) return;
     state.workoutTimer.isRunning = true;
     state.workoutTimer.startTime = Date.now();
-    state.workoutTimer.instance = setInterval(ui.updateTimerDisplay, 1000);
+    state.workoutTimer.instance = setInterval(ui.updateStopwatchDisplay, 1000);
 }
 
-/** Pauses the workout timer. */
-function pauseTimer() {
+/** Stops the main workout stopwatch. */
+function stopStopwatch() {
     if (!state.workoutTimer.isRunning) return;
     state.workoutTimer.isRunning = false;
     state.workoutTimer.elapsed += Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
     clearInterval(state.workoutTimer.instance);
-    ui.updateTimerDisplay();
+    ui.updateStopwatchDisplay();
 }
 
-/** Resets the workout timer. */
-function resetTimer() {
-    state.workoutTimer.isRunning = false;
-    state.workoutTimer.elapsed = 0;
-    state.workoutTimer.startTime = 0;
-    clearInterval(state.workoutTimer.instance);
-    ui.updateTimerDisplay();
+/** Starts the rest timer countdown. */
+function startRestTimer() {
+    if (state.restTimer.isRunning) return;
+    stopRestTimer(); // Ensure any existing timer is cleared
+    state.restTimer.isRunning = true;
+    state.restTimer.remaining = state.restTimer.duration;
+    ui.updateRestTimerDisplay();
+    state.restTimer.instance = setInterval(() => {
+        state.restTimer.remaining--;
+        ui.updateRestTimerDisplay();
+        if (state.restTimer.remaining <= 0) {
+            stopRestTimer();
+            // Optional: Vibrate or play a sound
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+    }, 1000);
 }
 
-/**
- * Sets the timer mode between stopwatch and timer.
- * @param {string} mode - The mode to switch to ('stopwatch' or 'timer').
- */
-function setTimerMode(mode) {
-    if (state.workoutTimer.mode === mode) return;
-    resetTimer();
-    state.workoutTimer.mode = mode;
-    document.querySelectorAll('[data-action="setTimerMode"]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
-    });
-    ui.updateTimerDisplay();
+/** Stops and resets the rest timer. */
+function stopRestTimer() {
+    state.restTimer.isRunning = false;
+    clearInterval(state.restTimer.instance);
+    state.restTimer.remaining = state.restTimer.duration;
+    ui.updateRestTimerDisplay();
 }
-
 
 // --- NOTE AND HISTORY FUNCTIONS ---
 
@@ -639,7 +638,6 @@ function handleStepTransition(stepChangeLogic) {
             ui.renderOnboardingStep();
         }, 400); // Match animation duration in CSS
     } else {
-        // If no step is active, just run the logic immediately
         stepChangeLogic();
         ui.renderOnboardingStep();
     }
@@ -650,8 +648,6 @@ function selectOnboardingCard(element, field, value) {
     state.userSelections[field] = value;
     element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
-    
-    // UPDATED: Use the main nextOnboardingStep function to handle all logic
     nextOnboardingStep();
 }
 
@@ -662,11 +658,9 @@ async function nextOnboardingStep() {
             state.onboarding.currentStep++;
         }
         
-        // If it's the final "calculating" step after advancing
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
             state.userSelections.onboardingCompleted = true;
             await firebase.saveStateToFirestore();
-            // Wait 2 seconds to simulate calculation, then go home
             setTimeout(() => {
                 ui.showView('home');
             }, 2000);
@@ -690,15 +684,21 @@ function previousOnboardingStep() {
 
 /** Initializes all event listeners for the application. */
 export function initEventListeners() {
-    // Main event delegation for data-action attributes
     document.body.addEventListener('click', e => {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, exerciseIndex, setIndex, exerciseId, mode } = target.dataset;
+        const { action, field, value, viewName, planId, increment, theme, unit, progression, shouldSave, tab, templateId, exerciseIndex, setIndex, exerciseId } = target.dataset;
 
         const actions = {
-            showView: () => ui.showView(viewName),
+            showView: () => {
+                if (viewName === 'workout' && !state.workoutTimer.isRunning) {
+                    startStopwatch();
+                } else if (viewName !== 'workout' && state.workoutTimer.isRunning) {
+                    stopStopwatch();
+                }
+                ui.showView(viewName);
+            },
             selectCard: () => selectCard(target, field, value, shouldSave === 'true'),
             setTheme: () => setTheme(theme),
             setUnits: () => setUnits(unit),
@@ -712,13 +712,11 @@ export function initEventListeners() {
             setActivePlan: () => setActivePlan(planId),
             confirmCompleteWorkout: () => confirmCompleteWorkout(),
             closeModal: () => ui.closeModal(),
-            switchTab: () => { /* Logic for switching tabs can be added here if needed */ },
+            switchTab: () => { /* Logic for switching tabs */ },
             selectTemplate: () => selectTemplate(templateId),
             finishWizard: () => ui.customPlanWizard.finish(),
-            startTimer: () => startTimer(),
-            pauseTimer: () => pauseTimer(),
-            resetTimer: () => resetTimer(),
-            setTimerMode: () => setTimerMode(mode),
+            startRestTimer: () => startRestTimer(),
+            stopRestTimer: () => stopRestTimer(),
             addSet: () => {
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
@@ -768,7 +766,6 @@ export function initEventListeners() {
         }
     });
 
-    // Event listener for the plan hub
     ui.elements.planHubView.addEventListener('click', e => {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
@@ -778,7 +775,6 @@ export function initEventListeners() {
         if (hubAction === 'resume') ui.showView('workout');
     });
 
-    // Event listeners for the workout builder
     ui.elements.scheduleContainer.addEventListener('click', (e) => {
         const dayCard = e.target.closest('.day-card');
         if (!dayCard) return;
@@ -820,12 +816,10 @@ export function initEventListeners() {
         if (e.target.matches('.exercise-select')) state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises[exerciseSelectIndex] = e.target.value;
     });
 
-    // Event listener for closing the modal by clicking the background
     ui.elements.modal.addEventListener('click', (e) => {
         if (e.target === ui.elements.modal) ui.closeModal();
     });
 
-    // Event listener for workout view inputs
     ui.elements.workoutView.addEventListener('input', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             const { exerciseIndex, setIndex } = e.target.dataset;
@@ -854,7 +848,6 @@ export function initEventListeners() {
         }
     });
 
-    // Add focus and blur listeners for set highlighting
     ui.elements.workoutView.addEventListener('focusin', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
@@ -868,10 +861,8 @@ export function initEventListeners() {
         }
     });
 
-    // Event listener for the performance summary exercise tracker
     document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => ui.renderProgressChart(e.target.value));
 
-    // Event listeners for the custom plan wizard
     ui.elements.customPlanWizardView.addEventListener('click', e => {
         const wizard = ui.customPlanWizard;
         const dayCard = e.target.closest('.day-card');
