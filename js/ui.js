@@ -363,6 +363,27 @@ export function renderDailyWorkout() {
     });
 }
 
+/** Renders the workout history list on the performance summary page. */
+function renderWorkoutHistory() {
+    const container = document.getElementById('workout-history-list');
+    if (!container) return;
+
+    if (!state.workoutHistory || state.workoutHistory.length === 0) {
+        container.innerHTML = '<p class="placeholder-text">You haven\'t completed any workouts yet.</p>';
+        return;
+    }
+
+    container.innerHTML = state.workoutHistory.map(entry => `
+        <div class="summary-item">
+            <div>
+                <h4>${entry.workoutName}</h4>
+                <p>${new Date(entry.completedDate).toLocaleDateString()}</p>
+            </div>
+            <span>${entry.volume} ${state.settings.units}</span>
+        </div>
+    `).join('');
+}
+
 /** Renders the performance summary view and its charts. */
 export function renderPerformanceSummary() {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
@@ -371,10 +392,9 @@ export function renderPerformanceSummary() {
         return;
     }
 
-    const listContainer = document.getElementById('completed-workouts-list');
     const exerciseSelect = document.getElementById('exercise-tracker-select');
-    listContainer.innerHTML = '';
     exerciseSelect.innerHTML = '<option value="">Select an exercise to track</option>';
+    
     const completedWorkouts = [];
     const uniqueExercises = new Set();
     Object.values(activePlan.weeks).forEach(week => {
@@ -385,23 +405,15 @@ export function renderPerformanceSummary() {
             }
         });
     });
-    if (completedWorkouts.length === 0) {
-        listContainer.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
-    } else {
-        completedWorkouts.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate))
-            .forEach(workout => {
-                const workoutItem = document.createElement('div');
-                workoutItem.className = 'summary-item';
-                workoutItem.innerHTML = `<h4>${workout.name}</h4><p>${new Date(workout.completedDate).toLocaleDateString()}</p>`;
-                listContainer.appendChild(workoutItem);
-            });
-    }
+    
     uniqueExercises.forEach(exName => {
         const option = document.createElement('option');
         option.value = exName;
         option.textContent = exName;
         exerciseSelect.appendChild(option);
     });
+
+    renderWorkoutHistory();
     renderProgressChart("");
     renderVolumeChart(completedWorkouts);
     renderConsistencyCalendar(completedWorkouts);
