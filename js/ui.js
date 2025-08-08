@@ -26,7 +26,6 @@ export const elements = {
     activePlanDisplay: document.getElementById('active-plan-display'),
     builderTitle: document.getElementById('builder-title'),
     planManagementList: document.getElementById('plan-management-list'),
-    // Updated Timer elements
     workoutStopwatchDisplay: document.getElementById('workout-stopwatch-display'),
     restTimerDisplay: document.getElementById('rest-timer-display'),
 };
@@ -52,7 +51,6 @@ const viewMap = {
  * @param {boolean} skipAnimation - If true, the transition will be immediate.
  */
 export function showView(viewName, skipAnimation = false) {
-    // If the user hasn't completed onboarding, force them to the onboarding view
     if (viewName !== 'onboarding' && !state.userSelections.onboardingCompleted) {
         viewName = 'onboarding';
     }
@@ -78,7 +76,6 @@ export function showView(viewName, skipAnimation = false) {
         }
         newViewEl.classList.remove('hidden');
 
-        // Call the specific render function for the new view
         switch (viewName) {
             case 'home': renderHomeScreen(); break;
             case 'planHub': renderPlanHub(); break;
@@ -99,7 +96,7 @@ export function showView(viewName, skipAnimation = false) {
         transition();
     } else {
         currentViewEl.classList.add('fade-out');
-        setTimeout(transition, 400); // Match animation duration in CSS
+        setTimeout(transition, 400);
     }
 }
 
@@ -135,7 +132,6 @@ export function renderHomeScreen() {
 /** Renders the plan hub view. */
 export function renderPlanHub() {
     const container = document.getElementById('plan-hub-options');
-    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     let optionsHTML = `
         <button class="hub-option" data-hub-action="template">
             <div class="hub-option-icon">📖</div>
@@ -146,17 +142,13 @@ export function renderPlanHub() {
             <div class="hub-option-text"><h3>Start from Scratch</h3><p>Use the wizard to design your own custom plan.</p></div>
         </button>
     `;
-    if (activePlan) {
-        optionsHTML = `
-            <button class="hub-option" data-hub-action="resume">
-                <div class="hub-option-icon">▶️</div>
-                <div class="hub-option-text"><h3>Resume Current Plan</h3><p>Pick up where you left off on "${activePlan.name}".p></div>
+    if (state.allPlans.length > 0) {
+        optionsHTML += `
+            <button class="hub-option" data-hub-action="manage">
+                <div class="hub-option-icon">⚙️</div>
+                <div class="hub-option-text"><h3>Manage My Plans</h3><p>Edit, delete, or set your active workout plan.</p></div>
             </button>
-            <button class="hub-option" data-hub-action="copy">
-                <div class="hub-option-icon">🔁</div>
-                <div class="hub-option-text"><h3>Copy a Mesocycle</h3><p>Start a new plan based on a previous one.</p></div>
-            </button>
-        ` + optionsHTML;
+        `;
     }
     container.innerHTML = optionsHTML;
 }
@@ -180,7 +172,7 @@ export function renderTemplateLibrary() {
 export function renderBuilder() {
     const container = elements.scheduleContainer;
     container.innerHTML = '';
-    if (state.builderPlan.days.length === 0) {
+    if (!state.builderPlan || state.builderPlan.days.length === 0) {
         container.innerHTML = `<p class="placeholder-text">Click "Add a Day" to start building your schedule.</p>`;
         return;
     }
@@ -190,7 +182,7 @@ export function renderBuilder() {
 
     state.builderPlan.days.forEach((day, dayIndex) => {
         const dayCard = document.createElement('div');
-        dayCard.className = `day-card ${day.isExpanded ? 'expanded' : 'collapsed'}`;
+        dayCard.className = `day-card expanded`; // Always expanded for now
         dayCard.dataset.dayIndex = dayIndex;
 
         const muscleGroupsHTML = day.muscleGroups.map((mg, muscleIndex) => {
@@ -222,9 +214,7 @@ export function renderBuilder() {
 
         dayCard.innerHTML = `
             <div class="day-header">
-                <select class="builder-select day-label-selector" data-day-index="${dayIndex}">
-                    <option>Add a label</option><option ${day.label === 'Monday' ? 'selected' : ''}>Monday</option><option ${day.label === 'Tuesday' ? 'selected' : ''}>Tuesday</option><option ${day.label === 'Wednesday' ? 'selected' : ''}>Wednesday</option><option ${day.label === 'Thursday' ? 'selected' : ''}>Thursday</option><option ${day.label === 'Friday' ? 'selected' : ''}>Friday</option><option ${day.label === 'Saturday' ? 'selected' : ''}>Saturday</option><option ${day.label === 'Sunday' ? 'selected' : ''}>Sunday</option>
-                </select>
+                <input class="builder-input day-label-input" type="text" value="${day.label}" placeholder="e.g., Push Day" data-day-index="${dayIndex}">
                 <button class="delete-btn delete-day-btn" aria-label="Delete day"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
             </div>
             <div class="day-content">${muscleGroupsHTML}<button class="cta-button secondary-button add-muscle-group-btn">+ Add a Muscle Group</button></div>
@@ -257,6 +247,7 @@ export function renderSettings() {
     document.querySelectorAll('[data-action="setTheme"]').forEach(btn => btn.classList.toggle('active', btn.dataset.theme === state.settings.theme));
     document.querySelectorAll('[data-action="setProgressionModel"]').forEach(btn => btn.classList.toggle('active', btn.dataset.progression === state.settings.progressionModel));
     document.querySelectorAll('[data-action="setWeightIncrement"]').forEach(btn => btn.classList.toggle('active', parseFloat(btn.dataset.increment) === state.settings.weightIncrement));
+    document.querySelectorAll('[data-action="setRestDuration"]').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.duration) === state.settings.restDuration));
 
     elements.planManagementList.innerHTML = '';
     if (state.allPlans.length === 0) {
@@ -269,12 +260,10 @@ export function renderSettings() {
             planItem.dataset.planId = plan.id;
             planItem.innerHTML = `
                 <span class="plan-name-container">
-                    <input type="text" class="plan-name-input hidden" value="${plan.name}" data-plan-id="${plan.id}" />
                     <span class="plan-name-text">${plan.name}</span>
                 </span>
                 <div class="plan-actions">
-                    <button class="plan-btn" data-action="toggleEditPlanName" data-plan-id="${plan.id}">Edit</button>
-                    <button class="plan-btn" data-action="openBuilderForEdit" data-plan-id="${plan.id}">Build</button>
+                    <button class="plan-btn" data-action="openBuilderForEdit" data-plan-id="${plan.id}">Edit</button>
                     <button class="plan-btn" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
                     <button class="plan-btn" data-action="setActivePlan" data-plan-id="${plan.id}" ${isActive ? 'disabled' : ''}>${isActive ? 'Active' : 'Set Active'}</button>
                 </div>
@@ -292,19 +281,16 @@ export function renderDailyWorkout() {
     container.innerHTML = '';
     workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Reset stopwatch when view loads
     state.workoutTimer.elapsed = 0;
     state.workoutTimer.startTime = 0;
     state.workoutTimer.isRunning = false;
     clearInterval(state.workoutTimer.instance);
     updateStopwatchDisplay();
 
-    // Reset rest timer when view loads
     state.restTimer.isRunning = false;
     clearInterval(state.restTimer.instance);
-    state.restTimer.remaining = state.restTimer.duration;
+    state.restTimer.remaining = state.settings.restDuration;
     updateRestTimerDisplay();
-
 
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) {
