@@ -572,8 +572,57 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
+            // --- NEW LOGIC: Generate and save the first plan ---
+            const { builderPlan, description } = planGenerator.generate(state.userSelections, state.exercises);
+            
+            const newMeso = {
+                id: `meso_${Date.now()}`,
+                name: "My First Plan",
+                startDate: new Date().toISOString(),
+                durationWeeks: 4, // Default to 4 weeks for the first plan
+                builderTemplate: builderPlan,
+                weeks: {}
+            };
+
+            const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
+            for (let i = 1; i <= newMeso.durationWeeks; i++) {
+                newMeso.weeks[i] = {};
+                const isDeload = (i === newMeso.durationWeeks);
+                const targetRIR = planGenerator.getRirForWeek(i, newMeso.durationWeeks);
+
+                builderPlan.days.forEach((day, dayIndex) => {
+                    const dayKey = dayIndex + 1;
+                    newMeso.weeks[i][dayKey] = {
+                        name: day.label || `Day ${dayKey}`,
+                        completed: false,
+                        exercises: day.muscleGroups
+                            .filter(mg => mg.muscle !== 'restday')
+                            .flatMap(mg =>
+                                mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
+                                    const exerciseDetails = state.exercises.find(e => e.name === exName) || {};
+                                    const setsPerExercise = focusSetMap[mg.focus] || 3;
+                                    return {
+                                        exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
+                                        targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
+                                        targetReps: 8,
+                                        targetRIR: targetRIR,
+                                        targetLoad: null, sets: [],
+                                        stallCount: 0
+                                    };
+                                })
+                            )
+                    };
+                });
+            }
+            
+            state.allPlans.push(newMeso);
+            state.activePlanId = newMeso.id;
+            const firstDayKey = Object.keys(newMeso.weeks[1])[0] || 1;
+            state.currentView = { week: 1, day: parseInt(firstDayKey) };
             state.userSelections.onboardingCompleted = true;
+            
             await firebase.saveStateToFirestore();
+            
             setTimeout(() => {
                 ui.showView('home');
             }, 2000);
