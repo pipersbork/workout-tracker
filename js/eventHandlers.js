@@ -435,7 +435,7 @@ function selectSavedTemplate(templateId) {
     const template = state.savedTemplates.find(t => t.id === templateId);
     if (template) {
         state.builderPlan = JSON.parse(JSON.stringify(template.builderTemplate));
-        state.editingPlanId = null; // Ensure it's treated as a new plan
+        state.editingPlanId = null;
         ui.elements.builderTitle.textContent = `New Plan from "${template.name}"`;
         ui.showView('builder');
     }
@@ -600,59 +600,46 @@ export function initEventListeners() {
         target.classList.add('pop-animation');
         setTimeout(() => target.classList.remove('pop-animation'), 300);
 
-        const { action, planId } = target.dataset;
+        const { action, ...dataset } = target.dataset;
 
-        switch (action) {
-            case 'nextOnboardingStep': nextOnboardingStep(); break;
-            case 'previousOnboardingStep': previousOnboardingStep(); break;
-            case 'selectOnboardingCard': selectOnboardingCard(target, target.dataset.field, target.dataset.value); break;
-            
-            case 'showView':
-                const { viewName } = target.dataset;
-                if (viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
-                else if (viewName !== 'workout' && state.workoutTimer.isRunning) stopStopwatch();
-                ui.showView(viewName);
-                break;
-
-            case 'selectCard': selectCard(target, target.dataset.field, target.dataset.value, target.dataset.shouldSave === 'true'); break;
-            case 'setTheme': setTheme(target.dataset.theme); break;
-            case 'setUnits': setUnits(target.dataset.unit); break;
-            case 'setProgressionModel': setProgressionModel(target.dataset.progression); break;
-            case 'setWeightIncrement': setWeightIncrement(parseFloat(target.dataset.increment)); break;
-            case 'setRestDuration': setRestDuration(parseInt(target.dataset.duration)); break;
-
-            case 'addDayToBuilder': addDayToBuilder(); break;
-            case 'deleteDayFromBuilder': deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)); break;
-            case 'savePlan': savePlan(); break;
-            case 'savePlanAsTemplate': savePlanAsTemplate(planId); break;
-            case 'openBuilderForEdit': openBuilderForEdit(planId); break;
-            case 'confirmDeletePlan': confirmDeletePlan(planId); break;
-            case 'setActivePlan': setActivePlan(planId); break;
-
-            case 'confirmCompleteWorkout': confirmCompleteWorkout(); break;
-            case 'closeModal': ui.closeModal(); break;
-            
-            case 'switchTab': ui.renderTemplateLibrary(target.dataset.tab); break;
-            case 'selectTemplate': selectTemplate(target.dataset.templateId); break;
-            case 'selectSavedTemplate': selectSavedTemplate(target.dataset.templateId); break;
-            
-            case 'finishWizard': ui.customPlanWizard.finish(); break;
-            
-            case 'startRestTimer': startRestTimer(); break;
-            case 'stopRestTimer': stopRestTimer(); break;
-            
-            case 'addSet': {
-                const { exerciseIndex } = target.dataset;
+        const actions = {
+            showView: () => {
+                if (dataset.viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
+                else if (dataset.viewName !== 'workout' && state.workoutTimer.isRunning) stopStopwatch();
+                ui.showView(dataset.viewName);
+            },
+            selectCard: () => selectCard(target, dataset.field, dataset.value, dataset.shouldSave === 'true'),
+            setTheme: () => setTheme(dataset.theme),
+            setUnits: () => setUnits(dataset.unit),
+            setProgressionModel: () => setProgressionModel(dataset.progression),
+            setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
+            setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
+            addDayToBuilder: addDayToBuilder,
+            deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
+            savePlan: savePlan,
+            savePlanAsTemplate: () => savePlanAsTemplate(dataset.planId),
+            openBuilderForEdit: () => openBuilderForEdit(dataset.planId),
+            confirmDeletePlan: () => confirmDeletePlan(dataset.planId),
+            setActivePlan: () => setActivePlan(dataset.planId),
+            confirmCompleteWorkout: confirmCompleteWorkout,
+            closeModal: ui.closeModal,
+            switchTab: () => ui.renderTemplateLibrary(dataset.tab),
+            selectTemplate: () => selectTemplate(dataset.templateId),
+            selectSavedTemplate: () => selectSavedTemplate(dataset.templateId),
+            finishWizard: ui.customPlanWizard.finish,
+            startRestTimer: startRestTimer,
+            stopRestTimer: stopRestTimer,
+            addSet: () => {
+                const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const exercise = workout.exercises[exerciseIndex];
                 if (!exercise.sets) exercise.sets = [];
                 exercise.sets.push({ weight: '', reps: '', rir: '', rawInput: '' });
                 ui.renderDailyWorkout();
-                break;
-            }
-            case 'swapExercise': {
-                const { exerciseIndex } = target.dataset;
+            },
+            swapExercise: () => {
+                const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const currentExerciseName = workout.exercises[exerciseIndex].name;
@@ -675,18 +662,19 @@ export function initEventListeners() {
                         ui.closeModal();
                     });
                 });
-                break;
-            }
-            case 'openNoteModal': {
-                const { exerciseIndex, setIndex } = target.dataset;
+            },
+            openNoteModal: () => {
+                const { exerciseIndex, setIndex } = dataset;
                 openNoteModal(exerciseIndex, setIndex);
-                break;
-            }
-            case 'showHistory': {
-                const { exerciseId } = target.dataset;
-                showHistory(exerciseId);
-                break;
-            }
+            },
+            showHistory: () => showHistory(dataset.exerciseId),
+            nextOnboardingStep: nextOnboardingStep,
+            previousOnboardingStep: previousOnboardingStep,
+            selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
+        };
+
+        if (actions[action]) {
+            actions[action]();
         }
     });
 
