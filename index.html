@@ -141,7 +141,7 @@
             <div class="schedule-container" id="schedule-container"></div>
             <div class="builder-actions">
                 <button class="cta-button secondary-button" data-action="addDayToBuilder">+ Add a Day</button>
-                <button class="cta-button" data-action="openMesoLengthModal">Save Plan</button>
+                <button class="cta-button" data-action="savePlan">Save Plan</button>
             </div>
         </div>
 
@@ -154,7 +154,6 @@
                 <p id="workout-date">Date</p>
             </div>
 
-            <!-- START: NEW TIMER BAR -->
             <div class="timer-container">
                 <div class="timer-section">
                     <span class="timer-label">TIME</span>
@@ -169,7 +168,6 @@
                     </div>
                 </div>
             </div>
-            <!-- END: NEW TIMER BAR -->
 
             <div id="exercise-list-container"></div>
             <div class="workout-actions">
@@ -277,7 +275,7 @@
                     </div>
                 </section>
                 <section class="settings-section">
-                    <h3>Progression</h3>
+                    <h3>Workout Settings</h3>
                     <label class="settings-label">Progression Model</label>
                     <div class="toggle-switch">
                         <button class="toggle-btn" data-action="setProgressionModel" data-progression="linear">Linear</button>
@@ -288,6 +286,13 @@
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="2.5">2.5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="5">5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="10">10</button>
+                    </div>
+                    <label class="settings-label">Default Rest Duration (seconds)</label>
+                    <div class="toggle-switch" id="rest-duration-switch">
+                        <button class="toggle-btn" data-action="setRestDuration" data-duration="60">60s</button>
+                        <button class="toggle-btn" data-action="setRestDuration" data-duration="90">90s</button>
+                        <button class="toggle-btn" data-action="setRestDuration" data-duration="120">120s</button>
+                        <button class="toggle-btn" data-action="setRestDuration" data-duration="180">180s</button>
                     </div>
                 </section>
                 <section class="settings-section">
