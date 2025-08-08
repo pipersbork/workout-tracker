@@ -245,13 +245,64 @@ select.builder-select { background-color: var(--color-surface-tertiary); color: 
   PERFORMANCE SUMMARY STYLES
 =========================== */
 .summary-section { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
-#workout-history-list { max-height: 300px; overflow-y: auto; padding-right: 1rem; }
+#workout-history-list, #trophy-case-list { max-height: 300px; overflow-y: auto; padding-right: 1rem; }
 .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border-primary); }
 .summary-item:last-child { border-bottom: none; }
 .summary-item h4 { margin: 0; font-size: 1.1rem; }
 .summary-item p { margin: 0; color: var(--color-text-secondary); }
 #exercise-tracker-select { width: 100%; margin-bottom: 1.5rem; }
+
+.chart-toggle-switch {
+    margin-bottom: 1rem;
+}
 .chart-container { position: relative; height: 300px; width: 100%; }
+.chart-container.hidden { display: none; }
+
+#trophy-case-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.pr-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-surface-tertiary);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid var(--color-state-success);
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.pr-exercise-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    flex-grow: 1;
+}
+.pr-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 0.1rem;
+}
+.pr-lift {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--color-accent-primary);
+}
+.pr-e1rm {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+.pr-date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    min-width: 80px;
+    text-align: right;
+}
+
 #consistency-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
 .calendar-header { grid-column: 1 / -1; font-weight: 600; margin-bottom: 1rem; color: var(--color-accent-secondary); }
 .calendar-day-name { font-size: 0.8rem; color: var(--color-text-secondary); }
