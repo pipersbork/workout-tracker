@@ -602,7 +602,11 @@ export function initEventListeners() {
 
         const { action, ...dataset } = target.dataset;
 
+        // A map of all possible actions
         const actions = {
+            nextOnboardingStep,
+            previousOnboardingStep,
+            selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
                 if (dataset.viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
                 else if (dataset.viewName !== 'workout' && state.workoutTimer.isRunning) stopStopwatch();
@@ -614,21 +618,21 @@ export function initEventListeners() {
             setProgressionModel: () => setProgressionModel(dataset.progression),
             setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
             setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
-            addDayToBuilder: addDayToBuilder,
+            addDayToBuilder,
             deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
-            savePlan: savePlan,
+            savePlan,
             savePlanAsTemplate: () => savePlanAsTemplate(dataset.planId),
             openBuilderForEdit: () => openBuilderForEdit(dataset.planId),
             confirmDeletePlan: () => confirmDeletePlan(dataset.planId),
             setActivePlan: () => setActivePlan(dataset.planId),
-            confirmCompleteWorkout: confirmCompleteWorkout,
+            confirmCompleteWorkout,
             closeModal: ui.closeModal,
             switchTab: () => ui.renderTemplateLibrary(dataset.tab),
             selectTemplate: () => selectTemplate(dataset.templateId),
             selectSavedTemplate: () => selectSavedTemplate(dataset.templateId),
             finishWizard: ui.customPlanWizard.finish,
-            startRestTimer: startRestTimer,
-            stopRestTimer: stopRestTimer,
+            startRestTimer,
+            stopRestTimer,
             addSet: () => {
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
@@ -668,9 +672,6 @@ export function initEventListeners() {
                 openNoteModal(exerciseIndex, setIndex);
             },
             showHistory: () => showHistory(dataset.exerciseId),
-            nextOnboardingStep: nextOnboardingStep,
-            previousOnboardingStep: previousOnboardingStep,
-            selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
         };
 
         if (actions[action]) {
