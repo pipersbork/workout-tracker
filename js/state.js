@@ -59,6 +59,7 @@ export const state = {
     // Chart.js instances for the performance summary
     progressChart: null,
     volumeChart: null,
+    e1rmChart: null, // New chart for estimated 1-Rep Max
 
     // Main Workout Stopwatch State
     workoutTimer: {
@@ -77,9 +78,13 @@ export const state = {
 
     // Temporary state for the workout summary screen
     workoutSummary: {
-        suggestions: []
+        suggestions: [],
+        newPRs: 0, // Tracks new PRs achieved in the session
     },
 
     // Holds the chronological history of all completed workouts
     workoutHistory: [],
+
+    // Holds all personal records achieved by the user
+    personalRecords: [],
 };
