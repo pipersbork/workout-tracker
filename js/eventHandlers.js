@@ -232,6 +232,64 @@ function confirmCompleteWorkout() {
     ]);
 }
 
+/**
+ * Calculates the estimated 1-Rep Max (e1RM) using the Brzycki formula.
+ * @param {number} weight - The weight lifted.
+ * @param {number} reps - The number of repetitions performed.
+ * @returns {number} The calculated e1RM.
+ */
+function calculateE1RM(weight, reps) {
+    if (!weight || !reps || reps < 1) return 0;
+    if (reps === 1) return weight;
+    // Brzycki formula
+    return weight / (1.0278 - 0.0278 * reps);
+}
+
+/**
+ * Checks all sets in a completed workout for new Personal Records (PRs).
+ * @param {object} completedWorkout - The workout object that was just completed.
+ * @returns {number} The count of new PRs achieved in this session.
+ */
+function checkForPRs(completedWorkout) {
+    let newPRsCount = 0;
+    completedWorkout.exercises.forEach(ex => {
+        if (!ex.sets || ex.sets.length === 0) return;
+
+        // Find the best set (by e1RM) from the current workout session for this exercise
+        const topSetOfTheSession = ex.sets.reduce((best, current) => {
+            // Only consider sets with both weight and an explicit rep count
+            if (!current.weight || !current.reps) return best;
+            const currentE1RM = calculateE1RM(current.weight, current.reps);
+            return currentE1RM > best.e1rm ? { ...current, e1rm: currentE1RM } : best;
+        }, { e1rm: 0 });
+
+        if (topSetOfTheSession.e1rm === 0) return; // No valid sets with reps found for this exercise
+
+        // Find the existing all-time PR for this exercise
+        const existingPR = state.personalRecords
+            .filter(pr => pr.exerciseId === ex.exerciseId)
+            .reduce((max, pr) => (pr.e1rm > max.e1rm ? pr : max), { e1rm: 0 });
+
+        // If the new set is a PR, record it
+        if (topSetOfTheSession.e1rm > existingPR.e1rm) {
+            newPRsCount++;
+            const newPR = {
+                id: `pr_${ex.exerciseId}_${Date.now()}`,
+                exerciseId: ex.exerciseId,
+                exerciseName: ex.name,
+                date: new Date().toISOString(),
+                weight: topSetOfTheSession.weight,
+                reps: topSetOfTheSession.reps,
+                e1rm: Math.round(topSetOfTheSession.e1rm),
+                units: state.settings.units
+            };
+            state.personalRecords.push(newPR);
+        }
+    });
+    return newPRsCount;
+}
+
+
 function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     if (!nextWeekWorkout) return [];
     const suggestions = [];
@@ -257,7 +315,6 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
 
 async function completeWorkout() {
     stopStopwatch();
-    state.workoutSummary.suggestions = [];
 
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
     if (planIndex === -1) return;
@@ -266,11 +323,16 @@ async function completeWorkout() {
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week][day];
 
+    // Mark workout as complete and calculate volume
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
     workout.exercises.forEach(ex => {
         ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
     });
+    
+    // Check for new PRs and store the count for the summary screen
+    const newPRsCount = checkForPRs(workout);
+    state.workoutSummary.newPRs = newPRsCount;
 
     const totalSeconds = state.workoutTimer.elapsed;
     const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
@@ -302,6 +364,7 @@ async function completeWorkout() {
     
     ui.showView('workoutSummary');
 
+    // Logic to advance to the next workout day/week
     const dayKeys = Object.keys(activePlan.weeks[week]).sort((a, b) => a - b);
     const currentDayIndex = dayKeys.indexOf(day.toString());
     let nextWeek = week;
@@ -315,6 +378,7 @@ async function completeWorkout() {
             const nextWeekDayKeys = Object.keys(activePlan.weeks[nextWeek] || {}).sort((a, b) => a - b);
             nextDay = nextWeekDayKeys.length > 0 ? parseInt(nextWeekDayKeys[0]) : null;
         } else {
+            // Meso finished, reset to the beginning (or could show a congrats message)
             state.currentView = { week: 1, day: 1 };
         }
     }
@@ -498,8 +562,12 @@ function openNoteModal(exerciseIndex, setIndex) {
                 class: 'cta-button',
                 action: () => {
                     const newNote = document.getElementById('set-note-input').value;
-                    set.note = newNote;
+                    if (!workout.exercises[exerciseIndex].sets[setIndex]) {
+                         workout.exercises[exerciseIndex].sets[setIndex] = {};
+                    }
+                    workout.exercises[exerciseIndex].sets[setIndex].note = newNote;
                     ui.renderDailyWorkout();
+                    ui.closeModal();
                 }
             }
         ]
@@ -700,7 +768,11 @@ export function initEventListeners() {
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const exercise = workout.exercises[exerciseIndex];
                 if (!exercise.sets) exercise.sets = [];
-                exercise.sets.push({ weight: '', reps: '', rir: '', rawInput: '' });
+                // Find the number of existing sets to correctly create the new one
+                const setIndex = exercise.sets.length;
+                 // Pre-fill the weight from the last set if it exists
+                const lastWeight = setIndex > 0 ? exercise.sets[setIndex - 1].weight : '';
+                exercise.sets.push({ weight: lastWeight, reps: '', rir: '', rawInput: '' });
                 ui.renderDailyWorkout();
             },
             swapExercise: () => {
@@ -818,15 +890,24 @@ export function initEventListeners() {
             } else if (e.target.classList.contains('rep-rir-input')) {
                 const value = e.target.value.toLowerCase();
                 set.rawInput = value;
+                // Try to parse reps first, then RIR
+                const repMatch = value.match(/^(\d+)/); // Match digits at the start of the string
                 const rirMatch = value.match(/(\d+)\s*rir/);
+                
                 if (rirMatch) {
                     set.rir = parseInt(rirMatch[1]);
-                    set.reps = '';
+                     // Get the reps before the 'rir' keyword
+                    const repsBeforeRir = value.substring(0, rirMatch.index).trim();
+                    set.reps = parseInt(repsBeforeRir) || '';
+                } else if (repMatch) {
+                    set.reps = parseInt(repMatch[1]);
+                    set.rir = ''; // Clear rir if reps are entered explicitly without 'rir'
                 } else {
-                    set.reps = parseInt(value) || '';
+                    set.reps = '';
                     set.rir = '';
                 }
-                // Auto-start rest timer when a set is logged
+
+                // Auto-start rest timer when a set is logged with weight and reps/rir
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
                 }
@@ -847,7 +928,10 @@ export function initEventListeners() {
         }
     });
 
-    document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => ui.renderProgressChart(e.target.value));
+    document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => {
+        ui.renderProgressChart(e.target.value);
+        // Add a call to render the new e1RM chart here once it exists
+    });
 
     ui.elements.customPlanWizardView.addEventListener('click', e => {
         const wizard = ui.customPlanWizard;
