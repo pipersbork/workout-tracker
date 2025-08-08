@@ -63,16 +63,14 @@ export async function loadStateFromFirestore() {
             state.userSelections = { ...state.userSelections, ...data.userSelections };
             state.settings = { ...state.settings, ...data.settings };
             state.allPlans = data.allPlans || [];
+            state.savedTemplates = data.savedTemplates || []; // Load saved templates
             state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
             state.currentView = data.currentView || state.currentView;
         } else {
             // No document found, so this is a new user.
-            // The default state in state.js already has onboardingCompleted: false,
-            // so we just need to save that initial state.
             await saveStateToFirestore();
         }
 
-        // Load workout history from localStorage after main state is loaded
         const savedHistory = localStorage.getItem('workoutHistory');
         if (savedHistory) {
             state.workoutHistory = JSON.parse(savedHistory);
@@ -95,6 +93,7 @@ export async function saveStateToFirestore() {
         userSelections: state.userSelections,
         settings: state.settings,
         allPlans: state.allPlans,
+        savedTemplates: state.savedTemplates, // Save templates
         activePlanId: state.activePlanId,
         currentView: state.currentView
     };
