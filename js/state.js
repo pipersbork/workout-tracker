@@ -22,13 +22,14 @@ export const state = {
         units: 'lbs',
         theme: 'dark',
         progressionModel: 'double',
-        weightIncrement: 5
+        weightIncrement: 5,
+        restDuration: 90, // Default rest duration
     },
 
     // Workout Plans and Progress
     allPlans: [],
     activePlanId: null,
-    editingPlanId: null,
+    editingPlanId: null, // Holds the ID of the plan being edited
     currentView: {
         week: 1,
         day: 1
@@ -47,6 +48,7 @@ export const state = {
     builderPlan: {
         days: []
     },
+    isPlanBuilderDirty: false, // Tracks if there are unsaved changes in the builder
 
     // Static Data Loaded from JSON
     exercises: [],
@@ -63,12 +65,11 @@ export const state = {
         startTime: 0,
     },
 
-    // NEW: Rest Timer State
+    // Rest Timer State
     restTimer: {
-        instance: null,      // Holds the setInterval ID for the rest timer
-        remaining: 0,        // Remaining seconds for the countdown
-        duration: 90,        // Default rest duration in seconds
-        isRunning: false,    // Is the rest timer currently running?
+        instance: null,
+        remaining: 0,
+        isRunning: false,
     },
 
     // Temporary state for the workout summary screen
