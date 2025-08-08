@@ -435,7 +435,7 @@ function selectSavedTemplate(templateId) {
     const template = state.savedTemplates.find(t => t.id === templateId);
     if (template) {
         state.builderPlan = JSON.parse(JSON.stringify(template.builderTemplate));
-        state.editingPlanId = null;
+        state.editingPlanId = null; // Ensure it's treated as a new plan
         ui.elements.builderTitle.textContent = `New Plan from "${template.name}"`;
         ui.showView('builder');
     }
@@ -765,6 +765,7 @@ export function initEventListeners() {
                     set.reps = parseInt(value) || '';
                     set.rir = '';
                 }
+                // Auto-start rest timer when a set is logged
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
                 }
