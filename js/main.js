@@ -1,7 +1,6 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-import { applyTheme, showView } from './ui.js';
-
++import { applyTheme, showView, initEventListeners as initUIEventListeners } from './ui.js';
 /**
  * @file main.js is the entry point for the application.
  * It initializes event listeners and handles the authentication flow.
