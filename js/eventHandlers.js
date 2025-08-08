@@ -42,17 +42,12 @@ async function selectCard(element, field, value, shouldSave = false) {
         ui.showModal('Coming Soon!', 'Cardiovascular endurance tracking and programming is a planned feature. Stay tuned!');
         return;
     }
-    // Update the state
     state.userSelections[field] = value;
-    
-    // Save the state to Firebase
+    element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
+    element.classList.add('active');
     if (shouldSave) {
         await firebase.saveState();
     }
-    
-    // Re-render the entire settings view from the new state
-    // This ensures consistency and fixes the "gray button" bug
-    ui.renderSettings();
 }
 
 async function setTheme(theme) {
@@ -780,8 +775,8 @@ export function initEventListeners() {
         const { action, ...dataset } = target.dataset;
 
         const actions = {
-            nextOnboardingStep: () => nextOnboardingStep(),
-            previousOnboardingStep: () => previousOnboardingStep(),
+            nextOnboardingStep,
+            previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
                 if (dataset.viewName === 'workout') {
@@ -801,21 +796,21 @@ export function initEventListeners() {
             setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
             setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
             setChartType: () => setChartType(dataset.chartType),
-            addDayToBuilder: () => addDayToBuilder(),
+            addDayToBuilder,
             deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
-            savePlan: () => savePlan(),
+            savePlan,
             savePlanAsTemplate: () => savePlanAsTemplate(dataset.planId),
             openBuilderForEdit: () => openBuilderForEdit(dataset.planId),
             confirmDeletePlan: () => confirmDeletePlan(dataset.planId),
             setActivePlan: () => setActivePlan(dataset.planId),
-            confirmCompleteWorkout: () => confirmCompleteWorkout(),
-            closeModal: () => ui.closeModal(),
+            confirmCompleteWorkout,
+            closeModal: ui.closeModal,
             switchTab: () => ui.renderTemplateLibrary(dataset.tab),
             selectTemplate: () => selectTemplate(dataset.templateId),
             selectSavedTemplate: () => selectSavedTemplate(dataset.templateId),
-            finishWizard: () => ui.customPlanWizard.finish(),
-            startRestTimer: () => startRestTimer(),
-            stopRestTimer: () => stopRestTimer(),
+            finishWizard: ui.customPlanWizard.finish,
+            startRestTimer,
+            stopRestTimer,
             addSet: () => {
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
