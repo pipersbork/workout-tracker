@@ -10,6 +10,38 @@ import { planGenerator } from './planGenerator.js';
 
 // --- ACTION FUNCTIONS ---
 
+/**
+ * Finds the first uncompleted workout in the active plan and sets it as the current view.
+ * This ensures the user is always taken to their next available workout.
+ */
+function findAndSetNextWorkout() {
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    if (!activePlan || !activePlan.weeks) {
+        ui.showModal("No Active Plan", "You don't have an active workout plan. Please create or select one from the settings.");
+        return false; // Indicate that a workout was not found
+    }
+
+    const sortedWeeks = Object.keys(activePlan.weeks).sort((a, b) => a - b);
+
+    for (const weekKey of sortedWeeks) {
+        const week = activePlan.weeks[weekKey];
+        const sortedDays = Object.keys(week).sort((a, b) => a - b);
+
+        for (const dayKey of sortedDays) {
+            const workout = week[dayKey];
+            if (!workout.completed) {
+                state.currentView = { week: parseInt(weekKey), day: parseInt(dayKey) };
+                return true; // Workout found
+            }
+        }
+    }
+
+    // If all workouts are completed
+    ui.showModal("Plan Complete!", "Congratulations! You've completed all the workouts in this plan. You can start a new one from the settings.", [{ text: 'Go to Settings', class: 'cta-button', action: () => ui.showView('settings') }]);
+    return false; // No workout found
+}
+
+
 async function selectCard(element, field, value, shouldSave = false) {
     if (value === 'cardio') {
         ui.showModal('Coming Soon!', 'Cardiovascular endurance tracking and programming is a planned feature. Stay tuned!');
@@ -753,8 +785,15 @@ export function initEventListeners() {
             previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
-                if (dataset.viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
-                ui.showView(dataset.viewName);
+                if (dataset.viewName === 'workout') {
+                    const workoutFound = findAndSetNextWorkout();
+                    if (workoutFound) {
+                        if (!state.workoutTimer.isRunning) startStopwatch();
+                        ui.showView(dataset.viewName);
+                    }
+                } else {
+                    ui.showView(dataset.viewName);
+                }
             },
             selectCard: () => selectCard(target, dataset.field, dataset.value, dataset.shouldSave === 'true'),
             setTheme: () => setTheme(dataset.theme),
