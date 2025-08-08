@@ -14,7 +14,7 @@
 
     <main>
 
-        <div class="container view hidden" id="onboarding-container">
+        <div class="container view" id="onboarding-container">
             <div class="onboarding-wizard">
                 <div class="progress-bar" id="onboarding-progress-bar">
                     <div class="progress" id="onboarding-progress"></div>
@@ -284,18 +284,18 @@
                 <section class="settings-section">
                     <h3>Workout Settings</h3>
                     <label class="settings-label">Progression Model</label>
-                    <div class="toggle-switch" data-field="progressionModel">
+                    <div class="toggle-switch">
                         <button class="toggle-btn" data-action="setProgressionModel" data-progression="linear">Linear</button>
                         <button class="toggle-btn" data-action="setProgressionModel" data-progression="double">Double</button>
                     </div>
                     <label class="settings-label">Weight Increment</label>
-                    <div class="toggle-switch" data-field="weightIncrement">
+                    <div class="toggle-switch" id="weight-increment-switch">
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="2.5">2.5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="5">5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="10">10</button>
                     </div>
                     <label class="settings-label">Default Rest Duration (seconds)</label>
-                    <div class="toggle-switch" data-field="restDuration">
+                    <div class="toggle-switch" id="rest-duration-switch">
                         <button class="toggle-btn" data-action="setRestDuration" data-duration="60">60s</button>
                         <button class="toggle-btn" data-action="setRestDuration" data-duration="90">90s</button>
                         <button class="toggle-btn" data-action="setRestDuration" data-duration="120">120s</button>
@@ -304,14 +304,14 @@
                 </section>
                 <section class="settings-section">
                     <h3>Units</h3>
-                    <div class="toggle-switch" data-field="units">
+                    <div class="toggle-switch">
                         <button class="toggle-btn" data-action="setUnits" data-unit="lbs">LBS</button>
                         <button class="toggle-btn" data-action="setUnits" data-unit="kg">KG</button>
                     </div>
                 </section>
                 <section class="settings-section">
                     <h3>Theme</h3>
-                    <div class="toggle-switch" data-field="theme">
+                    <div class="toggle-switch">
                         <button class="toggle-btn" data-action="setTheme" data-theme="dark">Dark</button>
                         <button class="toggle-btn" data-action="setTheme" data-theme="light">Light</button>
                     </div>
