@@ -303,8 +303,8 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
  * Marks a workout as complete, processes the data, and advances the user to the next workout.
  */
 async function completeWorkout() {
-    pauseTimer(); // Stop the timer when workout is completed
-    state.workoutSummary.suggestions = []; // Clear old suggestions
+    pauseTimer();
+    state.workoutSummary.suggestions = [];
 
     const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
     if (planIndex === -1) return;
@@ -313,28 +313,45 @@ async function completeWorkout() {
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week][day];
 
-    // Mark workout as complete and calculate volume
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
     workout.exercises.forEach(ex => {
         ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
     });
 
+    // --- START: ADD NEW HISTORY LOGIC ---
+    const totalSeconds = state.workoutTimer.elapsed;
+    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
+    const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+
+    const historyEntry = {
+        id: `hist_${Date.now()}`,
+        planName: activePlan.name,
+        workoutName: workout.name,
+        completedDate: new Date().toISOString(),
+        duration: totalSeconds,
+        volume: totalVolume,
+        sets: totalSets,
+    };
+
+    // Add the new entry to the start of the history array
+    state.workoutHistory.unshift(historyEntry);
+
+    // Persist the history to the browser's local storage
+    localStorage.setItem('workoutHistory', JSON.stringify(state.workoutHistory));
+    // --- END: ADD NEW HISTORY LOGIC ---
+
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
     
-    // Calculate next week's progression BEFORE generating suggestions
     if (!stalledExercise && week < activePlan.durationWeeks - 1 && workout.exercises.length > 0) {
         calculateNextWeekProgression(week, activePlan);
     }
 
-    // Generate and store suggestions BEFORE showing the summary view
     const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
     state.workoutSummary.suggestions = generateProgressionSuggestions(workout, nextWeekWorkout);
     
-    // Show the summary view
     ui.showView('workoutSummary');
 
-    // Logic to advance to the next workout day/week
     const dayKeys = Object.keys(activePlan.weeks[week]).sort((a, b) => a - b);
     const currentDayIndex = dayKeys.indexOf(day.toString());
     let nextWeek = week;
