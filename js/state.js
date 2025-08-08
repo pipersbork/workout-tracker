@@ -55,14 +55,20 @@ export const state = {
     progressChart: null,
     volumeChart: null,
 
-    // Workout Timer State
+    // Main Workout Stopwatch State
     workoutTimer: {
-        instance: null,      // Holds the setInterval ID
-        elapsed: 0,          // Total elapsed seconds for stopwatch
-        mode: 'stopwatch',   // 'stopwatch' or 'timer'
-        isRunning: false,    // Is the timer currently running?
-        startTime: 0,        // Timestamp when the timer was started/resumed
-        timerDuration: 180   // Default duration for the countdown timer
+        instance: null,
+        elapsed: 0,
+        isRunning: false,
+        startTime: 0,
+    },
+
+    // NEW: Rest Timer State
+    restTimer: {
+        instance: null,      // Holds the setInterval ID for the rest timer
+        remaining: 0,        // Remaining seconds for the countdown
+        duration: 90,        // Default rest duration in seconds
+        isRunning: false,    // Is the rest timer currently running?
     },
 
     // Temporary state for the workout summary screen
