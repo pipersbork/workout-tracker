@@ -867,29 +867,41 @@ export function initEventListeners() {
     ui.elements.scheduleContainer.addEventListener('click', (e) => {
         const button = e.target.closest('button');
         if (!button) return;
+    
         const dayCard = e.target.closest('.day-card');
+        if (!dayCard) return;
         const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
-        const muscleGroupBlock = e.target.closest('.muscle-group-block');
-        
+    
         if (button.matches('.add-muscle-group-btn')) {
             state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] });
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
+            return;
         }
+    
+        const muscleGroupBlock = e.target.closest('.muscle-group-block');
+        if (!muscleGroupBlock) return;
+        const muscleIndex = parseInt(muscleGroupBlock.dataset.muscleIndex, 10);
+    
         if (button.matches('.delete-muscle-group-btn')) {
-            const muscleIndex = parseInt(muscleGroupBlock.querySelector('.muscle-select').dataset.muscleIndex, 10);
             state.builderPlan.days[dayIndex].muscleGroups.splice(muscleIndex, 1);
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
+    
         if (button.matches('.focus-btn')) {
-            const muscleIndex = parseInt(muscleGroupBlock.querySelector('.muscle-select').dataset.muscleIndex, 10);
             const focus = button.dataset.focus;
             const muscleGroup = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex];
             muscleGroup.focus = focus;
-            // Adjust the number of exercise slots based on focus
+            
+            // Adjust the number of exercise slots based on the new focus
             const exerciseCount = focus === 'Primary' ? 3 : 2;
-            muscleGroup.exercises = Array(exerciseCount).fill('');
+            // Trim or pad the exercises array to match the new count
+            muscleGroup.exercises = muscleGroup.exercises.slice(0, exerciseCount);
+            while (muscleGroup.exercises.length < exerciseCount) {
+                muscleGroup.exercises.push('');
+            }
+            
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
@@ -899,7 +911,9 @@ export function initEventListeners() {
         const { dayIndex, muscleIndex, exerciseSelectIndex } = e.target.dataset;
         if (e.target.matches('.muscle-select')) {
             state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].muscle = e.target.value;
-            state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = ['', '', ''];
+            // Reset exercises when muscle group changes
+            const exerciseCount = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus === 'Primary' ? 3 : 2;
+            state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].exercises = Array(exerciseCount).fill('');
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
