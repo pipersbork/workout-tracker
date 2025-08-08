@@ -33,8 +33,8 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
     }
     
-    const hasNote = set.note && set.note.trim() !== '';
-
+    // The note button has been removed from this template string.
+    // It will be added to the exercise header instead.
     return `
         <div class="set-row" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
@@ -43,18 +43,7 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
                 <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
             </div>
             <div class="set-actions">
-                <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openNoteModal" data-exercise-index="${exIndex}" data-set-index="${setIndex}" aria-label="Add or view note">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 6L9 17l-5-5"></path>
-                        <path d="M12 20h.01"></path>
-                        <path d="M15 20h.01"></path>
-                        <path d="M18 20h.01"></path>
-                        <path d="M21 20h.01"></path>
-                        <path d="M9 20h.01"></path>
-                        <path d="M6 20h.01"></path>
-                        <path d="M3 20h.01"></path>
-                    </svg>
-                </button>
+                <!-- This space is now empty -->
             </div>
         </div>
     `;
