@@ -138,10 +138,19 @@ function _performViewChange(viewName, skipAnimation) {
                 targetViewEl.style.animation = '';
             }
             state.currentViewName = viewName;
+            
             // Call the corresponding render function for the view
-            const renderFunction = `render${capitalize(viewName)}`;
-            if (typeof self[renderFunction] === 'function') {
-                self[renderFunction]();
+            // FIX: Replaced faulty dynamic call with a switch statement for reliability.
+            switch (viewName) {
+                case 'onboarding': renderOnboardingStep(); break;
+                case 'home': renderHomeScreen(); break;
+                case 'planHub': renderPlanHub(); break;
+                case 'templateLibrary': renderTemplateLibrary(); break;
+                case 'builder': renderBuilder(); break;
+                case 'workout': renderDailyWorkout(); break;
+                case 'workoutSummary': renderWorkoutSummary(); break;
+                case 'performanceSummary': renderPerformanceSummary(); break;
+                case 'settings': renderSettings(); break;
             }
         }, currentViewEl ? 400 : 0);
     }
@@ -654,18 +663,4 @@ export function applyTheme() {
 // This could be its own module, but keeping it here for simplicity
 export const customPlanWizard = {
     // ... wizard logic would go here if it were more complex
-};
-
-// Expose functions to be used in other modules if needed
-const self = {
-    renderOnboardingStep,
-    renderHomeScreen,
-    renderDailyWorkout,
-    renderBuilder,
-    renderSettings,
-    renderPerformanceSummary,
-    renderTemplateLibrary,
-    renderPlanHub,
-    renderWorkoutSummary,
-    renderE1RMChart,
 };
