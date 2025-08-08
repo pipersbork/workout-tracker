@@ -182,11 +182,15 @@ export function renderDailyWorkout() {
     const workout = activePlan.weeks[week]?.[day];
     const lastWeekWorkout = activePlan.weeks[week - 1]?.[day];
 
-    if (!workout) {
-        elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">Workout not found for this day.</p>';
+    if (!workout || !workout.exercises || workout.exercises.length === 0) {
+        elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
+        elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No exercises scheduled for today. Enjoy your rest!</p>';
+        document.getElementById('complete-workout-btn').style.display = 'none'; // Hide complete button on rest day
         return;
     }
 
+    document.getElementById('complete-workout-btn').style.display = 'block'; // Show complete button
     elements.workoutDayTitle.textContent = workout.name;
     elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     updateStopwatchDisplay();
@@ -245,8 +249,9 @@ export function renderBuilder() {
             </div>
             ${day.muscleGroups.map((mg, muscleIndex) => {
                 const availableExercises = state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle.toLowerCase());
+                const exerciseCount = mg.focus === 'Primary' ? 3 : 2; // Dynamic exercise count
                 return `
-                <div class="muscle-group-block">
+                <div class="muscle-group-block" data-muscle-index="${muscleIndex}">
                     <div class="muscle-group-header">
                         <div class="muscle-group-selectors">
                             <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
@@ -263,7 +268,7 @@ export function renderBuilder() {
                         </button>
                     </div>
                     <div class="exercise-selection-group">
-                        ${[...Array(3)].map((_, exIndex) => `
+                        ${[...Array(exerciseCount)].map((_, exIndex) => `
                             <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exIndex}" ${mg.muscle === 'selectamuscle' ? 'disabled' : ''}>
                                 <option>Select an Exercise</option>
                                 ${availableExercises.map(ex => `<option value="${ex.name}" ${mg.exercises[exIndex] === ex.name ? 'selected' : ''}>${ex.name}</option>`).join('')}
@@ -322,7 +327,7 @@ export function renderPerformanceSummary() {
     renderConsistencyCalendar();
     renderVolumeChart();
     populateExerciseTrackerSelect();
-    const initialExercise = state.exercises[0]?.name;
+    const initialExercise = elements.exerciseTrackerSelect.value || state.exercises[0]?.name;
     if (initialExercise) {
         renderProgressChart(initialExercise);
         renderE1RMChart(initialExercise);
