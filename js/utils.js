@@ -34,19 +34,23 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
         const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
     }
-    const unitLabel = state.settings.units.toUpperCase();
-    const hasNote = set.note && set.note.trim() !== '';
+    
+    // A set is considered logged if it has the `isLogged` flag.
+    const isLogged = set.isLogged;
 
     return `
-        <div class="set-row" data-set-index="${setIndex}">
+        <div class="set-row ${isLogged ? 'logged' : ''}" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
             <div class="set-inputs">
                 <input type="number" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
                 <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
             </div>
             <div class="set-actions">
-                <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openNoteModal" data-exercise-index="${exIndex}" data-set-index="${setIndex}" aria-label="Add Note">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
+                <button class="log-set-btn" data-action="logSet" data-exercise-index="${exIndex}" data-set-index="${setIndex}" aria-label="Log Set">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
                 </button>
             </div>
         </div>
