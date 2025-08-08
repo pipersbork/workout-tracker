@@ -50,8 +50,12 @@ export const elements = {
     consistencyCalendar: document.getElementById('consistency-calendar'),
     volumeChartCanvas: document.getElementById('volume-chart'),
     progressChartCanvas: document.getElementById('progress-chart'),
+    e1rmChartCanvas: document.getElementById('e1rm-chart'), // New canvas for e1RM chart
     exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
     workoutHistoryList: document.getElementById('workout-history-list'),
+    trophyCaseList: document.getElementById('trophy-case-list'), // New container for PRs
+    weightChartContainer: document.getElementById('weight-chart-container'),
+    e1rmChartContainer: document.getElementById('e1rm-chart-container'),
 
     // Workout Summary
     summaryTime: document.getElementById('summary-time'),
@@ -314,10 +318,15 @@ export function renderSettings() {
 }
 
 export function renderPerformanceSummary() {
+    renderTrophyCase();
     renderConsistencyCalendar();
     renderVolumeChart();
     populateExerciseTrackerSelect();
-    renderProgressChart(state.exercises[0]?.name);
+    const initialExercise = state.exercises[0]?.name;
+    if (initialExercise) {
+        renderProgressChart(initialExercise);
+        renderE1RMChart(initialExercise);
+    }
     renderWorkoutHistory();
 }
 
@@ -326,20 +335,30 @@ export function renderProgressChart(exerciseName) {
     const labels = [];
     const data = [];
 
+    // Combine workout history from all plans
+    const history = [];
     allPlans.forEach(plan => {
         Object.values(plan.weeks).forEach(week => {
             Object.values(week).forEach(day => {
                 if (day.completed) {
                     const ex = day.exercises.find(e => e.name === exerciseName);
                     if (ex && ex.sets && ex.sets.length > 0) {
-                        const topSet = ex.sets.reduce((max, set) => (set.weight > max.weight ? set : max), { weight: 0 });
-                        labels.push(new Date(day.completedDate).toLocaleDateString());
-                        data.push(topSet.weight);
+                        const topSet = ex.sets.reduce((max, set) => ((set.weight || 0) > max.weight ? set : max), { weight: 0 });
+                        if (topSet.weight > 0) {
+                            history.push({ date: new Date(day.completedDate), value: topSet.weight });
+                        }
                     }
                 }
             });
         });
     });
+
+    // Sort by date and populate chart data
+    history.sort((a, b) => a.date - b.date).forEach(item => {
+        labels.push(item.date.toLocaleDateString());
+        data.push(item.value);
+    });
+
 
     if (progressChart) progressChart.destroy();
 
@@ -352,6 +371,34 @@ export function renderProgressChart(exerciseName) {
                 data,
                 borderColor: 'var(--color-accent-primary)',
                 backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
+
+function renderE1RMChart(exerciseName) {
+    const { personalRecords, e1rmChart, settings } = state;
+    const exercisePRs = personalRecords
+        .filter(pr => pr.exerciseName === exerciseName)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const labels = exercisePRs.map(pr => new Date(pr.date).toLocaleDateString());
+    const data = exercisePRs.map(pr => pr.e1rm);
+
+    if (e1rmChart) e1rmChart.destroy();
+
+    state.e1rmChart = new Chart(elements.e1rmChartCanvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: `Estimated 1-Rep Max (${settings.units})`,
+                data,
+                borderColor: 'var(--color-state-success)',
+                backgroundColor: 'rgba(52, 199, 89, 0.1)',
                 fill: true,
                 tension: 0.3
             }]
@@ -396,6 +443,35 @@ export function renderVolumeChart() {
     });
 }
 
+function renderTrophyCase() {
+    const { personalRecords } = state;
+    if (personalRecords.length === 0) {
+        elements.trophyCaseList.innerHTML = '<p class="placeholder-text">You haven\'t set any personal records yet. Keep lifting!</p>';
+        return;
+    }
+
+    const bestPRs = {};
+    personalRecords.forEach(pr => {
+        if (!bestPRs[pr.exerciseId] || pr.e1rm > bestPRs[pr.exerciseId].e1rm) {
+            bestPRs[pr.exerciseId] = pr;
+        }
+    });
+
+    const sortedBestPRs = Object.values(bestPRs).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    elements.trophyCaseList.innerHTML = sortedBestPRs.map(pr => `
+        <div class="pr-item">
+            <div class="pr-exercise-name">${pr.exerciseName}</div>
+            <div class="pr-details">
+                <span class="pr-lift">${pr.weight} ${pr.units} x ${pr.reps}</span>
+                <span class="pr-e1rm">~${pr.e1rm} ${pr.units} e1RM</span>
+            </div>
+            <div class="pr-date">${new Date(pr.date).toLocaleDateString()}</div>
+        </div>
+    `).join('');
+}
+
+
 function renderConsistencyCalendar() {
     const calendarEl = elements.consistencyCalendar;
     calendarEl.innerHTML = ''; // Clear previous
@@ -421,7 +497,18 @@ function renderConsistencyCalendar() {
 }
 
 function populateExerciseTrackerSelect() {
-    const uniqueExercises = [...new Set(state.exercises.map(ex => ex.name))].sort();
+    // Get unique exercises from workouts that have been completed at least once.
+    const completedExercises = new Set();
+    state.allPlans.forEach(plan => {
+        Object.values(plan.weeks).forEach(week => {
+            Object.values(week).forEach(day => {
+                if (day.completed) {
+                    day.exercises.forEach(ex => completedExercises.add(ex.name));
+                }
+            });
+        });
+    });
+    const uniqueExercises = [...completedExercises].sort();
     elements.exerciseTrackerSelect.innerHTML = uniqueExercises.map(name => `<option value="${name}">${name}</option>`).join('');
 }
 
@@ -495,7 +582,7 @@ export function renderPlanHub() {
 
 export function renderWorkoutSummary() {
     const { workoutSummary, settings } = state;
-    const { totalVolume, totalSets, suggestions } = workoutSummary;
+    const { totalVolume, totalSets, suggestions, newPRs } = workoutSummary;
     const totalSeconds = state.workoutTimer.elapsed;
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     const seconds = (totalSeconds % 60).toString().padStart(2, '0');
@@ -503,8 +590,7 @@ export function renderWorkoutSummary() {
     elements.summaryTime.textContent = `${minutes}:${seconds}`;
     elements.summaryVolume.textContent = `${Math.round(totalVolume)} ${settings.units}`;
     elements.summarySets.textContent = totalSets;
-    // PR tracking can be implemented here by comparing with history
-    elements.summaryPRs.textContent = '0';
+    elements.summaryPRs.textContent = newPRs || '0'; // Display the count of new PRs
 
     if (suggestions && suggestions.length > 0) {
         elements.summaryProgressionList.innerHTML = suggestions.map(s => `
@@ -575,4 +661,5 @@ const self = {
     renderTemplateLibrary,
     renderPlanHub,
     renderWorkoutSummary,
+    renderE1RMChart,
 };
