@@ -295,22 +295,22 @@ export function renderBuilder() {
 }
 
 export function renderSettings() {
-    const { settings, allPlans, activePlanId } = state;
+    const { settings, allPlans, activePlanId, userSelections } = state;
 
-    // Render toggles
-    document.querySelectorAll('.toggle-switch').forEach(group => {
-        const field = group.parentElement.querySelector('.settings-label')?.textContent.toLowerCase().replace(' ', '') || group.id.split('-')[0];
-        const activeValue = settings[field] || (field === 'weightincrement' ? settings.weightIncrement : settings.restDuration);
+    // Render toggles for workout settings, units, and theme
+    document.querySelectorAll('.settings-section .toggle-switch').forEach(group => {
+        const field = group.dataset.field;
+        const activeValue = settings[field];
         group.querySelectorAll('.toggle-btn').forEach(btn => {
-            const btnValue = btn.dataset[field] || btn.dataset.increment || btn.dataset.duration;
+            const btnValue = btn.dataset[Object.keys(btn.dataset).find(k => k !== 'action')];
             btn.classList.toggle('active', btnValue == activeValue);
         });
     });
 
-    // Render cards
+    // Render cards for goal and experience
     document.querySelectorAll('.settings-card-group').forEach(group => {
         const field = group.dataset.field;
-        const activeValue = state.userSelections[field];
+        const activeValue = userSelections[field];
         group.querySelectorAll('.goal-card').forEach(card => {
             card.classList.toggle('active', card.dataset.value === activeValue);
         });
@@ -333,6 +333,7 @@ export function renderSettings() {
         elements.planManagementList.innerHTML = '<p class="placeholder-text">You haven\'t created any plans yet.</p>';
     }
 }
+
 
 export function renderPerformanceSummary() {
     renderTrophyCase();
