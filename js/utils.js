@@ -35,12 +35,14 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
     
     // The note button has been removed from this template string.
     // It will be added to the exercise header instead.
+    // ADDED: inputmode="decimal" to the weight input to suggest a numeric keypad.
+    // ADDED: inputmode="tel" to the rep/rir input for a number-centric keypad.
     return `
         <div class="set-row" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
             <div class="set-inputs">
-                <input type="number" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                <input type="text" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                <input type="text" inputmode="decimal" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                <input type="text" inputmode="tel" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
             </div>
             <div class="set-actions">
                 <!-- This space is now empty -->
