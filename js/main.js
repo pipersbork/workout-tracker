@@ -1,6 +1,7 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-+import { applyTheme, showView, initEventListeners as initUIEventListeners } from './ui.js';
+import { applyTheme, showView, initEventListeners as initUIEventListeners } from './ui.js';
+
 /**
  * @file main.js is the entry point for the application.
  * It initializes event listeners and handles the authentication flow.
@@ -8,7 +9,8 @@ import { initEventListeners } from './eventHandlers.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize event listeners for the entire application
-    initEventListeners();
+    initEventListeners();       // from eventHandlers.js
+    initUIEventListeners();     // from ui.js — needed for Get Started button
 
     // Load static exercise data from JSON file
     await loadExercises();
