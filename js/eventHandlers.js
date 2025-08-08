@@ -69,28 +69,52 @@ function addDayToBuilder() {
 }
 
 /**
- * Opens a modal to get a name for the plan being saved.
+ * Opens a modal to get a name and duration for the plan being saved.
  */
 function savePlan() {
     const planName = state.editingPlanId ? state.allPlans.find(p => p.id === state.editingPlanId)?.name : '';
     ui.showModal(
-        'Save Plan',
-        `<p>Give your new workout plan a name.</p><input type="text" id="new-plan-name" class="modal-input" placeholder="e.g., My Summer Bulk" value="${planName}">`,
+        'Save & Start Plan',
+        `
+        <p>Give your plan a name and select how many weeks it should last. A 1-week deload will be added at the end.</p>
+        <input type="text" id="new-plan-name" class="modal-input" placeholder="e.g., My Summer Bulk" value="${planName}">
+        <div class="card-group" id="meso-length-cards">
+            <div class="goal-card meso-length-card" data-value="4" role="button" tabindex="0"><h3>4 Weeks</h3></div>
+            <div class="goal-card meso-length-card" data-value="6" role="button" tabindex="0"><h3>6 Weeks</h3></div>
+            <div class="goal-card meso-length-card" data-value="8" role="button" tabindex="0"><h3>8 Weeks</h3></div>
+        </div>
+        `,
         [
             { text: 'Cancel', class: 'secondary-button' },
-            { text: 'Save', class: 'cta-button', action: () => finalizeAndSavePlan() }
+            { text: 'Save & Start', class: 'cta-button', action: () => finalizeAndStartPlanFromBuilder() }
         ]
     );
+
+    // Add event listener for card selection inside the modal
+    ui.elements.modal.querySelector('#meso-length-cards').addEventListener('click', e => {
+        const card = e.target.closest('.meso-length-card');
+        if (card) {
+            ui.elements.modal.querySelectorAll('.meso-length-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        }
+    });
+
     document.getElementById('new-plan-name').focus();
 }
 
 /**
- * Finalizes and saves the plan from the builder to the main state.
+ * Finalizes and saves the plan from the builder, generates the mesocycle, and starts the workout.
  */
-async function finalizeAndSavePlan() {
+async function finalizeAndStartPlanFromBuilder() {
     const planName = document.getElementById('new-plan-name').value.trim();
+    const mesoLength = ui.elements.modal.querySelector('.meso-length-card.active')?.dataset.value;
+
     if (!planName) {
-        ui.showModal('Name Required', 'Please enter a name for your plan.');
+        ui.showModal('Input Required', 'Please provide a name for your plan.');
+        return;
+    }
+    if (!mesoLength) {
+        ui.showModal('Input Required', 'Please select a duration for your plan.');
         return;
     }
     if (!state.builderPlan || state.builderPlan.days.length === 0) {
@@ -98,29 +122,64 @@ async function finalizeAndSavePlan() {
         return;
     }
 
-    const newPlan = {
-        id: state.editingPlanId || `plan_${Date.now()}`,
+    const newMeso = {
+        id: state.editingPlanId || `meso_${Date.now()}`,
         name: planName,
-        builderTemplate: JSON.parse(JSON.stringify(state.builderPlan)), // Deep copy
+        startDate: new Date().toISOString(),
+        durationWeeks: parseInt(mesoLength),
+        builderTemplate: JSON.parse(JSON.stringify(state.builderPlan)),
+        weeks: {}
     };
 
+    const focusSetMap = { 'Primary': 5, 'Secondary': 4, 'Maintenance': 2 };
+    for (let i = 1; i <= newMeso.durationWeeks; i++) {
+        newMeso.weeks[i] = {};
+        const isDeload = (i === newMeso.durationWeeks);
+        const targetRIR = planGenerator.getRirForWeek(i, newMeso.durationWeeks);
+
+        state.builderPlan.days.forEach((day, dayIndex) => {
+            const dayKey = dayIndex + 1;
+            newMeso.weeks[i][dayKey] = {
+                name: day.label || `Day ${dayKey}`,
+                completed: false,
+                exercises: day.muscleGroups
+                    .filter(mg => mg.muscle !== 'restday')
+                    .flatMap(mg =>
+                        mg.exercises.filter(ex => ex && ex !== 'Select an Exercise').map(exName => {
+                            const exerciseDetails = state.exercises.find(e => e.name === exName) || {};
+                            const setsPerExercise = focusSetMap[mg.focus] || 3;
+                            return {
+                                exerciseId: `ex_${exName.replace(/\s+/g, '_')}`, name: exName, muscle: exerciseDetails.muscle || 'Unknown', type: mg.focus,
+                                targetSets: isDeload ? Math.ceil(setsPerExercise / 2) : setsPerExercise,
+                                targetReps: 8,
+                                targetRIR: targetRIR,
+                                targetLoad: null, sets: [],
+                                stallCount: 0
+                            };
+                        })
+                    )
+            };
+        });
+    }
+
     if (state.editingPlanId) {
-        const index = state.allPlans.findIndex(p => p.id === state.editingPlanId);
-        state.allPlans[index] = { ...state.allPlans[index], ...newPlan };
+        const planIndex = state.allPlans.findIndex(p => p.id === state.editingPlanId);
+        state.allPlans[planIndex] = newMeso;
     } else {
-        state.allPlans.push(newPlan);
+        state.allPlans.push(newMeso);
     }
 
-    if (!state.activePlanId) {
-        state.activePlanId = newPlan.id;
-    }
-
+    state.activePlanId = newMeso.id;
+    const firstDayKey = Object.keys(newMeso.weeks[1])[0] || 1;
+    state.currentView = { week: 1, day: parseInt(firstDayKey) };
     state.isPlanBuilderDirty = false;
     state.editingPlanId = null;
+
     await firebase.saveStateToFirestore();
-    ui.showView('settings');
     ui.closeModal();
+    ui.showView('workout'); // Navigate to the workout screen
 }
+
 
 function openBuilderForEdit(planId) {
     const planToEdit = state.allPlans.find(p => p.id === planId);
