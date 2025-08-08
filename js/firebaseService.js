@@ -49,7 +49,7 @@ export function handleAuthentication(onAuthenticated) {
 }
 
 /**
- * Loads the user's saved state from Firestore.
+ * Loads the user's saved state from Firestore and workout history from localStorage.
  * If no state is found, it initializes a default state.
  */
 export async function loadStateFromFirestore() {
@@ -71,6 +71,13 @@ export async function loadStateFromFirestore() {
             // so we just need to save that initial state.
             await saveStateToFirestore();
         }
+
+        // Load workout history from localStorage after main state is loaded
+        const savedHistory = localStorage.getItem('workoutHistory');
+        if (savedHistory) {
+            state.workoutHistory = JSON.parse(savedHistory);
+        }
+
         state.isDataLoaded = true;
     } catch (error) {
         console.error("Error loading state from Firestore:", error);
