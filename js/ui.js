@@ -8,67 +8,74 @@ import { planGenerator } from './planGenerator.js';
  */
 
 // --- DOM ELEMENT CACHE ---
-export const elements = {
-    // Views
-    onboardingView: document.getElementById('onboarding-container'),
-    homeScreenView: document.getElementById('home-screen'),
-    planHubView: document.getElementById('plan-hub-view'),
-    templateLibraryView: document.getElementById('template-library-view'),
-    customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
-    builderView: document.getElementById('builder-view'),
-    workoutView: document.getElementById('daily-workout-view'),
-    workoutSummaryView: document.getElementById('workout-summary-view'),
-    performanceSummaryView: document.getElementById('performance-summary-view'),
-    settingsView: document.getElementById('settings-view'),
+// This will be populated once the DOM is ready.
+export let elements = {};
 
-    // Onboarding
-    onboardingProgressBar: document.getElementById('onboarding-progress'),
+// This function will be called from main.js after the DOM has loaded.
+export function cacheDOMElements() {
+    elements = {
+        // Views
+        onboardingView: document.getElementById('onboarding-container'),
+        homeScreenView: document.getElementById('home-screen'),
+        planHubView: document.getElementById('plan-hub-view'),
+        templateLibraryView: document.getElementById('template-library-view'),
+        customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
+        builderView: document.getElementById('builder-view'),
+        workoutView: document.getElementById('daily-workout-view'),
+        workoutSummaryView: document.getElementById('workout-summary-view'),
+        performanceSummaryView: document.getElementById('performance-summary-view'),
+        settingsView: document.getElementById('settings-view'),
 
-    // Home Screen
-    activePlanDisplay: document.getElementById('active-plan-display'),
+        // Onboarding
+        onboardingProgressBar: document.getElementById('onboarding-progress'),
 
-    // Builder
-    builderTitle: document.getElementById('builder-title'),
-    scheduleContainer: document.getElementById('schedule-container'),
+        // Home Screen
+        activePlanDisplay: document.getElementById('active-plan-display'),
 
-    // Daily Workout
-    workoutDayTitle: document.getElementById('workout-day-title'),
-    workoutDate: document.getElementById('workout-date'),
-    exerciseListContainer: document.getElementById('exercise-list-container'),
-    workoutStopwatch: document.getElementById('workout-stopwatch-display'),
-    restTimer: document.getElementById('rest-timer-display'),
+        // Builder
+        builderTitle: document.getElementById('builder-title'),
+        scheduleContainer: document.getElementById('schedule-container'),
 
-    // Plan Hub
-    planHubOptions: document.getElementById('plan-hub-options'),
-    templateListContainer: document.getElementById('template-list-container'),
+        // Daily Workout
+        workoutDayTitle: document.getElementById('workout-day-title'),
+        workoutDate: document.getElementById('workout-date'),
+        exerciseListContainer: document.getElementById('exercise-list-container'),
+        workoutStopwatch: document.getElementById('workout-stopwatch-display'),
+        restTimer: document.getElementById('rest-timer-display'),
 
-    // Settings
-    settingsContent: document.getElementById('settings-content'),
-    planManagementList: document.getElementById('plan-management-list'),
+        // Plan Hub
+        planHubOptions: document.getElementById('plan-hub-options'),
+        templateListContainer: document.getElementById('template-list-container'),
 
-    // Performance Summary
-    consistencyCalendar: document.getElementById('consistency-calendar'),
-    volumeChartCanvas: document.getElementById('volume-chart'),
-    progressChartCanvas: document.getElementById('progress-chart'),
-    e1rmChartCanvas: document.getElementById('e1rm-chart'), // New canvas for e1RM chart
-    exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
-    workoutHistoryList: document.getElementById('workout-history-list'),
-    trophyCaseList: document.getElementById('trophy-case-list'), // New container for PRs
-    weightChartContainer: document.getElementById('weight-chart-container'),
-    e1rmChartContainer: document.getElementById('e1rm-chart-container'),
+        // Settings
+        settingsContent: document.getElementById('settings-content'),
+        planManagementList: document.getElementById('plan-management-list'),
 
-    // Workout Summary
-    summaryTime: document.getElementById('summary-time'),
-    summaryVolume: document.getElementById('summary-volume'),
-    summarySets: document.getElementById('summary-sets'),
-    summaryPRs: document.getElementById('summary-prs'),
-    summaryProgressionList: document.getElementById('summary-progression-list'),
+        // Performance Summary
+        consistencyCalendar: document.getElementById('consistency-calendar'),
+        volumeChartCanvas: document.getElementById('volume-chart'),
+        progressChartCanvas: document.getElementById('progress-chart'),
+        e1rmChartCanvas: document.getElementById('e1rm-chart'), // New canvas for e1RM chart
+        exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
+        workoutHistoryList: document.getElementById('workout-history-list'),
+        trophyCaseList: document.getElementById('trophy-case-list'), // New container for PRs
+        weightChartContainer: document.getElementById('weight-chart-container'),
+        e1rmChartContainer: document.getElementById('e1rm-chart-container'),
 
-    // Modal
-    modal: document.getElementById('modal'),
-    modalBody: document.getElementById('modal-body'),
-    modalActions: document.getElementById('modal-actions'),
-};
+        // Workout Summary
+        summaryTime: document.getElementById('summary-time'),
+        summaryVolume: document.getElementById('summary-volume'),
+        summarySets: document.getElementById('summary-sets'),
+        summaryPRs: document.getElementById('summary-prs'),
+        summaryProgressionList: document.getElementById('summary-progression-list'),
+
+        // Modal
+        modal: document.getElementById('modal'),
+        modalBody: document.getElementById('modal-body'),
+        modalActions: document.getElementById('modal-actions'),
+    };
+}
+
 
 // --- VIEW MANAGEMENT ---
 
@@ -160,7 +167,9 @@ function _performViewChange(viewName, skipAnimation) {
 export function renderOnboardingStep() {
     const { currentStep, totalSteps } = state.onboarding;
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-    elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
+    if (elements.onboardingProgressBar) {
+        elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
+    }
 
     document.querySelectorAll('.step').forEach(step => {
         step.classList.remove('active', 'fade-out');
