@@ -120,6 +120,17 @@ async function finalizeAndStartPlanFromBuilder() {
         ui.showModal("Incomplete Plan", "Please add at least one day to your plan before saving.");
         return;
     }
+    // New validation check: ensure at least one exercise is selected in the entire plan.
+    const hasAtLeastOneExercise = state.builderPlan.days.some(day =>
+        day.muscleGroups.some(mg =>
+            mg.exercises.some(ex => ex && ex !== 'Select an Exercise')
+        )
+    );
+    if (!hasAtLeastOneExercise) {
+        ui.showModal("Incomplete Plan", "Please select at least one exercise for your plan before saving.");
+        return;
+    }
+
 
     const newMeso = {
         id: state.editingPlanId || `meso_${Date.now()}`,
@@ -858,19 +869,27 @@ export function initEventListeners() {
         if (!button) return;
         const dayCard = e.target.closest('.day-card');
         const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
-        const { muscleIndex, focus } = button.dataset;
+        const muscleGroupBlock = e.target.closest('.muscle-group-block');
+        
         if (button.matches('.add-muscle-group-btn')) {
             state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] });
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
         if (button.matches('.delete-muscle-group-btn')) {
+            const muscleIndex = parseInt(muscleGroupBlock.querySelector('.muscle-select').dataset.muscleIndex, 10);
             state.builderPlan.days[dayIndex].muscleGroups.splice(muscleIndex, 1);
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
         if (button.matches('.focus-btn')) {
-            state.builderPlan.days[dayIndex].muscleGroups[muscleIndex].focus = focus;
+            const muscleIndex = parseInt(muscleGroupBlock.querySelector('.muscle-select').dataset.muscleIndex, 10);
+            const focus = button.dataset.focus;
+            const muscleGroup = state.builderPlan.days[dayIndex].muscleGroups[muscleIndex];
+            muscleGroup.focus = focus;
+            // Adjust the number of exercise slots based on focus
+            const exerciseCount = focus === 'Primary' ? 3 : 2;
+            muscleGroup.exercises = Array(exerciseCount).fill('');
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
