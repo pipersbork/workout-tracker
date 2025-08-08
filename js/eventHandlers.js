@@ -42,12 +42,17 @@ async function selectCard(element, field, value, shouldSave = false) {
         ui.showModal('Coming Soon!', 'Cardiovascular endurance tracking and programming is a planned feature. Stay tuned!');
         return;
     }
+    // Update the state
     state.userSelections[field] = value;
-    element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
-    element.classList.add('active');
+    
+    // Save the state to Firebase
     if (shouldSave) {
         await firebase.saveState();
     }
+    
+    // Re-render the entire settings view from the new state
+    // This ensures consistency and fixes the "gray button" bug
+    ui.renderSettings();
 }
 
 async function setTheme(theme) {
