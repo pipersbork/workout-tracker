@@ -154,20 +154,22 @@
                 <p id="workout-date">Date</p>
             </div>
 
-            <div class="workout-timer-bar">
-                <div class="timer-display-container">
-                    <span id="workout-timer-display">00:00</span>
-                    <div class="toggle-switch timer-mode-switch">
-                        <button class="toggle-btn active" data-action="setTimerMode" data-mode="stopwatch">Stopwatch</button>
-                        <button class="toggle-btn" data-action="setTimerMode" data-mode="timer">Timer</button>
+            <!-- START: NEW TIMER BAR -->
+            <div class="timer-container">
+                <div class="timer-section">
+                    <span class="timer-label">TIME</span>
+                    <span id="workout-stopwatch-display" class="timer-display">00:00</span>
+                </div>
+                <div class="timer-section rest-timer-section">
+                    <span class="timer-label">REST</span>
+                    <span id="rest-timer-display" class="timer-display">01:30</span>
+                    <div class="timer-controls">
+                        <button class="timer-control-btn" data-action="startRestTimer">▶</button>
+                        <button class="timer-control-btn" data-action="stopRestTimer">◼</button>
                     </div>
                 </div>
-                <div class="timer-controls">
-                    <button class="timer-control-btn" data-action="startTimer">Start</button>
-                    <button class="timer-control-btn" data-action="pauseTimer">Pause</button>
-                    <button class="timer-control-btn" data-action="resetTimer">Reset</button>
-                </div>
             </div>
+            <!-- END: NEW TIMER BAR -->
 
             <div id="exercise-list-container"></div>
             <div class="workout-actions">
