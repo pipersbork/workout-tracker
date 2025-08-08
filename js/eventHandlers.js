@@ -504,6 +504,24 @@ function selectSavedTemplate(templateId) {
     }
 }
 
+function setChartType(chartType) {
+    const weightContainer = ui.elements.weightChartContainer;
+    const e1rmContainer = ui.elements.e1rmChartContainer;
+    const toggleButtons = document.querySelectorAll('.chart-toggle-switch .toggle-btn');
+
+    toggleButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.chartType === chartType);
+    });
+
+    if (chartType === 'weight') {
+        weightContainer.classList.remove('hidden');
+        e1rmContainer.classList.add('hidden');
+    } else { // e1rm
+        weightContainer.classList.add('hidden');
+        e1rmContainer.classList.remove('hidden');
+    }
+}
+
 // --- TIMER FUNCTIONS ---
 
 function startStopwatch() {
@@ -747,6 +765,7 @@ export function initEventListeners() {
             setProgressionModel: () => setProgressionModel(dataset.progression),
             setWeightIncrement: () => setWeightIncrement(parseFloat(dataset.increment)),
             setRestDuration: () => setRestDuration(parseInt(dataset.duration)),
+            setChartType: () => setChartType(dataset.chartType), // Handles chart toggle
             addDayToBuilder,
             deleteDayFromBuilder: () => deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)),
             savePlan,
@@ -928,10 +947,12 @@ export function initEventListeners() {
         }
     });
 
-    document.getElementById('exercise-tracker-select')?.addEventListener('change', (e) => {
-        ui.renderProgressChart(e.target.value);
-        // Add a call to render the new e1RM chart here once it exists
+    ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
+        const exerciseName = e.target.value;
+        ui.renderProgressChart(exerciseName);
+        ui.renderE1RMChart(exerciseName);
     });
+
 
     ui.elements.customPlanWizardView.addEventListener('click', e => {
         const wizard = ui.customPlanWizard;
