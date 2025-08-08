@@ -41,7 +41,8 @@ export async function saveState() {
         savedTemplates: state.savedTemplates,
         activePlanId: state.activePlanId,
         currentView: state.currentView,
-        workoutHistory: state.workoutHistory
+        workoutHistory: state.workoutHistory,
+        personalRecords: state.personalRecords // Add personal records to the saved data
     };
 
     // 1. Save to localStorage immediately for offline access
@@ -86,6 +87,7 @@ async function loadInitialState() {
                 state.activePlanId = userData.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
                 state.currentView = userData.currentView || state.currentView;
                 state.workoutHistory = userData.workoutHistory || [];
+                state.personalRecords = userData.personalRecords || []; // Load personal records
                 dataLoaded = true;
             }
         }
@@ -108,6 +110,7 @@ async function loadInitialState() {
                 state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
                 state.currentView = data.currentView || state.currentView;
                 state.workoutHistory = data.workoutHistory || [];
+                state.personalRecords = data.personalRecords || []; // Load personal records
                 // Save the fetched data back to local storage for next time
                 await saveState();
             } else {
