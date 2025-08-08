@@ -629,7 +629,7 @@ function showHistory(exerciseId) {
                 const day = week[dayKey];
                  if (day.completed) {
                     const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
-                    if (exerciseInstance && exerciseInstance.sets.length > 0) {
+                    if (exerciseInstance && (exerciseInstance.sets.length > 0 || exerciseInstance.note)) {
                         historyHTML += `<div class="history-item">`;
                         historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()} - ${day.name}</div>`;
                         if (exerciseInstance.note) {
