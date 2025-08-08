@@ -53,7 +53,7 @@ async function setWeightIncrement(increment) {
 
 async function setRestDuration(duration) {
     state.settings.restDuration = duration;
-    state.restTimer.remaining = duration; // Update current timer as well
+    state.restTimer.remaining = duration;
     await firebase.saveStateToFirestore();
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
@@ -68,9 +68,12 @@ function addDayToBuilder() {
     ui.renderBuilder();
 }
 
-/**
- * Opens a modal to get a name and duration for the plan being saved.
- */
+function deleteDayFromBuilder(dayIndex) {
+    state.builderPlan.days.splice(dayIndex, 1);
+    state.isPlanBuilderDirty = true;
+    ui.renderBuilder();
+}
+
 function savePlan() {
     const planName = state.editingPlanId ? state.allPlans.find(p => p.id === state.editingPlanId)?.name : '';
     ui.showModal(
@@ -90,7 +93,6 @@ function savePlan() {
         ]
     );
 
-    // Add event listener for card selection inside the modal
     ui.elements.modal.querySelector('#meso-length-cards').addEventListener('click', e => {
         const card = e.target.closest('.meso-length-card');
         if (card) {
@@ -102,9 +104,6 @@ function savePlan() {
     document.getElementById('new-plan-name').focus();
 }
 
-/**
- * Finalizes and saves the plan from the builder, generates the mesocycle, and starts the workout.
- */
 async function finalizeAndStartPlanFromBuilder() {
     const planName = document.getElementById('new-plan-name').value.trim();
     const mesoLength = ui.elements.modal.querySelector('.meso-length-card.active')?.dataset.value;
@@ -177,9 +176,23 @@ async function finalizeAndStartPlanFromBuilder() {
 
     await firebase.saveStateToFirestore();
     ui.closeModal();
-    ui.showView('workout'); // Navigate to the workout screen
+    ui.showView('workout');
 }
 
+async function savePlanAsTemplate(planId) {
+    const plan = state.allPlans.find(p => p.id === planId);
+    if (!plan) return;
+
+    const newTemplate = {
+        id: `template_${Date.now()}`,
+        name: `${plan.name} (Template)`,
+        builderTemplate: plan.builderTemplate,
+    };
+
+    state.savedTemplates.push(newTemplate);
+    await firebase.saveStateToFirestore();
+    ui.showModal('Template Saved!', `"${plan.name}" has been saved to your templates.`);
+}
 
 function openBuilderForEdit(planId) {
     const planToEdit = state.allPlans.find(p => p.id === planId);
@@ -262,6 +275,9 @@ async function completeWorkout() {
     const totalSeconds = state.workoutTimer.elapsed;
     const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
     const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+
+    state.workoutSummary.totalVolume = totalVolume;
+    state.workoutSummary.totalSets = totalSets;
 
     const historyEntry = {
         id: `hist_${Date.now()}`,
@@ -415,6 +431,16 @@ function selectTemplate(templateId) {
     }
 }
 
+function selectSavedTemplate(templateId) {
+    const template = state.savedTemplates.find(t => t.id === templateId);
+    if (template) {
+        state.builderPlan = JSON.parse(JSON.stringify(template.builderTemplate));
+        state.editingPlanId = null; // Ensure it's treated as a new plan
+        ui.elements.builderTitle.textContent = `New Plan from "${template.name}"`;
+        ui.showView('builder');
+    }
+}
+
 // --- TIMER FUNCTIONS ---
 
 function startStopwatch() {
@@ -486,22 +512,24 @@ function showHistory(exerciseId) {
     const exerciseName = state.exercises.find(ex => `ex_${ex.name.replace(/\s+/g, '_')}` === exerciseId)?.name || "Exercise";
     let historyHTML = '';
 
-    for (const week of Object.values(activePlan.weeks).reverse()) {
-        for (const day of Object.values(week).reverse()) {
-            if (day.completed) {
-                const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
-                if (exerciseInstance) {
-                    historyHTML += `<div class="history-item">`;
-                    historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()}</div>`;
-                    exerciseInstance.sets.forEach((set, index) => {
-                        if (set.weight && (set.reps || set.rir)) {
-                            historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
-                            if (set.note) {
-                                historyHTML += `<div class="history-note">"${set.note}"</div>`;
+    if (activePlan && activePlan.weeks) {
+        for (const week of Object.values(activePlan.weeks).reverse()) {
+            for (const day of Object.values(week).reverse()) {
+                if (day.completed) {
+                    const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
+                    if (exerciseInstance) {
+                        historyHTML += `<div class="history-item">`;
+                        historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()}</div>`;
+                        exerciseInstance.sets.forEach((set, index) => {
+                            if (set.weight && (set.reps || set.rir)) {
+                                historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
+                                if (set.note) {
+                                    historyHTML += `<div class="history-note">"${set.note}"</div>`;
+                                }
                             }
-                        }
-                    });
-                    historyHTML += `</div>`;
+                        });
+                        historyHTML += `</div>`;
+                    }
                 }
             }
         }
@@ -569,47 +597,62 @@ export function initEventListeners() {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        const { action, field, value, viewName, planId, increment, theme, unit, progression, duration, shouldSave, tab, templateId, exerciseIndex, setIndex, exerciseId } = target.dataset;
+        target.classList.add('pop-animation');
+        setTimeout(() => target.classList.remove('pop-animation'), 300);
 
-        const actions = {
-            showView: () => {
-                if (viewName === 'workout' && !state.workoutTimer.isRunning) {
-                    startStopwatch();
-                } else if (viewName !== 'workout' && state.workoutTimer.isRunning) {
-                    stopStopwatch();
-                }
+        const { action, planId } = target.dataset;
+
+        switch (action) {
+            case 'nextOnboardingStep': nextOnboardingStep(); break;
+            case 'previousOnboardingStep': previousOnboardingStep(); break;
+            case 'selectOnboardingCard': selectOnboardingCard(target, target.dataset.field, target.dataset.value); break;
+            
+            case 'showView':
+                const { viewName } = target.dataset;
+                if (viewName === 'workout' && !state.workoutTimer.isRunning) startStopwatch();
+                else if (viewName !== 'workout' && state.workoutTimer.isRunning) stopStopwatch();
                 ui.showView(viewName);
-            },
-            selectCard: () => selectCard(target, field, value, shouldSave === 'true'),
-            setTheme: () => setTheme(theme),
-            setUnits: () => setUnits(unit),
-            setProgressionModel: () => setProgressionModel(progression),
-            setWeightIncrement: () => setWeightIncrement(parseFloat(increment)),
-            setRestDuration: () => setRestDuration(parseInt(duration)),
-            addDayToBuilder: () => addDayToBuilder(),
-            savePlan: () => savePlan(),
-            openBuilderForEdit: () => openBuilderForEdit(planId),
-            confirmDeletePlan: () => confirmDeletePlan(planId),
-            setActivePlan: () => setActivePlan(planId),
-            confirmCompleteWorkout: () => confirmCompleteWorkout(),
-            closeModal: () => ui.closeModal(),
-            switchTab: () => {},
-            selectTemplate: () => selectTemplate(templateId),
-            finishWizard: () => ui.customPlanWizard.finish(),
-            startRestTimer: () => startRestTimer(),
-            stopRestTimer: () => stopRestTimer(),
-            addSet: () => {
+                break;
+
+            case 'selectCard': selectCard(target, target.dataset.field, target.dataset.value, target.dataset.shouldSave === 'true'); break;
+            case 'setTheme': setTheme(target.dataset.theme); break;
+            case 'setUnits': setUnits(target.dataset.unit); break;
+            case 'setProgressionModel': setProgressionModel(target.dataset.progression); break;
+            case 'setWeightIncrement': setWeightIncrement(parseFloat(target.dataset.increment)); break;
+            case 'setRestDuration': setRestDuration(parseInt(target.dataset.duration)); break;
+
+            case 'addDayToBuilder': addDayToBuilder(); break;
+            case 'deleteDayFromBuilder': deleteDayFromBuilder(parseInt(target.closest('.day-card').dataset.dayIndex)); break;
+            case 'savePlan': savePlan(); break;
+            case 'savePlanAsTemplate': savePlanAsTemplate(planId); break;
+            case 'openBuilderForEdit': openBuilderForEdit(planId); break;
+            case 'confirmDeletePlan': confirmDeletePlan(planId); break;
+            case 'setActivePlan': setActivePlan(planId); break;
+
+            case 'confirmCompleteWorkout': confirmCompleteWorkout(); break;
+            case 'closeModal': ui.closeModal(); break;
+            
+            case 'switchTab': ui.renderTemplateLibrary(target.dataset.tab); break;
+            case 'selectTemplate': selectTemplate(target.dataset.templateId); break;
+            case 'selectSavedTemplate': selectSavedTemplate(target.dataset.templateId); break;
+            
+            case 'finishWizard': ui.customPlanWizard.finish(); break;
+            
+            case 'startRestTimer': startRestTimer(); break;
+            case 'stopRestTimer': stopRestTimer(); break;
+            
+            case 'addSet': {
+                const { exerciseIndex } = target.dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const exercise = workout.exercises[exerciseIndex];
                 if (!exercise.sets) exercise.sets = [];
-                if (exercise.sets.length < exercise.targetSets) {
-                    const previousWeight = exercise.sets.length > 0 ? exercise.sets[exercise.sets.length - 1].weight : (exercise.targetLoad || '');
-                    exercise.sets.push({ weight: previousWeight, reps: '', rir: '', rawInput: '' });
-                    ui.renderDailyWorkout();
-                }
-            },
-            swapExercise: () => {
+                exercise.sets.push({ weight: '', reps: '', rir: '', rawInput: '' });
+                ui.renderDailyWorkout();
+                break;
+            }
+            case 'swapExercise': {
+                const { exerciseIndex } = target.dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
                 const currentExerciseName = workout.exercises[exerciseIndex].name;
@@ -620,8 +663,7 @@ export function initEventListeners() {
                     return;
                 }
                 const alternativesHTML = exerciseData.alternatives.map(altName => `<div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0"><h3>${altName}</h3></div>`).join('');
-                ui.elements.modalBody.innerHTML = `<h2>Swap ${currentExerciseName}</h2><p>Choose a replacement exercise:</p><div class="card-group">${alternativesHTML}</div>`;
-                ui.elements.modalActions.innerHTML = '';
+                ui.showModal(`Swap ${currentExerciseName}`, `<p>Choose a replacement exercise:</p><div class="card-group">${alternativesHTML}</div>`, []);
                 ui.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
                     card.addEventListener('click', () => {
                         const newExerciseName = card.dataset.newExerciseName;
@@ -633,17 +675,18 @@ export function initEventListeners() {
                         ui.closeModal();
                     });
                 });
-                ui.elements.modal.classList.add('active');
-            },
-            openNoteModal: () => openNoteModal(exerciseIndex, setIndex),
-            showHistory: () => showHistory(exerciseId),
-            nextOnboardingStep: () => nextOnboardingStep(),
-            selectOnboardingCard: () => selectOnboardingCard(target, field, value),
-            previousOnboardingStep: () => previousOnboardingStep(),
-        };
-
-        if (actions[action]) {
-            actions[action]();
+                break;
+            }
+            case 'openNoteModal': {
+                const { exerciseIndex, setIndex } = target.dataset;
+                openNoteModal(exerciseIndex, setIndex);
+                break;
+            }
+            case 'showHistory': {
+                const { exerciseId } = target.dataset;
+                showHistory(exerciseId);
+                break;
+            }
         }
     });
 
@@ -670,19 +713,13 @@ export function initEventListeners() {
     });
 
     ui.elements.scheduleContainer.addEventListener('click', (e) => {
-        const dayCard = e.target.closest('.day-card');
-        if (!dayCard) return;
-        const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
         const button = e.target.closest('button');
         if (!button) return;
+        const dayCard = e.target.closest('.day-card');
+        const dayIndex = parseInt(dayCard.dataset.dayIndex, 10);
         const { muscleIndex, focus } = button.dataset;
         if (button.matches('.add-muscle-group-btn')) {
             state.builderPlan.days[dayIndex].muscleGroups.push({ muscle: 'selectamuscle', focus: 'Primary', exercises: ['', '', ''] });
-            state.isPlanBuilderDirty = true;
-            ui.renderBuilder();
-        }
-        if (button.matches('.delete-day-btn')) {
-            state.builderPlan.days.splice(dayIndex, 1);
             state.isPlanBuilderDirty = true;
             ui.renderBuilder();
         }
@@ -738,6 +775,9 @@ export function initEventListeners() {
                 } else {
                     set.reps = parseInt(value) || '';
                     set.rir = '';
+                }
+                if (set.weight && (set.reps || set.rir)) {
+                    startRestTimer();
                 }
             }
         }
