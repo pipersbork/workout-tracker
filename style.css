@@ -107,9 +107,10 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .exercise-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .exercise-title-group { display: flex; align-items: center; gap: 0.75rem; }
 .exercise-title-group h3 { margin: 0; font-size: 1.5rem; }
-.swap-exercise-btn, .history-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
-.swap-exercise-btn:hover, .history-btn:hover { color: var(--color-accent-secondary); }
-.swap-exercise-btn svg, .history-btn svg { pointer-events: none; }
+.swap-exercise-btn, .history-btn, .note-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
+.swap-exercise-btn:hover, .history-btn:hover, .note-btn:hover { color: var(--color-accent-secondary); }
+.swap-exercise-btn svg, .history-btn svg, .note-btn svg { pointer-events: none; }
+.note-btn.has-note { color: var(--color-accent-primary); }
 .exercise-target { font-size: 0.9rem; color: var(--color-accent-secondary); background-color: rgba(255, 165, 0, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; }
 .sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-primary); transition: background-color 0.2s ease-in-out; }
 .sets-container .set-row:last-child { border-bottom: none; }
@@ -128,19 +129,6 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
     display: flex;
     justify-content: center;
     align-items: center;
-}
-.note-btn {
-    background: none;
-    border: none;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    padding: 0.5rem;
-    opacity: 0.5;
-    transition: all 0.2s ease;
-}
-.note-btn.has-note, .note-btn:hover {
-    opacity: 1;
-    color: var(--color-accent-secondary);
 }
 .modal-textarea {
     width: 100%;
