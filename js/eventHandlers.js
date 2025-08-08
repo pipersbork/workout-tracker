@@ -19,20 +19,20 @@ async function selectCard(element, field, value, shouldSave = false) {
     element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
     if (shouldSave) {
-        await firebase.saveStateToFirestore();
+        await firebase.saveState();
     }
 }
 
 async function setTheme(theme) {
     state.settings.theme = theme;
     ui.applyTheme();
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setUnits(unit) {
     state.settings.units = unit;
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.renderDailyWorkout();
@@ -41,20 +41,20 @@ async function setUnits(unit) {
 
 async function setProgressionModel(progression) {
     state.settings.progressionModel = progression;
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setWeightIncrement(increment) {
     state.settings.weightIncrement = increment;
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setRestDuration(duration) {
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.updateRestTimerDisplay();
@@ -174,7 +174,7 @@ async function finalizeAndStartPlanFromBuilder() {
     state.isPlanBuilderDirty = false;
     state.editingPlanId = null;
 
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.closeModal();
     ui.showView('workout');
 }
@@ -190,7 +190,7 @@ async function savePlanAsTemplate(planId) {
     };
 
     state.savedTemplates.push(newTemplate);
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.showModal('Template Saved!', `"${plan.name}" has been saved to your templates.`);
 }
 
@@ -215,13 +215,13 @@ async function deletePlan(planId) {
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
     }
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setActivePlan(planId) {
     state.activePlanId = planId;
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
     ui.renderSettings();
 }
 
@@ -290,7 +290,6 @@ async function completeWorkout() {
     };
 
     state.workoutHistory.unshift(historyEntry);
-    localStorage.setItem('workoutHistory', JSON.stringify(state.workoutHistory));
 
     const stalledExercise = checkForStallAndRecommendDeload(activePlan, week, day);
     
@@ -324,7 +323,7 @@ async function completeWorkout() {
         state.currentView = { week: nextWeek, day: nextDay };
     }
 
-    await firebase.saveStateToFirestore();
+    await firebase.saveState();
 }
 
 function checkForStallAndRecommendDeload(plan, completedWeek, completedDayKey) {
@@ -629,7 +628,7 @@ async function nextOnboardingStep() {
             state.currentView = { week: 1, day: parseInt(firstDayKey) };
             state.userSelections.onboardingCompleted = true;
             
-            await firebase.saveStateToFirestore();
+            await firebase.saveState();
             
             // --- Show notification and then transition to home screen ---
             setTimeout(() => {
