@@ -1,6 +1,7 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-import { applyTheme, showView } from './ui.js';
+import { applyTheme, showView, renderOnboardingStep } from './ui.js';
+import { state } from './state.js';
 
 /**
  * @file main.js is the entry point for the application.
@@ -24,18 +25,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize event listeners for the entire application
     initEventListeners();
 
-    // Load static exercise data from JSON file
+    // Show the onboarding screen immediately to prevent a blank page.
+    // This provides a fast initial paint.
+    if (!state.userSelections.onboardingCompleted) {
+        showView('onboarding', true);
+    } else {
+        showView('home', true);
+    }
+
+
+    // Asynchronously load necessary data and handle user authentication.
     await loadExercises();
 
-    // Start the authentication process. The callback function will be executed
+    // Start the authentication process. The callback will be executed
     // once the user is authenticated and their data has been loaded.
     handleAuthentication(() => {
         // Apply the user's saved theme (or default)
         applyTheme();
 
-        // Show the initial view. The showView function already contains the logic
-        // to automatically redirect to 'onboarding' if the user hasn't completed it yet.
-        // We pass 'true' to skip the initial fade-in animation on load.
-        showView('home', true);
+        // Once data is loaded, decide the correct view.
+        // If onboarding is not complete, we stay there. If it is, we move to home.
+        if (state.userSelections.onboardingCompleted) {
+             showView('home', true);
+        } else {
+            // If the user is on a step other than 1 for some reason, re-render.
+            renderOnboardingStep();
+        }
     });
 });
