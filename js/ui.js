@@ -182,6 +182,7 @@ export function renderDailyWorkout() {
     const workout = activePlan.weeks[week]?.[day];
     const lastWeekWorkout = activePlan.weeks[week - 1]?.[day];
 
+    // Handle cases where the workout is a rest day or has no exercises
     if (!workout || !workout.exercises || workout.exercises.length === 0) {
         elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
         elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -190,7 +191,7 @@ export function renderDailyWorkout() {
         return;
     }
 
-    document.getElementById('complete-workout-btn').style.display = 'block'; // Show complete button
+    document.getElementById('complete-workout-btn').style.display = 'block'; // Ensure complete button is visible for workout days
     elements.workoutDayTitle.textContent = workout.name;
     elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     updateStopwatchDisplay();
