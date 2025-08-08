@@ -140,7 +140,6 @@ function _performViewChange(viewName, skipAnimation) {
             state.currentViewName = viewName;
             
             // Call the corresponding render function for the view
-            // FIX: Replaced faulty dynamic call with a switch statement for reliability.
             switch (viewName) {
                 case 'onboarding': renderOnboardingStep(); break;
                 case 'home': renderHomeScreen(); break;
@@ -191,16 +190,15 @@ export function renderDailyWorkout() {
     const workout = activePlan.weeks[week]?.[day];
     const lastWeekWorkout = activePlan.weeks[week - 1]?.[day];
 
-    // Handle cases where the workout is a rest day or has no exercises
     if (!workout || !workout.exercises || workout.exercises.length === 0) {
         elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
         elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No exercises scheduled for today. Enjoy your rest!</p>';
-        document.getElementById('complete-workout-btn').style.display = 'none'; // Hide complete button on rest day
+        document.getElementById('complete-workout-btn').style.display = 'none';
         return;
     }
 
-    document.getElementById('complete-workout-btn').style.display = 'block'; // Ensure complete button is visible for workout days
+    document.getElementById('complete-workout-btn').style.display = 'block';
     elements.workoutDayTitle.textContent = workout.name;
     elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     updateStopwatchDisplay();
@@ -209,6 +207,7 @@ export function renderDailyWorkout() {
     let html = '';
     workout.exercises.forEach((ex, exIndex) => {
         const lastWeekEx = lastWeekWorkout?.exercises.find(e => e.exerciseId === ex.exerciseId);
+        const hasNote = ex.note && ex.note.trim() !== '';
         html += `
             <div class="exercise-card" data-exercise-index="${exIndex}">
                 <div class="exercise-card-header">
@@ -219,6 +218,9 @@ export function renderDailyWorkout() {
                         </button>
                         <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
+                        </button>
+                        <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                     </div>
                     <span class="exercise-target">Target: ${ex.targetSets} sets of ${ex.targetReps} reps @ ${ex.targetRIR} RIR</span>
