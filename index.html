@@ -216,6 +216,11 @@
             </div>
             <div id="summary-content">
                 <section class="summary-section">
+                    <h3>🏆 Trophy Case: Personal Records</h3>
+                    <div id="trophy-case-list">
+                        </div>
+                </section>
+                <section class="summary-section">
                     <h3>Workout Consistency</h3>
                     <div id="consistency-calendar"></div>
                 </section>
@@ -228,8 +233,15 @@
                 <section class="summary-section">
                     <h3>Track Exercise Progress</h3>
                     <select id="exercise-tracker-select" class="builder-select"></select>
-                    <div class="chart-container">
+                    <div class="toggle-switch chart-toggle-switch">
+                        <button class="toggle-btn active" data-action="setChartType" data-chart-type="weight">Top Set Weight</button>
+                        <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
+                    </div>
+                    <div id="weight-chart-container" class="chart-container">
                         <canvas id="progress-chart"></canvas>
+                    </div>
+                    <div id="e1rm-chart-container" class="chart-container hidden">
+                        <canvas id="e1rm-chart"></canvas>
                     </div>
                 </section>
                 <section class="summary-section">
