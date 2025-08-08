@@ -572,8 +572,8 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // --- NEW LOGIC: Generate and save the first plan ---
-            const { builderPlan, description } = planGenerator.generate(state.userSelections, state.exercises);
+            // --- Generate and save the first plan ---
+            const { builderPlan } = planGenerator.generate(state.userSelections, state.exercises);
             
             const newMeso = {
                 id: `meso_${Date.now()}`,
@@ -615,6 +615,14 @@ async function nextOnboardingStep() {
                 });
             }
             
+            // --- Auto-save the new plan as a template ---
+            const newTemplate = {
+                id: `template_${newMeso.id}`,
+                name: `${newMeso.name} (Template)`,
+                builderTemplate: newMeso.builderTemplate,
+            };
+            state.savedTemplates.push(newTemplate);
+
             state.allPlans.push(newMeso);
             state.activePlanId = newMeso.id;
             const firstDayKey = Object.keys(newMeso.weeks[1])[0] || 1;
@@ -623,9 +631,14 @@ async function nextOnboardingStep() {
             
             await firebase.saveStateToFirestore();
             
+            // --- Show notification and then transition to home screen ---
             setTimeout(() => {
-                ui.showView('home');
-            }, 2000);
+                ui.showModal(
+                    'Plan Generated!',
+                    'A workout based on your answers has been generated for you. Click the settings icon to view/edit the routine or select "Start Next Workout" to begin!',
+                    [{ text: 'Got it!', class: 'cta-button', action: () => ui.showView('home') }]
+                );
+            }, 1000);
         }
     });
 }
