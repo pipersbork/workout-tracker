@@ -53,17 +53,23 @@ export const workoutEngine = {
             if (jointPainFeedback === 'moderate' || jointPainFeedback === 'severe') {
                 const alternative = this._findAlternativeExercise(completedEx.exerciseId, state.exercises);
                 if (alternative) {
-                    // Swap the exercise in next week's plan
                     nextWeekEx.name = alternative.name;
                     nextWeekEx.exerciseId = `ex_${alternative.name.replace(/\s+/g, '_')}`;
-                    // Reset progression for the new exercise
                     nextWeekEx.targetLoad = null; 
                     nextWeekEx.targetReps = 8;
+                    console.log(`Substituted ${completedEx.name} with ${alternative.name} due to joint pain.`);
                     return; // Skip normal progression for this exercise
                 }
             }
+            
+            const muscleSoreness = state.feedbackState.soreness[completedEx.muscle.toLowerCase()];
+            if ((muscleSoreness === 'moderate' || muscleSoreness === 'severe') && nextWeekEx.targetSets > 1) {
+                nextWeekEx.targetSets -= 1; // Reduce sets by 1 for next week to aid recovery
+                console.log(`Reduced sets for ${nextWeekEx.name} next week due to soreness.`);
+            }
 
-            // --- STANDARD PROGRESSION (if no auto-regulation occurred) ---
+
+            // --- STANDARD PROGRESSION ---
             if (!completedEx.sets || completedEx.sets.length === 0) {
                 nextWeekEx.targetLoad = completedEx.targetLoad || null;
                 nextWeekEx.targetReps = completedEx.targetReps;
@@ -192,7 +198,6 @@ export const workoutEngine = {
         if (!originalExercise || !originalExercise.alternatives || originalExercise.alternatives.length === 0) {
             return null;
         }
-        // Find the full exercise object for the first alternative name
         const alternativeName = originalExercise.alternatives[0];
         return allExercises.find(ex => ex.name === alternativeName) || null;
     },
