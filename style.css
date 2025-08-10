@@ -306,9 +306,9 @@ select.builder-select { background-color: var(--color-surface-tertiary); color: 
 .settings-section h3 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 1rem; }
 .settings-label { display: block; color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem; margin-top: 1.5rem; }
 .toggle-switch { display: flex; background-color: var(--color-surface-tertiary); border-radius: 8px; padding: 4px; border: 1px solid var(--color-border-primary); }
-.toggle-btn { flex: 1; background-color: transparent; border: none; color: var(--color-text-secondary); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; text-align: center; }
-.toggle-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); }
-.toggle-btn.active { background-color: var(--color-accent-primary); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 191, 255, 0.3); }
+.toggle-btn { flex: 1; background-color: transparent; border: 2px solid transparent; color: var(--color-text-secondary); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; text-align: center; }
+.toggle-btn:hover { border-color: var(--color-accent-secondary); }
+.toggle-btn.active { border-color: var(--color-accent-primary); color: var(--color-accent-primary); font-weight: 600; box-shadow: 0 2px 8px rgba(0, 191, 255, 0.1); }
 #plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border-primary); }
 #plan-management-list .plan-item:last-child { border-bottom: none; }
 #plan-management-list .plan-item.active .plan-name-text { color: var(--color-accent-primary); font-weight: 600; }
