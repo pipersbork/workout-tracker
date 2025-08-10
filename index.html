@@ -8,51 +8,88 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
 </head>
 <body>
 
     <main>
 
+        <!-- =================================================================================== -->
+        <!-- ONBOARDING WIZARD: Revised with more detailed questions for the new workout engine  -->
+        <!-- =================================================================================== -->
         <div class="container view" id="onboarding-container">
             <div class="onboarding-wizard">
                 <div class="progress-bar" id="onboarding-progress-bar">
                     <div class="progress" id="onboarding-progress"></div>
                 </div>
 
+                <!-- Step 1: Welcome -->
                 <div class="step active" data-step="1">
                     <h2 class="main-title">Welcome to Progression</h2>
                     <p>Let's build your perfect workout plan. First, tell us a little about yourself.</p>
                     <button class="cta-button" data-action="nextOnboardingStep">Get Started</button>
                 </div>
 
+                <!-- Step 2: Primary Goal -->
                 <div class="step" data-step="2">
                     <h3>What is your primary fitness goal?</h3>
-                    <p>Let's start with your vision! Knowing your main goal helps us build the perfect roadmap to get you there.</p>
+                    <p>This helps us tailor your training volume and intensity.</p>
                     <div class="card-group">
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="muscle" role="button" tabindex="0"><h3>Build Muscle</h3></div>
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="strength" role="button" tabindex="0"><h3>Get Strong</h3></div>
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="endurance" role="button" tabindex="0"><h3>Improve Endurance</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="hypertrophy" role="button" tabindex="0"><h3>Build Muscle</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="strength" role="button" tabindex="0"><h3>Get Stronger</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="goal" data-value="fatLoss" role="button" tabindex="0"><h3>Fat Loss</h3></div>
                     </div>
                     <div class="button-group">
                         <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
                     </div>
                 </div>
 
+                <!-- Step 3: Training Age (Replaces old "Experience") -->
                 <div class="step" data-step="3">
-                    <h3>What is your current fitness experience?</h3>
-                    <p>There's a starting line for everyone. Let us know where you are so we can start you on the right path.</p>
-                    <div class="card-group">
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="beginner" role="button" tabindex="0"><h3>Beginner</h3><p>New to structured training</p></div>
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="experienced" role="button" tabindex="0"><h3>Experienced</h3><p>You know your way around</p></div>
-                        <div class="goal-card" data-action="selectOnboardingCard" data-field="experience" data-value="advanced" role="button" tabindex="0"><h3>Advanced</h3><p>You live and breathe fitness</p></div>
+                    <h3>What is your training age?</h3>
+                    <p>Be honest! This determines your starting volume and progression rate.</p>
+                    <div class="card-group vertical">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="trainingAge" data-value="novice" role="button" tabindex="0"><h3>Novice</h3><p>&lt; 6 months of consistent training</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="trainingAge" data-value="beginner" role="button" tabindex="0"><h3>Beginner</h3><p>6 months to 2 years of training</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="trainingAge" data-value="intermediate" role="button" tabindex="0"><h3>Intermediate</h3><p>2 to 5 years of serious training</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="trainingAge" data-value="advanced" role="button" tabindex="0"><h3>Advanced</h3><p>5+ years of dedicated training</p></div>
                     </div>
                     <div class="button-group">
                         <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
                     </div>
                 </div>
-                
+
+                <!-- Step 4: Training Frequency -->
                 <div class="step" data-step="4">
+                    <h3>How many days per week can you train?</h3>
+                    <p>We'll use this to create an optimal training split for you.</p>
+                    <div class="card-group">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="daysPerWeek" data-value="3" role="button" tabindex="0"><h3>3 Days</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="daysPerWeek" data-value="4" role="button" tabindex="0"><h3>4 Days</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="daysPerWeek" data-value="5" role="button" tabindex="0"><h3>5 Days</h3></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="daysPerWeek" data-value="6" role="button" tabindex="0"><h3>6 Days</h3></div>
+                    </div>
+                     <div class="button-group">
+                        <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Dietary Status -->
+                 <div class="step" data-step="5">
+                    <h3>What is your current dietary status?</h3>
+                    <p>Your nutrition impacts recovery and how much training volume you can handle.</p>
+                    <div class="card-group vertical">
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="dietaryStatus" data-value="surplus" role="button" tabindex="0"><h3>Calorie Surplus</h3><p>Actively trying to gain weight</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="dietaryStatus" data-value="maintenance" role="button" tabindex="0"><h3>Maintenance</h3><p>Maintaining current weight</p></div>
+                        <div class="goal-card" data-action="selectOnboardingCard" data-field="dietaryStatus" data-value="deficit" role="button" tabindex="0"><h3>Calorie Deficit</h3><p>Actively trying to lose weight</p></div>
+                    </div>
+                     <div class="button-group">
+                        <button class="secondary-button" data-action="previousOnboardingStep">Back</button>
+                    </div>
+                </div>
+                
+                <!-- Step 6: Workout Location -->
+                <div class="step" data-step="6">
                     <h3>Where do you prefer to work out?</h3>
                     <p>No gym? No problem. We'll build workouts you can do anywhere.</p>
                     <div class="card-group">
@@ -64,13 +101,17 @@
                     </div>
                 </div>
 
-                <div class="step" data-step="5">
-                    <h2 class="main-title">Calculating Your Plan...</h2>
-                    <p>We're analyzing your answers to create the perfect starting point for your fitness journey.</p>
+                <!-- Step 7: Final Calculation -->
+                <div class="step" data-step="7">
+                    <h2 class="main-title">Building Your Plan...</h2>
+                    <p>We're analyzing your profile to create a personalized mesocycle just for you.</p>
                 </div>
             </div>
         </div>
 
+        <!-- =================================================================================== -->
+        <!-- HOME SCREEN                                                                         -->
+        <!-- =================================================================================== -->
         <div id="home-screen" class="container view hidden">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
@@ -81,7 +122,7 @@
                 </button>
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="planHub">
                     <div class="hub-option-icon">📖</div>
-                    <div class="hub-option-text"><h3>Plan Mesocycle</h3></div>
+                    <div class="hub-option-text"><h3>Plan Hub</h3></div>
                 </button>
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="performanceSummary">
                     <div class="hub-option-icon">📊</div>
@@ -90,62 +131,27 @@
             </nav>
             <div id="active-plan-display" class="active-plan-display"></div>
             <button class="home-icon-btn" data-action="showView" data-view-name="settings" aria-label="Settings">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
         </div>
 
+        <!-- =================================================================================== -->
+        <!-- PLAN HUB & OTHER VIEWS                                                              -->
+        <!-- =================================================================================== -->
         <div id="plan-hub-view" class="container view hidden">
             <div class="workout-header">
                  <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
-                <h2>Plan a Mesocycle</h2>
+                <h2>Plan Hub</h2>
             </div>
             <div id="plan-hub-options"></div>
-        </div>
-
-        <div id="template-library-view" class="container view hidden">
-            <div class="workout-header">
-                 <button class="back-btn" data-action="showView" data-view-name="planHub" aria-label="Back to Plan Hub">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                </button>
-                <h2>Templates</h2>
-            </div>
-            <div class="tab-container">
-                <button class="tab-btn active" data-action="switchTab" data-tab="progression">Progression Templates</button>
-                <button class="tab-btn" data-action="switchTab" data-tab="saved">My Templates</button>
-            </div>
-            <div id="template-list-container"></div>
-        </div>
-
-        <div id="custom-plan-wizard-view" class="container view hidden">
-            <div class="workout-header">
-                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                </button>
-                <h2>Design Your Plan</h2>
-            </div>
-            <div id="custom-wizard-content"></div>
-        </div>
-
-        <div id="builder-view" class="container view hidden">
-            <div class="workout-header">
-                <button class="back-btn" data-action="showView" data-view-name="planHub" aria-label="Back to Plan Hub">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 id="builder-title">Mesocycle Builder</h2>
-            </div>
-            <div class="schedule-container" id="schedule-container"></div>
-            <div class="builder-actions">
-                <button class="cta-button secondary-button" data-action="addDayToBuilder">+ Add a Day</button>
-                <button class="cta-button" data-action="savePlan">Save Plan</button>
-            </div>
         </div>
 
         <div id="daily-workout-view" class="view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2 id="workout-day-title">Workout Title</h2>
                 <p id="workout-date">Date</p>
@@ -210,7 +216,7 @@
         <section id="performance-summary-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2>Performance Summary</h2>
             </div>
@@ -254,7 +260,7 @@
         <section id="settings-view" class="container view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2>Settings</h2>
             </div>
@@ -268,17 +274,17 @@
                     <h3>Training Goal</h3>
                     <div class="card-group settings-card-group" data-field="goal" id="settings-goal-cards">
                         <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="strength" role="button" tabindex="0"><div class="icon">🏋️</div><h3>Get Strong</h3></div>
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="muscle" role="button" tabindex="0"><div class="icon">💪</div><h3>Build Muscle</h3></div>
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="endurance" role="button" tabindex="0"><div class="icon">🏃</div><h3>Build Endurance</h3></div>
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="hybrid" role="button" tabindex="0"><div class="icon">🔥</div><h3>Hybrid</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="hypertrophy" role="button" tabindex="0"><div class="icon">💪</div><h3>Build Muscle</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="fatLoss" role="button" tabindex="0"><div class="icon">🔥</div><h3>Fat Loss</h3></div>
                     </div>
                 </section>
                 <section class="settings-section">
                     <h3>Experience Level</h3>
-                    <div class="card-group settings-card-group" data-field="experience" id="settings-experience-cards">
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><div class="icon">🌱</div><h3>Beginner</h3></div>
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="experienced" role="button" tabindex="0"><div class="icon">⚡</div><h3>Experienced</h3></div>
-                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><div class="icon">🔥</div><h3>Advanced</h3></div>
+                    <div class="card-group settings-card-group" data-field="trainingAge" id="settings-experience-cards">
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="novice" role="button" tabindex="0"><div class="icon">🌱</div><h3>Novice</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="beginner" role="button" tabindex="0"><h3>Beginner</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="intermediate" role="button" tabindex="0"><h3>Intermediate</h3></div>
+                        <div class="goal-card" data-action="selectCard" data-should-save="true" data-value="advanced" role="button" tabindex="0"><h3>Advanced</h3></div>
                     </div>
                 </section>
                 <section class="settings-section">
