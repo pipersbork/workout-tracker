@@ -423,21 +423,7 @@ export function findLastPerformance(exerciseId) {
 }
 
 
-// --- ONBOARDING FUNCTIONS ---
-
-function handleStepTransition(stepChangeLogic) {
-    const currentStepEl = document.querySelector('.step.active');
-    if (currentStepEl) {
-        currentStepEl.classList.add('fade-out');
-        setTimeout(() => {
-            stepChangeLogic();
-            ui.renderOnboardingStep();
-        }, 500); // Match CSS fade-out duration
-    } else {
-        stepChangeLogic();
-        ui.renderOnboardingStep();
-    }
-}
+// --- ONBOARDING FUNCTIONS (FIXED) ---
 
 function selectOnboardingCard(element, field, value) {
     selectCard(element, field, value); // This also adds the 'active' class
@@ -445,47 +431,49 @@ function selectOnboardingCard(element, field, value) {
 }
 
 async function nextOnboardingStep() {
-    handleStepTransition(async () => {
-        state.onboarding.totalSteps = 7; // Ensure total steps is correct
+    // FIXED: Simplified without problematic handleStepTransition
+    state.onboarding.totalSteps = 7;
 
-        if (state.onboarding.currentStep < state.onboarding.totalSteps) {
-            state.onboarding.currentStep++;
-        }
+    if (state.onboarding.currentStep < state.onboarding.totalSteps) {
+        state.onboarding.currentStep++;
+    }
+    
+    if (state.onboarding.currentStep === state.onboarding.totalSteps) {
+        const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
+        const newPlan = {
+            id: `meso_${Date.now()}`,
+            name: "My First Intelligent Plan",
+            startDate: new Date().toISOString(),
+            durationWeeks: 4,
+            ...newMeso
+        };
+
+        state.allPlans.push(newPlan);
+        state.activePlanId = newPlan.id;
+        state.userSelections.onboardingCompleted = true;
         
-        if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
-            const newPlan = {
-                id: `meso_${Date.now()}`,
-                name: "My First Intelligent Plan",
-                startDate: new Date().toISOString(),
-                durationWeeks: 4,
-                ...newMeso
-            };
+        await firebase.saveState();
+        
+        setTimeout(() => {
+            triggerHapticFeedback('success');
+            ui.showModal(
+                'Plan Generated!',
+                'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
+                [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
+            );
+        }, 1000); // Wait for shimmer animation
+    }
 
-            state.allPlans.push(newPlan);
-            state.activePlanId = newPlan.id;
-            state.userSelections.onboardingCompleted = true;
-            
-            await firebase.saveState();
-            
-            setTimeout(() => {
-                triggerHapticFeedback('success');
-                ui.showModal(
-                    'Plan Generated!',
-                    'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
-                );
-            }, 1000); // Wait for shimmer animation
-        }
-    });
+    // Direct call to render - no transition wrapper
+    ui.renderOnboardingStep();
 }
 
 function previousOnboardingStep() {
-    handleStepTransition(() => {
-        if (state.onboarding.currentStep > 1) {
-            state.onboarding.currentStep--;
-        }
-    });
+    // FIXED: Simplified without problematic handleStepTransition
+    if (state.onboarding.currentStep > 1) {
+        state.onboarding.currentStep--;
+    }
+    ui.renderOnboardingStep();
 }
 
 // --- FEEDBACK TRIGGER LOGIC ---
