@@ -360,6 +360,24 @@
         </div>
     </div>
 
+    <!-- Daily Check-in Modal -->
+    <div id="daily-checkin-modal" class="modal">
+        <div class="modal-content">
+            <h2>Daily Check-in</h2>
+            <p>How are you feeling today? This helps us adjust your workout.</p>
+            <div class="settings-section">
+                <label class="settings-label" id="sleep-label">Sleep: 8 hours</label>
+                <input type="range" min="4" max="12" value="8" step="0.5" class="slider" id="sleep-slider">
+                
+                <label class="settings-label" id="stress-label">Stress Level: 3</label>
+                <input type="range" min="1" max="10" value="3" class="slider" id="stress-slider">
+            </div>
+            <div class="modal-actions">
+                <button class="cta-button" data-action="submitCheckin">Start Workout</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/main.js"></script>
 
 </body>
