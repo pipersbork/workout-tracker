@@ -115,7 +115,10 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-primary); transition: background-color 0.2s ease-in-out; }
 .sets-container .set-row:last-child { border-bottom: none; }
 .sets-container .set-row.active-set { background-color: rgba(0, 191, 255, 0.1); }
-.set-number { flex-basis: 50px; font-weight: 600; color: var(--color-text-secondary); }
+.set-number { flex-basis: 50px; font-weight: 600; color: var(--color-text-secondary);test-align: center; }
+.set-inputs-wrapper {
+    flex: 1;
+}
 .set-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; }
 .set-row.header .set-inputs span { color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
 .set-inputs input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-border-primary); background-color: var(--color-surface-tertiary); color: var(--color-text-primary); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
