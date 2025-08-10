@@ -8,6 +8,27 @@ import { workoutEngine } from './planGenerator.js';
  * It acts as the "controller" of the application, responding to user input and interfacing with the workoutEngine.
  */
 
+// --- UTILITY FUNCTIONS ---
+
+/**
+ * Provides haptic feedback if the browser supports it.
+ * @param {string} type - The type of feedback ('light', 'medium', 'heavy', 'success', 'error').
+ */
+function triggerHapticFeedback(type = 'light') {
+    if (!navigator.vibrate) return;
+
+    const patterns = {
+        light: [50],
+        medium: [100],
+        heavy: [150],
+        success: [50, 100, 50],
+        error: [100, 50, 100],
+    };
+
+    navigator.vibrate(patterns[type] || patterns.light);
+}
+
+
 // --- ACTION FUNCTIONS ---
 
 function findAndSetNextWorkout(planId = state.activePlanId) {
@@ -38,6 +59,7 @@ function findAndSetNextWorkout(planId = state.activePlanId) {
 
 
 async function selectCard(element, field, value, shouldSave = false) {
+    triggerHapticFeedback('light');
     const processedValue = /^\d+$/.test(value) ? parseInt(value) : value;
     state.userSelections[field] = processedValue;
     
@@ -50,6 +72,7 @@ async function selectCard(element, field, value, shouldSave = false) {
 }
 
 async function setTheme(theme) {
+    triggerHapticFeedback('light');
     state.settings.theme = theme;
     ui.applyTheme();
     await firebase.saveState();
@@ -57,6 +80,7 @@ async function setTheme(theme) {
 }
 
 async function setUnits(unit) {
+    triggerHapticFeedback('light');
     state.settings.units = unit;
     await firebase.saveState();
     ui.renderSettings();
@@ -66,18 +90,21 @@ async function setUnits(unit) {
 }
 
 async function setProgressionModel(progression) {
+    triggerHapticFeedback('light');
     state.settings.progressionModel = progression;
     await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setWeightIncrement(increment) {
+    triggerHapticFeedback('light');
     state.settings.weightIncrement = increment;
     await firebase.saveState();
     ui.renderSettings();
 }
 
 async function setRestDuration(duration) {
+    triggerHapticFeedback('light');
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
     await firebase.saveState();
@@ -88,6 +115,7 @@ async function setRestDuration(duration) {
 }
 
 function confirmDeletePlan(planId) {
+    triggerHapticFeedback('medium');
     ui.showModal('Delete Plan?', 'Are you sure you want to permanently delete this plan? This cannot be undone.', [
         { text: 'Cancel', class: 'secondary-button' },
         { text: 'Yes, Delete', class: 'cta-button', action: () => deletePlan(planId) }
@@ -95,6 +123,7 @@ function confirmDeletePlan(planId) {
 }
 
 async function deletePlan(planId) {
+    triggerHapticFeedback('success');
     state.allPlans = state.allPlans.filter(p => p.id !== planId);
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
@@ -105,12 +134,14 @@ async function deletePlan(planId) {
 }
 
 async function setActivePlan(planId) {
+    triggerHapticFeedback('success');
     state.activePlanId = planId;
     await firebase.saveState();
     ui.renderSettings();
 }
 
 function confirmCompleteWorkout() {
+    triggerHapticFeedback('medium');
     ui.showModal('Complete Workout?', 'Are you sure you want to complete this workout? This action cannot be undone.', [
         { text: 'Cancel', class: 'secondary-button' },
         { text: 'Yes, Complete', class: 'cta-button', action: () => completeWorkout() }
@@ -224,6 +255,7 @@ function calculateMesocycleStats() {
 
 
 async function completeWorkout() {
+    triggerHapticFeedback('success');
     stopStopwatch();
     ui.closeModal();
 
@@ -277,6 +309,7 @@ async function completeWorkout() {
 }
 
 function setChartType(chartType) {
+    triggerHapticFeedback('light');
     const weightContainer = ui.elements.weightChartContainer;
     const e1rmContainer = ui.elements.e1rmChartContainer;
     const toggleButtons = document.querySelectorAll('.chart-toggle-switch .toggle-btn');
@@ -312,6 +345,7 @@ function stopStopwatch() {
 }
 
 function startRestTimer() {
+    triggerHapticFeedback('light');
     if (state.restTimer.isRunning) return;
     stopRestTimer();
     state.restTimer.isRunning = true;
@@ -322,7 +356,7 @@ function startRestTimer() {
         ui.updateRestTimerDisplay();
         if (state.restTimer.remaining <= 0) {
             stopRestTimer();
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            triggerHapticFeedback('success');
         }
     }, 1000);
 }
@@ -355,6 +389,7 @@ function openExerciseNotes(exerciseIndex) {
                     exercise.note = newNote;
                     ui.renderDailyWorkout();
                     ui.closeModal();
+                    triggerHapticFeedback('success');
                 }
             }
         ]
@@ -449,6 +484,7 @@ async function nextOnboardingStep() {
             await firebase.saveState();
             
             setTimeout(() => {
+                triggerHapticFeedback('success');
                 ui.showModal(
                     'Plan Generated!',
                     'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
@@ -532,6 +568,7 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
 }
 
 async function submitCheckin() {
+    triggerHapticFeedback('success');
     state.dailyCheckin.sleep = parseFloat(ui.elements.sleepSlider.value);
     state.dailyCheckin.stress = parseInt(ui.elements.stressSlider.value);
     
@@ -568,6 +605,9 @@ export function initEventListeners() {
     document.body.addEventListener('click', e => {
         const target = e.target.closest('[data-action]');
         if (!target) return;
+        
+        // Haptic feedback for all actions
+        triggerHapticFeedback('light');
 
         target.classList.add('pop-animation');
         setTimeout(() => target.classList.remove('pop-animation'), 300);
@@ -668,6 +708,7 @@ export function initEventListeners() {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
         const hubAction = hubOption.dataset.hubAction;
+        triggerHapticFeedback('medium');
 
         if (hubAction === 'new') {
             ui.showModal("Create New Plan?", 
@@ -675,6 +716,7 @@ export function initEventListeners() {
             [
                 { text: 'Cancel', class: 'secondary-button' },
                 { text: 'Yes, Create', class: 'cta-button', action: async () => {
+                    triggerHapticFeedback('success');
                     const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
                     const newPlan = {
                         id: `meso_${Date.now()}`,
@@ -713,6 +755,13 @@ export function initEventListeners() {
             if (!exercise) return;
             if (!exercise.sets[setIndex]) exercise.sets[setIndex] = {};
             const set = exercise.sets[setIndex];
+
+            // Real-time Input Validation
+            e.target.classList.remove('valid', 'invalid');
+            if (e.target.value.trim() !== '') {
+                const isValid = e.target.checkValidity();
+                e.target.classList.add(isValid ? 'valid' : 'invalid');
+            }
 
             if (e.target.classList.contains('weight-input')) {
                 set.weight = parseFloat(e.target.value) || '';
@@ -779,5 +828,20 @@ export function initEventListeners() {
 
     ui.elements.stressSlider?.addEventListener('input', (e) => {
         ui.elements.stressLabel.textContent = `Stress Level: ${e.target.value}`;
+    });
+
+    // Event listeners for tooltips
+    document.body.addEventListener('mouseover', e => {
+        const target = e.target.closest('[data-tooltip]');
+        if (target) {
+            ui.showTooltip(target);
+        }
+    });
+
+    document.body.addEventListener('mouseout', e => {
+        const target = e.target.closest('[data-tooltip]');
+        if (target) {
+            ui.hideTooltip();
+        }
     });
 }
