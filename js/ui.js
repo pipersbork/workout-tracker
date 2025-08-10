@@ -194,9 +194,11 @@ export function renderDailyWorkout() {
                 <div class="sets-container">
                     <div class="set-row header">
                         <div class="set-number">SET</div>
-                        <div class="set-inputs">
-                            <span>${state.settings.units.toUpperCase()}</span>
-                            <span>REPS / RIR</span>
+                        <div class="set-inputs-wrapper">
+                            <div class="set-inputs">
+                                <span>${state.settings.units.toUpperCase()}</span>
+                                <span>REPS / RIR</span>
+                            </div>
                         </div>
                         <div class="set-actions"></div>
                     </div>
@@ -364,7 +366,7 @@ export function renderVolumeChart() {
             datasets: [{
                 label: 'Total Volume by Muscle',
                 data,
-                backgroundColor: ['#FF7A00', '#FFA500', '#FFC04D', '#FFDB8D', '#FFEDC2', '#38383A', '#5A5A5A'],
+                backgroundColor: ['#FF7A00', '#FFA500', '#FFC04D', '#FFDB8D', '#FFEDC2', '#3838A', '#5A5A5A'],
             }]
         },
         options: { responsive: true, maintainAspectRatio: false }
@@ -519,23 +521,17 @@ export function closeModal() {
     elements.modal.classList.remove('active');
 }
 
-/**
- * Shows the dedicated feedback modal with a specific question and options.
- * @param {string} title - The title for the modal.
- * @param {string} question - The question to ask the user.
- * @param {Array<object>} options - An array of option objects, e.g., [{ text: 'No Pain', value: 'none', action: callback }]
- */
-export function showFeedbackModal(title, question, options) {
+export function showFeedbackModal(title, question, options, callback) {
     elements.feedbackModalTitle.textContent = title;
     elements.feedbackModalQuestion.textContent = question;
     elements.feedbackModalOptions.innerHTML = options.map(opt => 
         `<button class="cta-button secondary-button" data-value="${opt.value}">${opt.text}</button>`
     ).join('');
 
-    elements.feedbackModalOptions.querySelectorAll('button').forEach((button, index) => {
+    elements.feedbackModalOptions.querySelectorAll('button').forEach((button) => {
         button.addEventListener('click', () => {
-            if (options[index].action) {
-                options[index].action(button.dataset.value);
+            if (callback) {
+                callback(button.dataset.value);
             }
             closeFeedbackModal();
         }, { once: true });
@@ -546,6 +542,23 @@ export function showFeedbackModal(title, question, options) {
 
 export function closeFeedbackModal() {
     elements.feedbackModal.classList.remove('active');
+}
+
+/**
+ * Displays the intra-workout recommendation text in the correct set row.
+ * @param {number} exerciseIndex - The index of the exercise.
+ * @param {number} setIndex - The index of the set that was just completed.
+ * @param {string} recommendationText - The text to display.
+ */
+export function displayIntraWorkoutRecommendation(exerciseIndex, setIndex, recommendationText) {
+    // Find the recommendation container for the *next* set
+    const nextSetIndex = setIndex + 1;
+    const recommendationEl = document.querySelector(`.recommendation-text[data-exercise-index="${exerciseIndex}"][data-set-index="${nextSetIndex}"]`);
+    
+    if (recommendationEl) {
+        recommendationEl.textContent = recommendationText;
+        recommendationEl.style.display = 'block';
+    }
 }
 
 
