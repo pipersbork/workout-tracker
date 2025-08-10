@@ -209,6 +209,7 @@ async function completeWorkout() {
     state.workoutSummary.totalVolume = totalVolume;
     state.workoutSummary.totalSets = totalSets;
 
+    // Add the detailed workout object to history
     const historyEntry = {
         id: `hist_${Date.now()}`,
         planName: activePlan.name,
@@ -217,6 +218,7 @@ async function completeWorkout() {
         duration: totalSeconds,
         volume: totalVolume,
         sets: totalSets,
+        exercises: JSON.parse(JSON.stringify(workout.exercises)) // Deep copy
     };
     state.workoutHistory.unshift(historyEntry);
 
@@ -354,6 +356,25 @@ function showHistory(exerciseId) {
 
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
+
+/**
+ * Finds the most recent performance of a specific exercise from the workout history.
+ * @param {string} exerciseId - The ID of the exercise to look for.
+ * @returns {object|null} The top set from the last performance, or null if not found.
+ */
+export function findLastPerformance(exerciseId) {
+    for (const historyItem of state.workoutHistory) {
+        const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
+        if (exerciseInstance && exerciseInstance.sets && exerciseInstance.sets.length > 0) {
+            const topSet = exerciseInstance.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
+            if (topSet.weight > 0) {
+                return topSet;
+            }
+        }
+    }
+    return null; // No previous performance found
+}
+
 
 // --- ONBOARDING FUNCTIONS ---
 
@@ -636,7 +657,6 @@ export function initEventListeners() {
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
                     
-                    // --- NEW: Trigger Intra-Workout Recommendation ---
                     const recommendation = workoutEngine.generateIntraWorkoutRecommendation(set, exercise);
                     ui.displayIntraWorkoutRecommendation(parseInt(exerciseIndex), parseInt(setIndex), recommendation);
 
