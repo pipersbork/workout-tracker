@@ -1,6 +1,7 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
 import { applyTheme, showView } from './ui.js';
+import { state } from './state.js';
 
 /**
  * @file main.js is the entry point for the application.
@@ -33,9 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Apply the user's saved theme (or default)
         applyTheme();
 
-        // Show the initial view. The showView function already contains the logic
-        // to automatically redirect to 'onboarding' if the user hasn't completed it yet.
-        // We pass 'true' to skip the initial fade-in animation on load.
-        showView('home', true);
+        // Explicitly determine the starting view based on onboarding status.
+        // This prevents skipping the onboarding flow for new or reset users.
+        const initialView = state.userSelections.onboardingCompleted ? 'home' : 'onboarding';
+        showView(initialView, true);
     });
 });
