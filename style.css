@@ -82,8 +82,35 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .home-icon-btn:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); }
 .home-icon-btn:hover svg { stroke: #fff; }
 
-.progress-bar { width: 100%; height: 8px; background-color: var(--color-surface-secondary); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; }
-.progress { width: 0%; height: 100%; background-color: var(--color-accent-primary); border-radius: 4px; transition: width 0.5s ease-in-out; }
+.progress-bar { 
+    width: 100%; 
+    height: 8px; 
+    background-color: var(--color-surface-secondary); 
+    border-radius: 4px; 
+    margin-bottom: 2rem; 
+    overflow: hidden; 
+    position: relative;
+}
+.progress { 
+    width: 0%; 
+    height: 100%; 
+    background-color: var(--color-accent-primary); 
+    border-radius: 4px; 
+    transition: width 0.5s ease-in-out; 
+}
+
+/* Shimmer Effect */
+.shimmer-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+}
+
 .splash-bar { max-width: 300px; margin: 2rem auto 0 auto; }
 
 .card-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
@@ -121,6 +148,14 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .set-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; }
 .set-row.header .set-inputs span { color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
 .set-inputs input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-border-primary); background-color: var(--color-surface-tertiary); color: var(--color-text-primary); font-family: var(--font-family); text-align: center; font-size: 1rem; transition: all 0.2s ease; }
+/* Real-time input validation styling */
+.set-inputs input.invalid {
+    border-color: var(--color-state-error);
+    box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.3);
+}
+.set-inputs input.valid {
+    border-color: var(--color-state-success);
+}
 .add-set-btn { background: none; border: 1px dashed var(--color-border-primary); color: var(--color-text-secondary); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
 .add-set-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); }
 .workout-actions { margin-top: 2rem; text-align: center; }
@@ -164,13 +199,15 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 =========================== */
 .cta-button, .secondary-button {
     border-radius: 12px;
-    padding: 16px 32px;
+    padding: 1rem 2rem;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    will-change: transform;
+    touch-action: manipulation;
 }
 
 .cta-button {
@@ -208,41 +245,17 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 }
 
 .secondary-button {
-    background: rgba(0, 191, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 191, 255, 0.3);
-    color: #00bfff;
-}
-
-.secondary-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-    opacity: 0;
-    transition: opacity 0.3s;
+    background: transparent;
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-secondary);
 }
 
 .secondary-button:hover {
-    background: rgba(0, 191, 255, 0.2);
-    border-color: rgba(0, 191, 255, 0.5);
+    background-color: var(--color-surface-tertiary);
+    color: var(--color-text-primary);
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 191, 255, 0.2);
 }
 
-.secondary-button:hover::before {
-    opacity: 1;
-}
-
-.secondary-button:active {
-    transform: translateY(0);
-    background: rgba(0, 191, 255, 0.3);
-}
-
-.button-group { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
 .back-btn svg { stroke: var(--color-text-secondary); transition: all 0.2s ease; }
 .back-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
@@ -397,6 +410,10 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
 =========================== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+@keyframes shimmer { 
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
 @media (max-width: 768px) { .container, #daily-workout-view, #performance-summary-view, #settings-view { margin: 1rem auto; padding: 1rem; } .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .back-btn { top: 1rem; left: 1rem; } }
 
 /* ===========================
@@ -569,4 +586,33 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
     border-radius: 50%;
     background: var(--color-accent-primary);
     cursor: pointer;
+}
+/* ===========================
+  TOOLTIP STYLES
+=========================== */
+[data-tooltip] {
+  position: relative;
+  cursor: pointer;
+}
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  background-color: var(--color-surface-tertiary);
+  color: var(--color-text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 10;
+}
+[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
