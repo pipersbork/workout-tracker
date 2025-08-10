@@ -680,6 +680,13 @@ export function initEventListeners() {
 
     ui.elements.workoutView.addEventListener('input', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
+            // FIX: Restore validation logic
+            e.target.classList.remove('valid', 'invalid');
+            if (e.target.value.trim() !== '') {
+                const isValid = e.target.checkValidity();
+                e.target.classList.add(isValid ? 'valid' : 'invalid');
+            }
+            
             const { exerciseIndex, setIndex } = e.target.dataset;
             const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
             const workout = activePlan?.weeks[state.currentView.week][state.currentView.day];
