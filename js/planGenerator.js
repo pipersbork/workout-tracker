@@ -5,7 +5,8 @@ import { state } from './state.js';
  * This file contains the core business logic for the Progression app. It's responsible for:
  * 1.  Dynamically generating entire, individualized mesocycles based on user profile.
  * 2.  Calculating week-to-week progression based on user performance and feedback (auto-regulation).
- * 3.  Implementing training principles like Volume Landmarks (MV, MEV, MRV) and RIR-based periodization.
+ * 3.  Generating real-time, intra-workout recommendations for the next set.
+ * 4.  Implementing training principles like Volume Landmarks (MV, MEV, MRV) and RIR-based periodization.
  */
 
 // --- DATA & CONSTANTS ---
@@ -26,6 +27,43 @@ const EXERCISE_COUNT_PER_SESSION = {
 
 export const workoutEngine = {
 
+    /**
+     * Generates a real-time recommendation for the next set based on the performance of the last set.
+     * @param {object} completedSet - The set object that was just completed by the user.
+     * @param {object} exercise - The full exercise object from the current workout plan.
+     * @returns {string|null} A recommendation string (e.g., "Increase weight to 135 lbs") or null if no recommendation.
+     */
+    generateIntraWorkoutRecommendation(completedSet, exercise) {
+        if (!completedSet.reps || !completedSet.weight) {
+            return "Enter weight and reps to get a recommendation.";
+        }
+
+        const { weightIncrement } = state.settings;
+        const repsPerformed = completedSet.reps;
+        const rir = completedSet.rir;
+        const targetReps = exercise.targetReps;
+        const effectiveReps = repsPerformed + (rir || 0); // Estimated reps to failure
+
+        // If performance is significantly above target, recommend increasing weight.
+        if (effectiveReps > targetReps + 2) {
+            const newWeight = completedSet.weight + weightIncrement;
+            return `We recommend increasing to ${newWeight} ${state.settings.units}`;
+        }
+
+        // If performance is below target, recommend decreasing weight.
+        if (effectiveReps < targetReps - 1 && completedSet.weight > weightIncrement) {
+            const newWeight = completedSet.weight - weightIncrement;
+            return `We recommend decreasing to ${newWeight} ${state.settings.units}`;
+        }
+        
+        // If performance is on target, recommend maintaining weight.
+        if (effectiveReps >= targetReps && effectiveReps <= targetReps + 2) {
+            return `Good set! Stay at ${completedSet.weight} ${state.settings.units}`;
+        }
+
+        return "No recommendation at this time.";
+    },
+
     generateNewMesocycle(userSelections, allExercises, durationWeeks) {
         const { trainingAge, goal, daysPerWeek } = userSelections;
         const split = this._getSplitForDays(daysPerWeek);
@@ -36,11 +74,6 @@ export const workoutEngine = {
         return mesocycle;
     },
 
-    /**
-     * Calculates the progression for the next workout, incorporating auto-regulation based on user feedback.
-     * @param {object} completedWorkout - The workout data just completed by the user.
-     * @param {object} nextWorkout - The workout object for the upcoming week to be modified.
-     */
     calculateNextWorkoutProgression(completedWorkout, nextWorkout) {
         const { progressionModel, weightIncrement } = state.settings;
 
@@ -48,7 +81,6 @@ export const workoutEngine = {
             const nextWeekEx = nextWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
             if (!nextWeekEx) return;
 
-            // --- AUTO-REGULATION (from feedback) ---
             const jointPainFeedback = state.feedbackState.jointPain[completedEx.exerciseId];
             if (jointPainFeedback === 'moderate' || jointPainFeedback === 'severe') {
                 const alternative = this._findAlternativeExercise(completedEx.exerciseId, state.exercises);
@@ -58,18 +90,16 @@ export const workoutEngine = {
                     nextWeekEx.targetLoad = null; 
                     nextWeekEx.targetReps = 8;
                     console.log(`Substituted ${completedEx.name} with ${alternative.name} due to joint pain.`);
-                    return; // Skip normal progression for this exercise
+                    return;
                 }
             }
             
             const muscleSoreness = state.feedbackState.soreness[completedEx.muscle.toLowerCase()];
             if ((muscleSoreness === 'moderate' || muscleSoreness === 'severe') && nextWeekEx.targetSets > 1) {
-                nextWeekEx.targetSets -= 1; // Reduce sets by 1 for next week to aid recovery
+                nextWeekEx.targetSets -= 1;
                 console.log(`Reduced sets for ${nextWeekEx.name} next week due to soreness.`);
             }
 
-
-            // --- STANDARD PROGRESSION ---
             if (!completedEx.sets || completedEx.sets.length === 0) {
                 nextWeekEx.targetLoad = completedEx.targetLoad || null;
                 nextWeekEx.targetReps = completedEx.targetReps;
