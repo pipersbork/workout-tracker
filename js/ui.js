@@ -25,6 +25,8 @@ export const elements = {
 
     // Home Screen
     activePlanDisplay: document.getElementById('active-plan-display'),
+    homeNav: document.querySelector('#home-screen .home-nav-buttons'),
+
 
     // Daily Workout
     workoutDayTitle: document.getElementById('workout-day-title'),
@@ -100,7 +102,7 @@ function _performViewChange(viewName, skipAnimation) {
         setTimeout(() => {
             currentViewEl.classList.add('hidden');
             currentViewEl.classList.remove('fade-out');
-        }, 400);
+        }, 500); // Match fade-out duration
     }
 
     const viewMap = {
@@ -116,15 +118,17 @@ function _performViewChange(viewName, skipAnimation) {
     const targetViewEl = viewMap[viewName];
 
     if (targetViewEl) {
+        // Use a single timeout to prevent race conditions
         setTimeout(() => {
             targetViewEl.classList.remove('hidden');
             if (skipAnimation) {
                 targetViewEl.style.animation = 'none';
             } else {
-                targetViewEl.style.animation = '';
+                targetViewEl.style.animation = ''; // Re-enable animation
             }
             state.currentViewName = viewName;
             
+            // Render the content for the new view
             switch (viewName) {
                 case 'onboarding': renderOnboardingStep(); break;
                 case 'home': renderHomeScreen(); break;
@@ -134,9 +138,10 @@ function _performViewChange(viewName, skipAnimation) {
                 case 'performanceSummary': renderPerformanceSummary(); break;
                 case 'settings': renderSettings(); break;
             }
-        }, currentViewEl ? 400 : 0);
+        }, currentViewEl ? 400 : 0); // Delay should be slightly less than fade-out duration
     }
 }
+
 
 // --- RENDER FUNCTIONS ---
 
@@ -145,23 +150,15 @@ export function renderOnboardingStep() {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
 
-    // Add shimmer effect when loading the last step
     if (currentStep === totalSteps) {
-        const shimmer = document.createElement('div');
-        shimmer.className = 'shimmer-wrapper';
-        elements.onboardingProgressBarContainer.appendChild(shimmer);
+        elements.onboardingProgressBarContainer.classList.add('shimmer');
     } else {
-        const shimmer = elements.onboardingProgressBarContainer.querySelector('.shimmer-wrapper');
-        if (shimmer) {
-            shimmer.remove();
-        }
+        elements.onboardingProgressBarContainer.classList.remove('shimmer');
     }
 
     document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('active', 'fade-out');
-        if (parseInt(step.dataset.step) === currentStep) {
-            step.classList.add('active');
-        }
+        const isActive = parseInt(step.dataset.step) === currentStep;
+        step.classList.toggle('active', isActive);
     });
 }
 
@@ -172,6 +169,18 @@ export function renderHomeScreen() {
     } else {
         elements.activePlanDisplay.textContent = 'No active plan. Create one to get started!';
     }
+     // For mobile, we might want to change the layout of buttons, this is handled by CSS now.
+    // JS just ensures the view is visible.
+}
+
+function applyStaggeredAnimation(containerSelector, itemSelector) {
+    const container = document.querySelector(containerSelector);
+    if (!container) return;
+
+    const items = container.querySelectorAll(itemSelector);
+    items.forEach((item, index) => {
+        item.style.animationDelay = `${index * 0.08}s`;
+    });
 }
 
 export function renderDailyWorkout() {
@@ -188,11 +197,11 @@ export function renderDailyWorkout() {
         elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
         elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No exercises scheduled for today. Enjoy your rest!</p>';
-        document.getElementById('complete-workout-btn').style.display = 'none';
+        document.querySelector('.workout-actions').style.display = 'none';
         return;
     }
 
-    document.getElementById('complete-workout-btn').style.display = 'block';
+    document.querySelector('.workout-actions').style.display = 'block';
     elements.workoutDayTitle.textContent = workout.name;
     elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     updateStopwatchDisplay();
@@ -213,7 +222,7 @@ export function renderDailyWorkout() {
             <div class="exercise-card ${isStalled ? 'stalled' : ''}" data-exercise-index="${exIndex}">
                 <div class="exercise-card-header">
                     <div class="exercise-title-group">
-                        <h3 data-tooltip="This is your main lift for the day. Focus on good form and progressive overload.">${ex.name} ${isStalled ? `<span class="stall-indicator" data-tooltip="You've stalled on this exercise. Consider swapping it.">⚠️</span>` : ''}</h3>
+                        <h3 data-tooltip="${ex.type} exercise for ${ex.muscle}. Focus on good form and progressive overload.">${ex.name} ${isStalled ? `<span class="stall-indicator" data-tooltip="You've stalled on this exercise. Consider swapping it.">⚠️</span>` : ''}</h3>
                         <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise" data-tooltip="Swap for an alternative exercise">
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
                         </button>
@@ -248,32 +257,30 @@ export function renderDailyWorkout() {
         `;
     });
     elements.exerciseListContainer.innerHTML = html;
+    applyStaggeredAnimation('#exercise-list-container', '.exercise-card');
 }
 
 export function renderSettings() {
     const { settings, userSelections, allPlans, activePlanId } = state;
 
-    // Helper function to update a toggle switch
     const updateToggleSwitch = (switchId, stateValue, dataAttribute) => {
         const switchElement = document.getElementById(switchId);
         if (switchElement) {
             switchElement.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset[dataAttribute] == stateValue);
+                btn.classList.toggle('active', String(btn.dataset[dataAttribute]) === String(stateValue));
             });
         }
     };
 
-    // Update all toggle switches
     updateToggleSwitch('progression-model-switch', settings.progressionModel, 'progression');
     updateToggleSwitch('weight-increment-switch', settings.weightIncrement, 'increment');
     updateToggleSwitch('rest-duration-switch', settings.restDuration, 'duration');
     updateToggleSwitch('units-switch', settings.units, 'unit');
     updateToggleSwitch('theme-switch', settings.theme, 'theme');
 
-
     document.querySelectorAll('.settings-card-group').forEach(group => {
         const field = group.dataset.field;
-        const activeValue = state.userSelections[field];
+        const activeValue = userSelections[field];
         group.querySelectorAll('.goal-card').forEach(card => {
             card.classList.toggle('active', card.dataset.value == activeValue);
         });
@@ -306,37 +313,78 @@ export function renderPerformanceSummary() {
         renderE1RMChart(initialExercise);
     }
     renderWorkoutHistory();
+    applyStaggeredAnimation('#trophy-case-list', '.pr-item');
+    applyStaggeredAnimation('#workout-history-list', '.summary-item');
 }
 
+// --- CHART RENDERING WITH ENHANCED OPTIONS ---
+
+const getChartOptions = (titleText) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: 'var(--color-text-secondary)',
+                font: {
+                    family: 'var(--font-family)'
+                }
+            },
+            onHover: (event, legendItem, legend) => {
+                legend.chart.data.datasets.forEach((dataset, i) => {
+                    dataset.borderWidth = (i === legendItem.datasetIndex) ? 3 : 1;
+                });
+                legend.chart.update();
+            },
+            onLeave: (event, legendItem, legend) => {
+                legend.chart.data.datasets.forEach(dataset => {
+                    dataset.borderWidth = 1;
+                });
+                legend.chart.update();
+            }
+        },
+        tooltip: {
+            backgroundColor: 'var(--color-surface-primary)',
+            titleColor: 'var(--color-text-primary)',
+            bodyColor: 'var(--color-text-secondary)',
+            borderColor: 'var(--color-accent-primary)',
+            borderWidth: 1,
+            padding: 10,
+            cornerRadius: 8,
+            titleFont: { weight: 'bold', family: 'var(--font-family)' },
+            bodyFont: { family: 'var(--font-family)' },
+        }
+    },
+    scales: {
+        x: {
+            ticks: { color: 'var(--color-text-secondary)' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        },
+        y: {
+            ticks: { color: 'var(--color-text-secondary)' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        }
+    }
+});
+
 export function renderProgressChart(exerciseName) {
-    const { allPlans, progressChart, settings } = state;
+    const { workoutHistory, progressChart, settings } = state;
     const labels = [];
     const data = [];
 
-    const history = [];
-    allPlans.forEach(plan => {
-        Object.values(plan.weeks).forEach(week => {
-            Object.values(week).forEach(day => {
-                if (day.completed) {
-                    const ex = day.exercises.find(e => e.name === exerciseName);
-                    if (ex && ex.sets && ex.sets.length > 0) {
-                        const topSet = ex.sets.reduce((max, set) => ((set.weight || 0) > max.weight ? set : max), { weight: 0 });
-                        if (topSet.weight > 0) {
-                            history.push({ date: new Date(day.completedDate), value: topSet.weight });
-                        }
-                    }
-                }
-            });
-        });
-    });
-
-    history.sort((a, b) => a.date - b.date).forEach(item => {
-        labels.push(item.date.toLocaleDateString());
-        data.push(item.value);
+    workoutHistory.forEach(hist => {
+        const ex = hist.exercises.find(e => e.name === exerciseName);
+        if (ex && ex.sets && ex.sets.length > 0) {
+            const topSet = ex.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
+            if (topSet.weight > 0) {
+                labels.push(new Date(hist.completedDate).toLocaleDateString());
+                data.push(topSet.weight);
+            }
+        }
     });
 
     if (progressChart) progressChart.destroy();
-
+    
     state.progressChart = new Chart(elements.progressChartCanvas, {
         type: 'line',
         data: {
@@ -345,12 +393,15 @@ export function renderProgressChart(exerciseName) {
                 label: `Top Set Weight (${settings.units})`,
                 data,
                 borderColor: 'var(--color-accent-primary)',
-                backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                backgroundColor: 'rgba(0, 191, 255, 0.1)',
                 fill: true,
-                tension: 0.3
+                tension: 0.4,
+                pointBackgroundColor: 'var(--color-accent-primary)',
+                pointRadius: 4,
+                pointHoverRadius: 7
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: getChartOptions(`Progress for ${exerciseName}`)
     });
 }
 
@@ -373,34 +424,33 @@ function renderE1RMChart(exerciseName) {
                 label: `Estimated 1-Rep Max (${settings.units})`,
                 data,
                 borderColor: 'var(--color-state-success)',
-                backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                backgroundColor: 'rgba(72, 187, 120, 0.1)',
                 fill: true,
-                tension: 0.3
+                tension: 0.4,
+                pointBackgroundColor: 'var(--color-state-success)',
+                pointRadius: 4,
+                pointHoverRadius: 7
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: getChartOptions(`e1RM for ${exerciseName}`)
     });
 }
 
 export function renderVolumeChart() {
-    const { allPlans, volumeChart } = state;
+    const { workoutHistory, volumeChart } = state;
     const muscleVolume = {};
 
-    allPlans.forEach(plan => {
-        Object.values(plan.weeks).forEach(week => {
-            Object.values(week).forEach(day => {
-                if (day.completed) {
-                    day.exercises.forEach(ex => {
-                        const volume = ex.totalVolume || 0;
-                        muscleVolume[ex.muscle] = (muscleVolume[ex.muscle] || 0) + volume;
-                    });
-                }
-            });
+    workoutHistory.forEach(hist => {
+        hist.exercises.forEach(ex => {
+            const volume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
+            muscleVolume[ex.muscle] = (muscleVolume[ex.muscle] || 0) + volume;
         });
     });
-
+    
     const labels = Object.keys(muscleVolume);
     const data = Object.values(muscleVolume);
+    const colors = ['#00bfff', '#1e90ff', '#33ccff', '#00ced1', '#20b2aa', '#4682b4', '#5f9ea0'];
+
 
     if (volumeChart) volumeChart.destroy();
 
@@ -411,10 +461,20 @@ export function renderVolumeChart() {
             datasets: [{
                 label: 'Total Volume by Muscle',
                 data,
-                backgroundColor: ['#FF7A00', '#FFA500', '#FFC04D', '#FFDB8D', '#FFEDC2', '#3838A', '#5A5A5A'],
+                backgroundColor: colors,
+                borderColor: 'var(--color-surface-secondary)',
+                borderWidth: 3,
+                hoverOffset: 20,
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: getChartOptions().plugins.legend,
+                tooltip: getChartOptions().plugins.tooltip
+            }
+        }
     });
 }
 
@@ -425,16 +485,9 @@ function renderTrophyCase() {
         return;
     }
 
-    const bestPRs = {};
-    personalRecords.forEach(pr => {
-        if (!bestPRs[pr.exerciseId] || pr.e1rm > bestPRs[pr.exerciseId].e1rm) {
-            bestPRs[pr.exerciseId] = pr;
-        }
-    });
+    const sortedPRs = [...personalRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const sortedBestPRs = Object.values(bestPRs).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    elements.trophyCaseList.innerHTML = sortedBestPRs.map(pr => `
+    elements.trophyCaseList.innerHTML = sortedPRs.map(pr => `
         <div class="pr-item">
             <div class="pr-exercise-name">${pr.exerciseName}</div>
             <div class="pr-details">
@@ -467,28 +520,23 @@ function renderConsistencyCalendar() {
     for (let i = 1; i <= endDate.getDate(); i++) {
         const currentDate = new Date(today.getFullYear(), today.getMonth(), i);
         const isCompleted = completedDates.has(currentDate.toDateString());
-        calendarEl.innerHTML += `<div class="calendar-day ${isCompleted ? 'completed' : ''}">${i}</div>`;
+        calendarEl.innerHTML += `<div class="calendar-day ${isCompleted ? 'completed' : ''}" data-tooltip="${isCompleted ? 'Workout Completed!' : 'Rest Day'}">${i}</div>`;
     }
 }
 
 function populateExerciseTrackerSelect() {
     const completedExercises = new Set();
-    state.allPlans.forEach(plan => {
-        Object.values(plan.weeks).forEach(week => {
-            Object.values(week).forEach(day => {
-                if (day.completed) {
-                    day.exercises.forEach(ex => completedExercises.add(ex.name));
-                }
-            });
-        });
+    state.workoutHistory.forEach(hist => {
+        hist.exercises.forEach(ex => completedExercises.add(ex.name));
     });
+
     const uniqueExercises = [...completedExercises].sort();
     elements.exerciseTrackerSelect.innerHTML = uniqueExercises.map(name => `<option value="${name}">${name}</option>`).join('');
 }
 
 function renderWorkoutHistory() {
     if (state.workoutHistory.length > 0) {
-        elements.workoutHistoryList.innerHTML = state.workoutHistory.map(h => `
+        elements.workoutHistoryList.innerHTML = state.workoutHistory.slice(0, 15).map(h => `
             <div class="summary-item">
                 <div>
                     <h4>${h.workoutName}</h4>
@@ -656,8 +704,23 @@ export function showTooltip(target) {
     const targetRect = target.getBoundingClientRect();
     const tooltipRect = elements.tooltip.getBoundingClientRect();
 
-    elements.tooltip.style.left = `${targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2)}px`;
-    elements.tooltip.style.top = `${targetRect.top - tooltipRect.height - 10}px`;
+    let top = targetRect.top - tooltipRect.height - 10;
+    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+
+    // Prevent tooltip from going off-screen
+    if (top < 0) {
+        top = targetRect.bottom + 10;
+    }
+    if (left < 0) {
+        left = 5;
+    }
+    if (left + tooltipRect.width > window.innerWidth) {
+        left = window.innerWidth - tooltipRect.width - 5;
+    }
+
+
+    elements.tooltip.style.top = `${top}px`;
+    elements.tooltip.style.left = `${left}px`;
 }
 
 export function hideTooltip() {
