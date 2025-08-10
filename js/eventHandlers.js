@@ -625,6 +625,7 @@ export function initEventListeners() {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
         const hubAction = hubOption.dataset.hubAction;
+
         if (hubAction === 'new') {
             ui.showModal("Create New Plan?", 
             "This will generate a new intelligent plan based on your current settings. Are you sure?",
@@ -647,7 +648,12 @@ export function initEventListeners() {
                 }}
             ]);
         }
-        if (hubAction === 'manage') ui.showView('settings');
+        if (hubAction === 'manage') {
+            ui.showView('settings');
+        }
+        if (hubAction === 'premade' || hubAction === 'custom') {
+            ui.showModal('Coming Soon!', 'This feature is not yet implemented.');
+        }
     });
 
     ui.elements.modal.addEventListener('click', (e) => {
