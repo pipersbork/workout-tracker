@@ -213,7 +213,7 @@ export function renderDailyWorkout() {
             <div class="exercise-card ${isStalled ? 'stalled' : ''}" data-exercise-index="${exIndex}">
                 <div class="exercise-card-header">
                     <div class="exercise-title-group">
-                        <h3 data-tooltip="This is your main lift for the day. Focus on good form and progressive overload.">${ex.name} ${isStalled ? '<span class="stall-indicator" data-tooltip="You\'ve stalled on this exercise. Consider swapping it.">⚠️</span>' : ''}</h3>
+                        <h3 data-tooltip="This is your main lift for the day. Focus on good form and progressive overload.">${ex.name} ${isStalled ? `<span class="stall-indicator" data-tooltip="You've stalled on this exercise. Consider swapping it.">⚠️</span>` : ''}</h3>
                         <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise" data-tooltip="Swap for an alternative exercise">
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
                         </button>
