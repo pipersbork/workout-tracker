@@ -134,20 +134,36 @@ export const workoutEngine = {
 
     _getSplitForDays(days) {
         if (days <= 3) {
-            return { name: 'Full Body', muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core'] };
+            return { 
+                name: 'Full Body', 
+                days: {
+                    'Full Body A': ['quads', 'chest', 'back', 'shoulders'],
+                    'Full Body B': ['hamstrings', 'back', 'chest', 'biceps', 'triceps'],
+                    'Full Body C': ['quads', 'shoulders', 'back', 'core']
+                },
+                muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core']
+            };
         } else if (days === 4) {
-            return { name: 'Upper/Lower', days: {
-                'Upper A': ['chest', 'back', 'shoulders', 'biceps', 'triceps'],
-                'Lower A': ['quads', 'hamstrings', 'core'],
-                'Upper B': ['back', 'chest', 'shoulders', 'triceps', 'biceps'],
-                'Lower B': ['hamstrings', 'quads', 'core']
-            }};
+            return { 
+                name: 'Upper/Lower', 
+                days: {
+                    'Upper A': ['chest', 'back', 'shoulders', 'biceps', 'triceps'],
+                    'Lower A': ['quads', 'hamstrings', 'core'],
+                    'Upper B': ['back', 'chest', 'shoulders', 'triceps', 'biceps'],
+                    'Lower B': ['hamstrings', 'quads', 'core']
+                },
+                muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core']
+            };
         } else {
-            return { name: 'Push/Pull/Legs', days: {
-                'Push': ['chest', 'shoulders', 'triceps'],
-                'Pull': ['back', 'biceps'],
-                'Legs': ['quads', 'hamstrings', 'core'],
-            }};
+            return { 
+                name: 'Push/Pull/Legs', 
+                days: {
+                    'Push': ['chest', 'shoulders', 'triceps'],
+                    'Pull': ['back', 'biceps'],
+                    'Legs': ['quads', 'hamstrings', 'core'],
+                },
+                muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core']
+            };
         }
     },
 
