@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { createSetRowHTML, capitalize } from './utils.js';
-import { planGenerator } from './planGenerator.js';
+import { workoutEngine } from './planGenerator.js';
 
 /**
  * @file ui.js handles all DOM manipulation and UI rendering for the application.
@@ -13,9 +13,7 @@ export const elements = {
     onboardingView: document.getElementById('onboarding-container'),
     homeScreenView: document.getElementById('home-screen'),
     planHubView: document.getElementById('plan-hub-view'),
-    templateLibraryView: document.getElementById('template-library-view'),
-    customPlanWizardView: document.getElementById('custom-plan-wizard-view'),
-    builderView: document.getElementById('builder-view'),
+    // REMOVED: templateLibraryView and customPlanWizardView as they are replaced by a more dynamic flow
     workoutView: document.getElementById('daily-workout-view'),
     workoutSummaryView: document.getElementById('workout-summary-view'),
     performanceSummaryView: document.getElementById('performance-summary-view'),
@@ -27,10 +25,6 @@ export const elements = {
     // Home Screen
     activePlanDisplay: document.getElementById('active-plan-display'),
 
-    // Builder
-    builderTitle: document.getElementById('builder-title'),
-    scheduleContainer: document.getElementById('schedule-container'),
-
     // Daily Workout
     workoutDayTitle: document.getElementById('workout-day-title'),
     workoutDate: document.getElementById('workout-date'),
@@ -40,7 +34,6 @@ export const elements = {
 
     // Plan Hub
     planHubOptions: document.getElementById('plan-hub-options'),
-    templateListContainer: document.getElementById('template-list-container'),
 
     // Settings
     settingsContent: document.getElementById('settings-content'),
@@ -50,10 +43,10 @@ export const elements = {
     consistencyCalendar: document.getElementById('consistency-calendar'),
     volumeChartCanvas: document.getElementById('volume-chart'),
     progressChartCanvas: document.getElementById('progress-chart'),
-    e1rmChartCanvas: document.getElementById('e1rm-chart'), // New canvas for e1RM chart
+    e1rmChartCanvas: document.getElementById('e1rm-chart'),
     exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
     workoutHistoryList: document.getElementById('workout-history-list'),
-    trophyCaseList: document.getElementById('trophy-case-list'), // New container for PRs
+    trophyCaseList: document.getElementById('trophy-case-list'),
     weightChartContainer: document.getElementById('weight-chart-container'),
     e1rmChartContainer: document.getElementById('e1rm-chart-container'),
 
@@ -72,35 +65,12 @@ export const elements = {
 
 // --- VIEW MANAGEMENT ---
 
-/**
- * Shows a specific view and hides all others.
- * @param {string} viewName - The name of the view to show (e.g., 'home', 'workout').
- * @param {boolean} [skipAnimation=false] - If true, skips the fade-in animation.
- */
 export function showView(viewName, skipAnimation = false) {
-    if (state.isPlanBuilderDirty) {
-        showModal(
-            'Unsaved Changes',
-            'You have unsaved changes in the plan builder. Are you sure you want to leave? Your changes will be lost.',
-            [
-                { text: 'Cancel', class: 'secondary-button' },
-                {
-                    text: 'Leave Anyway',
-                    class: 'cta-button',
-                    action: () => {
-                        state.isPlanBuilderDirty = false;
-                        _performViewChange(viewName, skipAnimation);
-                    }
-                }
-            ]
-        );
-        return;
-    }
+    // Simplified: No longer checking for builder dirty state as it's removed
     _performViewChange(viewName, skipAnimation);
 }
 
 function _performViewChange(viewName, skipAnimation) {
-    // Redirect to onboarding if it's not completed, unless the user is already there.
     if (!state.userSelections.onboardingCompleted && viewName !== 'onboarding') {
         viewName = 'onboarding';
     }
@@ -118,9 +88,6 @@ function _performViewChange(viewName, skipAnimation) {
         onboarding: elements.onboardingView,
         home: elements.homeScreenView,
         planHub: elements.planHubView,
-        templateLibrary: elements.templateLibraryView,
-        customWizard: elements.customPlanWizardView,
-        builder: elements.builderView,
         workout: elements.workoutView,
         workoutSummary: elements.workoutSummaryView,
         performanceSummary: elements.performanceSummaryView,
@@ -139,13 +106,10 @@ function _performViewChange(viewName, skipAnimation) {
             }
             state.currentViewName = viewName;
             
-            // Call the corresponding render function for the view
             switch (viewName) {
                 case 'onboarding': renderOnboardingStep(); break;
                 case 'home': renderHomeScreen(); break;
                 case 'planHub': renderPlanHub(); break;
-                case 'templateLibrary': renderTemplateLibrary(); break;
-                case 'builder': renderBuilder(); break;
                 case 'workout': renderDailyWorkout(); break;
                 case 'workoutSummary': renderWorkoutSummary(); break;
                 case 'performanceSummary': renderPerformanceSummary(); break;
@@ -247,57 +211,9 @@ export function renderDailyWorkout() {
     elements.exerciseListContainer.innerHTML = html;
 }
 
-export function renderBuilder() {
-    const { days } = state.builderPlan;
-    const allMuscles = [...new Set(state.exercises.map(ex => ex.muscle))].sort();
-
-    elements.scheduleContainer.innerHTML = days.map((day, dayIndex) => `
-        <div class="day-card" data-day-index="${dayIndex}">
-            <div class="day-header">
-                <input type="text" class="builder-input day-label-input" value="${day.label}" data-day-index="${dayIndex}" placeholder="Day Label (e.g., Upper Body)">
-                <button class="delete-btn" data-action="deleteDayFromBuilder" aria-label="Delete Day">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                </button>
-            </div>
-            ${day.muscleGroups.map((mg, muscleIndex) => {
-                const availableExercises = state.exercises.filter(ex => ex.muscle.toLowerCase() === mg.muscle.toLowerCase());
-                const exerciseCount = mg.focus === 'Primary' ? 3 : 2; // Dynamic exercise count
-                return `
-                <div class="muscle-group-block" data-muscle-index="${muscleIndex}">
-                    <div class="muscle-group-header">
-                        <div class="muscle-group-selectors">
-                            <select class="builder-select muscle-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}">
-                                <option value="selectamuscle">Select a Muscle</option>
-                                ${allMuscles.map(m => `<option value="${m.toLowerCase()}" ${mg.muscle.toLowerCase() === m.toLowerCase() ? 'selected' : ''}>${m}</option>`).join('')}
-                            </select>
-                            <div class="focus-buttons">
-                                <button class="focus-btn ${mg.focus === 'Primary' ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="Primary">Primary</button>
-                                <button class="focus-btn ${mg.focus === 'Secondary' ? 'active' : ''}" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-focus="Secondary">Secondary</button>
-                            </div>
-                        </div>
-                         <button class="delete-btn delete-muscle-group-btn" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" aria-label="Delete Muscle Group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    <div class="exercise-selection-group">
-                        ${[...Array(exerciseCount)].map((_, exIndex) => `
-                            <select class="builder-select exercise-select" data-day-index="${dayIndex}" data-muscle-index="${muscleIndex}" data-exercise-select-index="${exIndex}" ${mg.muscle === 'selectamuscle' ? 'disabled' : ''}>
-                                <option>Select an Exercise</option>
-                                ${availableExercises.map(ex => `<option value="${ex.name}" ${mg.exercises[exIndex] === ex.name ? 'selected' : ''}>${ex.name}</option>`).join('')}
-                            </select>
-                        `).join('')}
-                    </div>
-                </div>
-            `}).join('')}
-            <button class="add-set-btn add-muscle-group-btn" data-day-index="${dayIndex}">+ Add Muscle Group</button>
-        </div>
-    `).join('');
-}
-
 export function renderSettings() {
     const { settings, allPlans, activePlanId } = state;
 
-    // Render toggles
     document.querySelectorAll('.toggle-switch').forEach(group => {
         const field = group.parentElement.querySelector('.settings-label')?.textContent.toLowerCase().replace(' ', '') || group.id.split('-')[0];
         const activeValue = settings[field] || (field === 'weightincrement' ? settings.weightIncrement : settings.restDuration);
@@ -307,7 +223,6 @@ export function renderSettings() {
         });
     });
 
-    // Render cards
     document.querySelectorAll('.settings-card-group').forEach(group => {
         const field = group.dataset.field;
         const activeValue = state.userSelections[field];
@@ -316,15 +231,12 @@ export function renderSettings() {
         });
     });
 
-    // Render plan management list
     if (allPlans.length > 0) {
         elements.planManagementList.innerHTML = allPlans.map(plan => `
             <div class="plan-item ${plan.id === activePlanId ? 'active' : ''}">
                 <span class="plan-name-text">${plan.name}</span>
                 <div class="plan-actions">
                     ${plan.id !== activePlanId ? `<button class="cta-button plan-btn" data-action="setActivePlan" data-plan-id="${plan.id}">Set Active</button>` : ''}
-                    <button class="secondary-button plan-btn" data-action="openBuilderForEdit" data-plan-id="${plan.id}">Edit</button>
-                    <button class="secondary-button plan-btn" data-action="savePlanAsTemplate" data-plan-id="${plan.id}">Save as Template</button>
                     <button class="secondary-button plan-btn" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
                 </div>
             </div>
@@ -352,7 +264,6 @@ export function renderProgressChart(exerciseName) {
     const labels = [];
     const data = [];
 
-    // Combine workout history from all plans
     const history = [];
     allPlans.forEach(plan => {
         Object.values(plan.weeks).forEach(week => {
@@ -370,12 +281,10 @@ export function renderProgressChart(exerciseName) {
         });
     });
 
-    // Sort by date and populate chart data
     history.sort((a, b) => a.date - b.date).forEach(item => {
         labels.push(item.date.toLocaleDateString());
         data.push(item.value);
     });
-
 
     if (progressChart) progressChart.destroy();
 
@@ -491,7 +400,7 @@ function renderTrophyCase() {
 
 function renderConsistencyCalendar() {
     const calendarEl = elements.consistencyCalendar;
-    calendarEl.innerHTML = ''; // Clear previous
+    calendarEl.innerHTML = '';
     const completedDates = new Set(state.workoutHistory.map(h => new Date(h.completedDate).toDateString()));
     const today = new Date();
     const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -514,7 +423,6 @@ function renderConsistencyCalendar() {
 }
 
 function populateExerciseTrackerSelect() {
-    // Get unique exercises from workouts that have been completed at least once.
     const completedExercises = new Set();
     state.allPlans.forEach(plan => {
         Object.values(plan.weeks).forEach(week => {
@@ -545,53 +453,20 @@ function renderWorkoutHistory() {
     }
 }
 
-export function renderTemplateLibrary(activeTab = 'progression') {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.tab-btn[data-tab="${activeTab}"]`).classList.add('active');
-
-    let templates = [];
-    if (activeTab === 'progression') {
-        templates = planGenerator.getAllTemplates();
-    } else {
-        templates = state.savedTemplates;
-    }
-
-    if (templates.length > 0) {
-        elements.templateListContainer.innerHTML = templates.map(template => `
-            <button class="hub-option" data-action="${activeTab === 'progression' ? 'selectTemplate' : 'selectSavedTemplate'}" data-template-id="${template.id}">
-                <div class="hub-option-icon">${template.icon || '💾'}</div>
-                <div class="hub-option-text">
-                    <h3>${template.name}</h3>
-                    <p>${template.description || `A custom template you created.`}</p>
-                </div>
-            </button>
-        `).join('');
-    } else {
-        elements.templateListContainer.innerHTML = `<p class="placeholder-text">You have no saved templates yet. Save a plan from the settings menu to create one.</p>`;
-    }
-}
-
 export function renderPlanHub() {
     elements.planHubOptions.innerHTML = `
-        <button class="hub-option" data-hub-action="scratch">
+        <button class="hub-option" data-hub-action="new">
             <div class="hub-option-icon">✨</div>
             <div class="hub-option-text">
-                <h3>Start from Scratch</h3>
-                <p>Use the builder to create a fully custom plan.</p>
-            </div>
-        </button>
-        <button class="hub-option" data-hub-action="template">
-            <div class="hub-option-icon">📚</div>
-            <div class="hub-option-text">
-                <h3>Use a Template</h3>
-                <p>Start with a proven template from Progression or one you've saved.</p>
+                <h3>Create New Intelligent Plan</h3>
+                <p>Generate a new mesocycle based on your current profile.</p>
             </div>
         </button>
          <button class="hub-option" data-hub-action="manage">
             <div class="hub-option-icon">⚙️</div>
             <div class="hub-option-text">
                 <h3>Manage My Plans</h3>
-                <p>Edit, delete, or change your active workout plan.</p>
+                <p>View, delete, or change your active workout plan.</p>
             </div>
         </button>
     `;
@@ -607,7 +482,7 @@ export function renderWorkoutSummary() {
     elements.summaryTime.textContent = `${minutes}:${seconds}`;
     elements.summaryVolume.textContent = `${Math.round(totalVolume)} ${settings.units}`;
     elements.summarySets.textContent = totalSets;
-    elements.summaryPRs.textContent = newPRs || '0'; // Display the count of new PRs
+    elements.summaryPRs.textContent = newPRs || '0';
 
     if (suggestions && suggestions.length > 0) {
         elements.summaryProgressionList.innerHTML = suggestions.map(s => `
@@ -617,7 +492,7 @@ export function renderWorkoutSummary() {
             </div>
         `).join('');
     } else {
-        elements.summaryProgressionList.innerHTML = '<p class="placeholder-text">Great work! Continue with this plan for your next session.</p>';
+        elements.summaryProgressionList.innerHTML = '<p class="placeholder-text">Great work! You have completed your mesocycle.</p>';
     }
 }
 
@@ -629,7 +504,6 @@ export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-b
         `<button class="${action.class}" data-action="closeModal">${action.text}</button>`
     ).join('');
 
-    // Re-attach listeners for programmatically added actions
     elements.modalActions.querySelectorAll('button').forEach((button, index) => {
         if (actions[index].action) {
             button.addEventListener('click', actions[index].action, { once: true });
@@ -660,9 +534,3 @@ export function updateRestTimerDisplay() {
 export function applyTheme() {
     document.body.dataset.theme = state.settings.theme;
 }
-
-// --- CUSTOM PLAN WIZARD ---
-// This could be its own module, but keeping it here for simplicity
-export const customPlanWizard = {
-    // ... wizard logic would go here if it were more complex
-};
