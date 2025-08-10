@@ -10,17 +10,17 @@ import { workoutEngine } from './planGenerator.js';
 
 // --- ACTION FUNCTIONS ---
 
-function findAndSetNextWorkout() {
-    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-    if (!activePlan || !activePlan.weeks) {
+function findAndSetNextWorkout(planId = state.activePlanId) {
+    const plan = state.allPlans.find(p => p.id === planId);
+    if (!plan || !plan.weeks) {
         ui.showModal("No Active Plan", "You don't have an active workout plan. Please create one to get started.");
         return false;
     }
 
-    const sortedWeeks = Object.keys(activePlan.weeks).sort((a, b) => a - b);
+    const sortedWeeks = Object.keys(plan.weeks).sort((a, b) => a - b);
 
     for (const weekKey of sortedWeeks) {
-        const week = activePlan.weeks[weekKey];
+        const week = plan.weeks[weekKey];
         const sortedDays = Object.keys(week).sort((a, b) => a - b);
 
         for (const dayKey of sortedDays) {
@@ -547,6 +547,20 @@ async function submitCheckin() {
     ui.showView('workout');
 }
 
+async function startPlanWorkout(planId) {
+    state.activePlanId = planId;
+    await firebase.saveState();
+    const workoutFound = findAndSetNextWorkout(planId);
+    if (workoutFound) {
+        ui.showDailyCheckinModal();
+    }
+}
+
+function editPlan(planId) {
+    // Placeholder for future functionality
+    ui.showModal('Coming Soon!', 'The plan editor is not yet implemented.');
+}
+
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -583,6 +597,8 @@ export function initEventListeners() {
             setChartType: () => setChartType(dataset.chartType),
             confirmDeletePlan: () => confirmDeletePlan(dataset.planId),
             setActivePlan: () => setActivePlan(dataset.planId),
+            startPlanWorkout: () => startPlanWorkout(dataset.planId),
+            editPlan: () => editPlan(dataset.planId),
             confirmCompleteWorkout,
             closeModal: ui.closeModal,
             startRestTimer,
