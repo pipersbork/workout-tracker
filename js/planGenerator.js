@@ -1,71 +1,269 @@
+import { state } from './state.js';
+
 /**
- * @file planGenerator.js contains the business logic for creating workout plans,
- * both from templates and from the custom wizard.
+ * @file planGenerator.js - The "Workout Engine"
+ * This file contains the core business logic for the Progression app. It's responsible for:
+ * 1.  Dynamically generating entire, individualized mesocycles based on user profile.
+ * 2.  Calculating week-to-week progression based on user performance.
+ * 3.  Implementing training principles like Volume Landmarks (MV, MEV, MRV) and RIR-based periodization.
  */
 
-export const planGenerator = {
+// --- DATA & CONSTANTS ---
+
+// Volume landmarks (sets per muscle group per week) based on training age.
+// These are baseline values and can be adjusted by other factors (diet, recovery).
+const VOLUME_LANDMARKS = {
+    novice:       { mv: 4,  mev: 6,  mav: 10, mrv: 12 },
+    beginner:     { mv: 6,  mev: 8,  mav: 12, mrv: 15 },
+    intermediate: { mv: 8,  mev: 10, mav: 16, mrv: 20 },
+    advanced:     { mv: 10, mev: 12, mav: 18, mrv: 22 },
+};
+
+// Defines how many exercises of each type (Primary, Secondary) are selected for a muscle group in a session.
+const EXERCISE_COUNT_PER_SESSION = {
+    Primary: 1,
+    Secondary: 2,
+};
+
+// --- WORKOUT ENGINE ---
+
+export const workoutEngine = {
+
     /**
-     * Generates a builder-ready plan based on user selections or a template.
-     * @param {object} userSelections - The user's choices (experience, goal, etc.).
+     * Generates a complete, new mesocycle plan from scratch based on the user's profile.
+     * This is the primary function for creating a new, intelligent workout program.
+     * @param {object} userSelections - The detailed user profile from state.
      * @param {Array} allExercises - The full list of available exercises.
-     * @param {boolean} isCustom - Flag indicating if it's a custom plan from the wizard.
-     * @returns {object} An object containing the builderPlan and a description.
+     * @param {number} durationWeeks - The total number of weeks for the mesocycle.
+     * @returns {object} A complete mesocycle plan object.
      */
-    generate(userSelections, allExercises, isCustom = false) {
-        let template, description;
+    generateNewMesocycle(userSelections, allExercises, durationWeeks) {
+        const { trainingAge, goal, daysPerWeek } = userSelections;
 
-        if (isCustom) {
-            const { days, priorityMuscles, goal } = userSelections;
-            template = this._buildCustomTemplate(days, priorityMuscles, goal);
-            description = `${days}-Day Custom Plan`;
-        } else {
-            // This part is for pre-defined templates if you expand on that feature
-            const { experience, goal } = userSelections;
-            if (goal === 'muscle') {
-                if (experience === 'beginner') { template = this.templates.beginner.muscle; description = "3-Day Full Body Routine"; }
-                else if (experience === 'experienced') { template = this.templates.experienced.muscle; description = "4-Day Upper/Lower Split"; }
-                else { template = this.templates.advanced.muscle; description = "5-Day 'Body Part' Split"; }
-            } else {
-                template = this.templates.beginner.combined;
-                description = "3-Day Full Body & Cardio Plan";
-            }
-        }
+        // 1. Determine the optimal split based on available days.
+        const split = this._getSplitForDays(daysPerWeek);
+        const landmarks = VOLUME_LANDMARKS[trainingAge] || VOLUME_LANDMARKS.beginner;
 
-        const equipmentFilter = this._getEquipmentFilter(userSelections.style);
-        const builderPlan = { days: [] };
-        template.days.forEach(dayTemplate => {
-            const newDay = { label: dayTemplate.label, isExpanded: true, muscleGroups: [] };
-            dayTemplate.muscles.forEach(muscleGroup => {
-                const newMuscleGroup = {
-                    muscle: muscleGroup.name.toLowerCase(),
-                    focus: muscleGroup.focus,
-                    exercises: this._getExercisesForMuscle(allExercises, muscleGroup.name, equipmentFilter, muscleGroup.count)
-                };
-                newDay.muscleGroups.push(newMuscleGroup);
-            });
-            builderPlan.days.push(newDay);
-        });
+        // 2. Calculate target weekly volume (sets) for each muscle group.
+        // For a new plan, we start at the Minimum Effective Volume (MEV).
+        const weeklyVolumeTargets = this._calculateInitialWeeklyVolume(split.muscles, landmarks.mev);
 
-        return { builderPlan, description };
+        // 3. Build the template for one week of the mesocycle.
+        const weeklyTemplate = this._buildWeekTemplate(split, weeklyVolumeTargets, allExercises, userSelections.style);
+
+        // 4. Extrapolate the weekly template into a full mesocycle plan.
+        const mesocycle = this._createFullMesocycle(weeklyTemplate, durationWeeks);
+
+        return mesocycle;
     },
 
     /**
-     * Constructs a custom workout template based on wizard inputs.
-     * @param {number} days - Number of training days per week.
-     * @param {Array} priorityMuscles - Array of priority muscle groups.
-     * @param {string} goal - The primary training goal.
-     * @returns {object} A template object.
+     * Calculates the progression for the next workout based on the completed one.
+     * @param {object} completedWorkout - The workout data just completed by the user.
+     * @param {object} nextWorkout - The workout object for the upcoming week to be modified.
      */
-    _buildCustomTemplate(days, priorityMuscles, goal) {
-        let split;
-        const baseVolume = { 'Primary': 2, 'Secondary': 1 };
+    calculateNextWorkoutProgression(completedWorkout, nextWorkout) {
+        const { progressionModel, weightIncrement } = state.settings;
 
-        if (days <= 3) split = this.splits.fullBody(days, priorityMuscles, baseVolume);
-        else if (days === 4) split = this.splits.upperLower(priorityMuscles, baseVolume);
-        else if (days === 5) split = this.splits.pplUpperLower(priorityMuscles, baseVolume);
-        else split = this.splits.pplTwice(priorityMuscles, baseVolume);
+        completedWorkout.exercises.forEach((completedEx) => {
+            const nextWeekEx = nextWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
+            if (!nextWeekEx) return;
 
-        return { days: split };
+            // If no sets were logged, carry over the previous target.
+            if (!completedEx.sets || completedEx.sets.length === 0) {
+                nextWeekEx.targetLoad = completedEx.targetLoad || null;
+                nextWeekEx.targetReps = completedEx.targetReps;
+                return;
+            }
+
+            // Find the top set from the completed workout to base progression on.
+            const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
+            
+            // Double Progression Logic
+            if (progressionModel === 'double') {
+                const repsAchievedInTopSet = topSet.reps || 0;
+                const targetRepsForNextWeek = nextWeekEx.targetReps;
+
+                // If user hit the top end of the rep range, increase weight.
+                if (repsAchievedInTopSet >= (targetRepsForNextWeek + 2)) { // e.g., target 8, hit 10
+                    nextWeekEx.targetLoad = (topSet.weight || 0) + weightIncrement;
+                    nextWeekEx.targetReps = 8; // Reset to bottom of rep range
+                } 
+                // If user hit the target rep range, increase the rep target for next time.
+                else if (repsAchievedInTopSet >= targetRepsForNextWeek) {
+                    nextWeekEx.targetLoad = topSet.weight;
+                    nextWeekEx.targetReps = (nextWeekEx.targetReps || 8) + 1;
+                }
+                // If user failed to hit the target, keep everything the same to try again.
+                else {
+                    nextWeekEx.targetLoad = topSet.weight;
+                    nextWeekEx.targetReps = nextWeekEx.targetReps;
+                }
+            } 
+            // Linear Progression Logic
+            else { 
+                const allSetsSuccessful = completedEx.sets.every(set => (set.reps || 0) >= completedEx.targetReps);
+                nextWeekEx.targetLoad = allSetsSuccessful ? (topSet.weight || 0) + weightIncrement : topSet.weight;
+                nextWeekEx.targetReps = completedEx.targetReps;
+            }
+        });
+    },
+
+    // --- PRIVATE HELPER FUNCTIONS ---
+
+    /**
+     * Determines the best training split based on the number of available training days.
+     * @param {number} days - Number of training days per week.
+     * @returns {object} A split object with a name and muscle group distribution.
+     */
+    _getSplitForDays(days) {
+        if (days <= 3) {
+            return { name: 'Full Body', muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core'] };
+        } else if (days === 4) {
+            return { name: 'Upper/Lower', days: {
+                'Upper A': ['chest', 'back', 'shoulders', 'biceps', 'triceps'],
+                'Lower A': ['quads', 'hamstrings', 'core'],
+                'Upper B': ['back', 'chest', 'shoulders', 'triceps', 'biceps'],
+                'Lower B': ['hamstrings', 'quads', 'core']
+            }};
+        } else { // 5+ days
+            return { name: 'Push/Pull/Legs', days: {
+                'Push': ['chest', 'shoulders', 'triceps'],
+                'Pull': ['back', 'biceps'],
+                'Legs': ['quads', 'hamstrings', 'core'],
+            }};
+        }
+    },
+
+    /**
+     * Calculates the total number of sets needed per week for each muscle group.
+     * @param {Array} musclesInSplit - All muscles trained in the split.
+     * @param {number} targetVolume - The target volume landmark (e.g., MEV).
+     * @returns {object} An object mapping muscle groups to their weekly set counts.
+     */
+    _calculateInitialWeeklyVolume(musclesInSplit, targetVolume) {
+        const weeklyVolume = {};
+        musclesInSplit.forEach(muscle => {
+            weeklyVolume[muscle] = targetVolume;
+        });
+        // Adjust for smaller muscle groups that need less volume
+        if (weeklyVolume.biceps) weeklyVolume.biceps = Math.round(targetVolume * 0.75);
+        if (weeklyVolume.triceps) weeklyVolume.triceps = Math.round(targetVolume * 0.75);
+        if (weeklyVolume.core) weeklyVolume.core = Math.round(targetVolume * 0.75);
+        return weeklyVolume;
+    },
+
+    /**
+     * Constructs the template for a single week of workouts.
+     * @param {object} split - The chosen training split.
+     * @param {object} weeklyVolumeTargets - The target weekly sets for each muscle.
+     * @param {Array} allExercises - The list of all available exercises.
+     * @param {string} equipmentStyle - 'gym' or 'home'.
+     * @returns {Array} An array of day objects for the week.
+     */
+    _buildWeekTemplate(split, weeklyVolumeTargets, allExercises, equipmentStyle) {
+        const weekTemplate = [];
+        const equipmentFilter = this._getEquipmentFilter(equipmentStyle);
+        let remainingVolume = { ...weeklyVolumeTargets };
+
+        for (const dayLabel in split.days) {
+            const dayMuscles = split.days[dayLabel];
+            const dayObject = { name: dayLabel, exercises: [] };
+            
+            // Prioritize Primary exercises first
+            dayMuscles.forEach(muscle => {
+                if (remainingVolume[muscle] > 0) {
+                    const exercises = this._selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, 'Primary', 1);
+                    if (exercises.length > 0) {
+                        dayObject.exercises.push(...exercises);
+                        remainingVolume[muscle] -= 3; // Assume a primary lift is 3 sets
+                    }
+                }
+            });
+            
+            // Fill remaining volume with Secondary exercises
+            dayMuscles.forEach(muscle => {
+                while (remainingVolume[muscle] > 0) {
+                     const exercises = this._selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, 'Secondary', 1);
+                     if (exercises.length > 0) {
+                        dayObject.exercises.push(...exercises);
+                        remainingVolume[muscle] -= 3; // Assume a secondary lift is 3 sets
+                    } else {
+                        break; // No more exercises to add for this muscle
+                    }
+                }
+            });
+
+            weekTemplate.push(dayObject);
+        }
+        return weekTemplate;
+    },
+
+    /**
+     * Selects exercises for a given muscle group based on type and count.
+     * @param {Array} allExercises - The full list of available exercises.
+     * @param {string} muscle - The muscle group.
+     * @param {Array} equipmentFilter - Available equipment.
+     * @param {string} type - 'Primary' or 'Secondary'.
+     * @param {number} count - Number of exercises to select.
+     * @returns {Array} An array of exercise objects.
+     */
+    _selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, type, count) {
+        const exercisePool = allExercises.filter(ex =>
+            ex.muscle.toLowerCase() === muscle.toLowerCase() &&
+            (ex.type === type) &&
+            (ex.equipment.includes('bodyweight') || ex.equipment.some(e => equipmentFilter.includes(e)))
+        );
+
+        // Shuffle and slice to get random exercises
+        const selected = exercisePool.sort(() => 0.5 - Math.random()).slice(0, count);
+
+        return selected.map(ex => ({
+            exerciseId: `ex_${ex.name.replace(/\s+/g, '_')}`,
+            name: ex.name,
+            muscle: ex.muscle,
+            type: ex.type,
+            targetSets: 3, // Default sets, can be adjusted
+            targetReps: 8, // Default reps, will be progressed
+            targetRIR: 3, // Starting RIR
+            targetLoad: null,
+            sets: [],
+            stallCount: 0,
+            note: ''
+        }));
+    },
+
+    /**
+     * Creates the full mesocycle structure by populating each week.
+     * @param {Array} weekTemplate - The template for a single week.
+     * @param {number} durationWeeks - The total duration of the mesocycle.
+     * @returns {object} The complete mesocycle object with all weeks and days.
+     */
+    _createFullMesocycle(weekTemplate, durationWeeks) {
+        const mesocycle = { weeks: {} };
+
+        for (let i = 1; i <= durationWeeks; i++) {
+            mesocycle.weeks[i] = {};
+            const isDeload = (i === durationWeeks);
+            const targetRIR = this._getRirForWeek(i, durationWeeks);
+
+            weekTemplate.forEach((dayTemplate, dayIndex) => {
+                const dayKey = dayIndex + 1;
+                // Deep copy the template to avoid reference issues
+                const newDay = JSON.parse(JSON.stringify(dayTemplate));
+                newDay.completed = false;
+                
+                newDay.exercises.forEach(ex => {
+                    ex.targetRIR = targetRIR;
+                    // For deload week, cut sets in half
+                    if (isDeload) {
+                        ex.targetSets = Math.ceil(ex.targetSets / 2);
+                    }
+                });
+                mesocycle.weeks[i][dayKey] = newDay;
+            });
+        }
+        return mesocycle;
     },
 
     /**
@@ -74,36 +272,12 @@ export const planGenerator = {
      * @param {number} totalWeeks - The total number of weeks in the mesocycle.
      * @returns {number} The target RIR.
      */
-    getRirForWeek(week, totalWeeks) {
+    _getRirForWeek(week, totalWeeks) {
         if (week === totalWeeks) return 4; // Deload week
-        const progress = (week - 1) / (totalWeeks - 2);
-        if (totalWeeks <= 5) {
-            if (week === 1) return 3;
-            if (week === totalWeeks - 1) return 1;
-            return 2;
-        } else {
-            if (week <= 2) return 3;
-            if (week >= totalWeeks - 2) return 1;
-            return 2;
-        }
-    },
-
-    /**
-     * Selects a specified number of exercises for a muscle group, matching available equipment.
-     * @param {Array} allExercises - The full list of available exercises.
-     * @param {string} muscle - The muscle group to select exercises for.
-     * @param {Array} equipmentFilter - The list of available equipment.
-     * @param {number} count - The number of exercises to select.
-     * @returns {Array} A list of exercise names.
-     */
-    _getExercisesForMuscle(allExercises, muscle, equipmentFilter, count) {
-        if (muscle.toLowerCase() === 'rest day') return [];
-        const filtered = allExercises.filter(ex =>
-            ex.muscle.toLowerCase() === muscle.toLowerCase() &&
-            (ex.equipment.includes('bodyweight') || ex.equipment.some(e => equipmentFilter.includes(e)))
-        );
-        // Shuffle and slice to get random exercises
-        return filtered.sort(() => 0.5 - Math.random()).slice(0, count).map(ex => ex.name);
+        const progress = (week - 1) / (totalWeeks - 2); // Normalize progress from 0 to 1
+        if (progress < 0.33) return 3; // First third of the cycle
+        if (progress < 0.66) return 2; // Middle third of the cycle
+        return 1; // Final third before deload
     },
 
     /**
@@ -113,125 +287,7 @@ export const planGenerator = {
      */
     _getEquipmentFilter(style) {
         if (style === 'gym') return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
-        if (style === 'home') return ['bodyweight', 'dumbbell'];
+        if (style === 'home') return ['bodyweight', 'dumbbell', 'pullup-bar']; // Added pullup-bar for home
         return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
     },
-
-    /**
-     * Returns all predefined templates.
-     * @returns {Array} A list of template objects.
-     */
-    getAllTemplates() {
-        return [
-            { id: 'beginner_muscle', name: 'Beginner Full Body', icon: '🌱', description: 'A 3-day full body routine for new lifters.', config: this.templates.beginner.muscle },
-            { id: 'experienced_muscle', name: 'Experienced Upper/Lower', icon: '⚡️', description: 'A 4-day upper/lower split for intermediate lifters.', config: this.templates.experienced.muscle },
-            { id: 'advanced_muscle', name: 'Advanced Body Part Split', icon: '🔥', description: 'A 5-day split for advanced lifters focusing on volume.', config: this.templates.advanced.muscle },
-        ];
-    },
-
-    // --- WORKOUT SPLIT DEFINITIONS ---
-    splits: {
-        fullBody(days, priorities, volume) {
-            const structure = [
-                { label: 'Full Body A', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
-                { label: 'Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }] },
-                { label: 'Full Body C', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] }
-            ];
-            return structure.slice(0, days);
-        },
-        upperLower(priorities, volume) {
-            const upperA = { label: 'Upper A', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Secondary', count: volume.Secondary }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
-            const lowerA = { label: 'Lower A', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
-            const upperB = { label: 'Upper B', muscles: [{ name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Secondary', count: volume.Secondary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
-            const lowerB = { label: 'Lower B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
-
-            priorities.forEach(p => {
-                [upperA, lowerA, upperB, lowerB].forEach(day => {
-                    day.muscles.forEach(mg => {
-                        if (mg.name === p) mg.focus = 'Primary';
-                    });
-                });
-            });
-
-            return [upperA, lowerA, upperB, lowerB];
-        },
-        pplUpperLower(priorities, volume) {
-            const push = { label: 'Push', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
-            const pull = { label: 'Pull', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
-            const legs = { label: 'Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
-            const upper = { label: 'Upper', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Secondary }, { name: 'Back', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Secondary', count: volume.Secondary }] };
-            const lower = { label: 'Lower', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }] };
-
-            priorities.forEach(p => {
-                [push, pull, legs, upper, lower].forEach(day => {
-                    day.muscles.forEach(mg => {
-                        if (mg.name === p) mg.focus = 'Primary';
-                    });
-                });
-            });
-
-            return [push, pull, legs, upper, lower];
-        },
-        pplTwice(priorities, volume) {
-            const push1 = { label: 'Push 1', muscles: [{ name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
-            const pull1 = { label: 'Pull 1', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
-            const legs1 = { label: 'Legs 1', muscles: [{ name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
-            const push2 = { label: 'Push 2', muscles: [{ name: 'Shoulders', focus: 'Primary', count: volume.Primary }, { name: 'Chest', focus: 'Primary', count: volume.Primary }, { name: 'Triceps', focus: 'Secondary', count: volume.Secondary }] };
-            const pull2 = { label: 'Pull 2', muscles: [{ name: 'Back', focus: 'Primary', count: volume.Primary + 1 }, { name: 'Biceps', focus: 'Secondary', count: volume.Secondary }] };
-            const legs2 = { label: 'Legs 2', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: volume.Primary }, { name: 'Quads', focus: 'Primary', count: volume.Primary }, { name: 'Core', focus: 'Secondary', count: volume.Secondary }] };
-
-            priorities.forEach(p => {
-                [push1, pull1, legs1, push2, pull2, legs2].forEach(day => {
-                    day.muscles.forEach(mg => {
-                        if (mg.name === p) mg.focus = 'Primary';
-                    });
-                });
-            });
-
-            return [push1, pull1, legs1, push2, pull2, legs2];
-        }
-    },
-
-    // --- PRE-DEFINED TEMPLATE CONFIGURATIONS ---
-    templates: {
-        beginner: {
-            muscle: {
-                days: [
-                    { label: 'Day 1: Full Body A', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }] },
-                    { label: 'Day 2: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                    { label: 'Day 3: Full Body B', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
-                    { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                    { label: 'Day 5: Full Body C', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                ]
-            },
-            combined: {
-                days: [
-                    { label: 'Day 1: Full Body', muscles: [{ name: 'Quads', focus: 'Primary', count: 1 }, { name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
-                    { label: 'Day 2: Cardio', muscles: [{ name: 'Cardio', focus: 'Primary', count: 1 }] },
-                    { label: 'Day 3: Full Body', muscles: [{ name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Shoulders', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 1 }] },
-                ]
-            }
-        },
-        experienced: {
-            muscle: {
-                days: [
-                    { label: 'Day 1: Upper A', muscles: [{ name: 'Chest', focus: 'Primary', count: 2 }, { name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Secondary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }] },
-                    { label: 'Day 2: Lower A', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 1 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                    { label: 'Day 3: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                    { label: 'Day 4: Upper B', muscles: [{ name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Primary', count: 2 }, { name: 'Chest', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
-                ]
-            }
-        },
-        advanced: {
-            muscle: {
-                days: [
-                    { label: 'Day 1: Push', muscles: [{ name: 'Chest', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Primary', count: 2 }, { name: 'Triceps', focus: 'Secondary', count: 2 }] },
-                    { label: 'Day 2: Pull', muscles: [{ name: 'Back', focus: 'Primary', count: 3 }, { name: 'Biceps', focus: 'Secondary', count: 2 }] },
-                    { label: 'Day 3: Legs', muscles: [{ name: 'Quads', focus: 'Primary', count: 2 }, { name: 'Hamstrings', focus: 'Primary', count: 2 }, { name: 'Core', focus: 'Secondary', count: 1 }] },
-                    { label: 'Day 4: Rest', muscles: [{ name: 'Rest Day', focus: 'Primary', count: 0 }] },
-                    { label: 'Day 5: Upper', muscles: [{ name: 'Chest', focus: 'Primary', count: 1 }, { name: 'Back', focus: 'Primary', count: 2 }, { name: 'Shoulders', focus: 'Secondary', count: 1 }, { name: 'Biceps', focus: 'Secondary', count: 1 }, { name: 'Triceps', focus: 'Secondary', count: 1 }] },
-                ]
-            }
-        }
-    }
 };
