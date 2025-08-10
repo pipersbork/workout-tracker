@@ -27,7 +27,7 @@ export function capitalize(str) {
 export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps, targetRIR, week) {
     let placeholder;
     if (week === 1) {
-        placeholder = 'Aim for ${targetRIR} RIR`;
+        placeholder = `Aim for ${targetRIR} RIR`;
     } else {
         const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
@@ -45,8 +45,7 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
                 <div class="recommendation-text" data-exercise-index="${exIndex}" data-set-index="${setIndex}"></div>
             </div>
             <div class="set-actions">
-                <!-- This space is empty -->
-            </div>
+                </div>
         </div>
     `;
 }
