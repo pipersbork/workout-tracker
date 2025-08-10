@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { createSetRowHTML, capitalize } from './utils.js';
 import { workoutEngine } from './planGenerator.js';
+import { findLastPerformance } from './eventHandlers.js'; // Import the new function
 
 /**
  * @file ui.js handles all DOM manipulation and UI rendering for the application.
@@ -154,8 +155,7 @@ export function renderDailyWorkout() {
 
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week]?.[day];
-    const lastWeekWorkout = activePlan.weeks[week - 1]?.[day];
-
+    
     if (!workout || !workout.exercises || workout.exercises.length === 0) {
         elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
         elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -172,8 +172,15 @@ export function renderDailyWorkout() {
 
     let html = '';
     workout.exercises.forEach((ex, exIndex) => {
-        const lastWeekEx = lastWeekWorkout?.exercises.find(e => e.exerciseId === ex.exerciseId);
         const hasNote = ex.note && ex.note.trim() !== '';
+        
+        // NEW: Find the last performance for this exercise
+        const lastPerformance = findLastPerformance(ex.exerciseId);
+        let lastPerformanceHTML = '';
+        if (lastPerformance) {
+            lastPerformanceHTML = `<div class="last-performance-display">Last Time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}</div>`;
+        }
+
         html += `
             <div class="exercise-card" data-exercise-index="${exIndex}">
                 <div class="exercise-card-header">
@@ -190,6 +197,7 @@ export function renderDailyWorkout() {
                         </button>
                     </div>
                     <span class="exercise-target">Target: ${ex.targetSets} sets of ${ex.targetReps} reps @ ${ex.targetRIR} RIR</span>
+                    ${lastPerformanceHTML}
                 </div>
                 <div class="sets-container">
                     <div class="set-row header">
@@ -204,7 +212,7 @@ export function renderDailyWorkout() {
                     </div>
                     ${[...Array(ex.targetSets)].map((_, setIndex) => {
                         const currentSet = ex.sets?.[setIndex] || {};
-                        const lastWeekSet = lastWeekEx?.sets?.[setIndex];
+                        const lastWeekSet = null; // We now use the more robust findLastPerformance
                         return createSetRowHTML(exIndex, setIndex, currentSet, lastWeekSet, ex.targetReps, ex.targetRIR, week);
                     }).join('')}
                 </div>
@@ -544,14 +552,7 @@ export function closeFeedbackModal() {
     elements.feedbackModal.classList.remove('active');
 }
 
-/**
- * Displays the intra-workout recommendation text in the correct set row.
- * @param {number} exerciseIndex - The index of the exercise.
- * @param {number} setIndex - The index of the set that was just completed.
- * @param {string} recommendationText - The text to display.
- */
 export function displayIntraWorkoutRecommendation(exerciseIndex, setIndex, recommendationText) {
-    // Find the recommendation container for the *next* set
     const nextSetIndex = setIndex + 1;
     const recommendationEl = document.querySelector(`.recommendation-text[data-exercise-index="${exerciseIndex}"][data-set-index="${nextSetIndex}"]`);
     
