@@ -33,19 +33,19 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
     }
     
-    // The note button has been removed from this template string.
-    // It will be added to the exercise header instead.
-    // ADDED: inputmode="decimal" to the weight input to suggest a numeric keypad.
-    // ADDED: inputmode="tel" to the rep/rir input for a number-centric keypad.
+    // NEW: Added the recommendation-text div below the inputs.
     return `
         <div class="set-row" data-set-index="${setIndex}">
             <div class="set-number">${setIndex + 1}</div>
-            <div class="set-inputs">
-                <input type="text" inputmode="decimal" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
-                <input type="text" inputmode="tel" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+            <div class="set-inputs-wrapper">
+                <div class="set-inputs">
+                    <input type="text" inputmode="decimal" class="weight-input" placeholder="${lastWeekSet?.weight || '-'}" value="${set.weight || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                    <input type="text" inputmode="tel" class="rep-rir-input" placeholder="${placeholder}" value="${set.rawInput || ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                </div>
+                <div class="recommendation-text" data-exercise-index="${exIndex}" data-set-index="${setIndex}"></div>
             </div>
             <div class="set-actions">
-                <!-- This space is now empty -->
+                <!-- This space is empty -->
             </div>
         </div>
     `;
