@@ -1,238 +1,282 @@
-import { state } from './state.js';
-
-/**
- * @file planGenerator.js - The "Workout Engine"
- * This file contains the core business logic for the Progression app. It's responsible for:
- * 1.  Dynamically generating entire, individualized mesocycles based on user profile.
- * 2.  Calculating week-to-week progression based on user performance and feedback (auto-regulation).
- * 3.  Implementing training principles like Volume Landmarks (MV, MEV, MRV) and RIR-based periodization.
- */
-
-// --- DATA & CONSTANTS ---
-
-const VOLUME_LANDMARKS = {
-    novice:       { mv: 4,  mev: 6,  mav: 10, mrv: 12 },
-    beginner:     { mv: 6,  mev: 8,  mav: 12, mrv: 15 },
-    intermediate: { mv: 8,  mev: 10, mav: 16, mrv: 20 },
-    advanced:     { mv: 10, mev: 12, mav: 18, mrv: 22 },
-};
-
-const EXERCISE_COUNT_PER_SESSION = {
-    Primary: 1,
-    Secondary: 2,
-};
-
-// --- WORKOUT ENGINE ---
-
-export const workoutEngine = {
-
-    generateNewMesocycle(userSelections, allExercises, durationWeeks) {
-        const { trainingAge, goal, daysPerWeek } = userSelections;
-        const split = this._getSplitForDays(daysPerWeek);
-        const landmarks = VOLUME_LANDMARKS[trainingAge] || VOLUME_LANDMARKS.beginner;
-        const weeklyVolumeTargets = this._calculateInitialWeeklyVolume(split.muscles, landmarks.mev);
-        const weeklyTemplate = this._buildWeekTemplate(split, weeklyVolumeTargets, allExercises, userSelections.style);
-        const mesocycle = this._createFullMesocycle(weeklyTemplate, durationWeeks);
-        return mesocycle;
+[
+    {
+        "name": "Barbell Bench Press",
+        "muscle": "Chest",
+        "type": "Primary",
+        "equipment": ["barbell", "bench", "rack"],
+        "alternatives": ["Dumbbell Bench Press", "Machine Chest Press"]
     },
-
-    /**
-     * Calculates the progression for the next workout, incorporating auto-regulation based on user feedback.
-     * @param {object} completedWorkout - The workout data just completed by the user.
-     * @param {object} nextWorkout - The workout object for the upcoming week to be modified.
-     */
-    calculateNextWorkoutProgression(completedWorkout, nextWorkout) {
-        const { progressionModel, weightIncrement } = state.settings;
-
-        completedWorkout.exercises.forEach((completedEx) => {
-            const nextWeekEx = nextWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
-            if (!nextWeekEx) return;
-
-            // --- AUTO-REGULATION (from feedback) ---
-            const jointPainFeedback = state.feedbackState.jointPain[completedEx.exerciseId];
-            if (jointPainFeedback === 'moderate' || jointPainFeedback === 'severe') {
-                const alternative = this._findAlternativeExercise(completedEx.exerciseId, state.exercises);
-                if (alternative) {
-                    // Swap the exercise in next week's plan
-                    nextWeekEx.name = alternative.name;
-                    nextWeekEx.exerciseId = `ex_${alternative.name.replace(/\s+/g, '_')}`;
-                    // Reset progression for the new exercise
-                    nextWeekEx.targetLoad = null; 
-                    nextWeekEx.targetReps = 8;
-                    return; // Skip normal progression for this exercise
-                }
-            }
-
-            // --- STANDARD PROGRESSION (if no auto-regulation occurred) ---
-            if (!completedEx.sets || completedEx.sets.length === 0) {
-                nextWeekEx.targetLoad = completedEx.targetLoad || null;
-                nextWeekEx.targetReps = completedEx.targetReps;
-                return;
-            }
-
-            const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
-            
-            if (progressionModel === 'double') {
-                const repsAchievedInTopSet = topSet.reps || 0;
-                const targetRepsForNextWeek = nextWeekEx.targetReps;
-
-                if (repsAchievedInTopSet >= (targetRepsForNextWeek + 2)) {
-                    nextWeekEx.targetLoad = (topSet.weight || 0) + weightIncrement;
-                    nextWeekEx.targetReps = 8;
-                } else if (repsAchievedInTopSet >= targetRepsForNextWeek) {
-                    nextWeekEx.targetLoad = topSet.weight;
-                    nextWeekEx.targetReps = (nextWeekEx.targetReps || 8) + 1;
-                } else {
-                    nextWeekEx.targetLoad = topSet.weight;
-                    nextWeekEx.targetReps = nextWeekEx.targetReps;
-                }
-            } else { 
-                const allSetsSuccessful = completedEx.sets.every(set => (set.reps || 0) >= completedEx.targetReps);
-                nextWeekEx.targetLoad = allSetsSuccessful ? (topSet.weight || 0) + weightIncrement : topSet.weight;
-                nextWeekEx.targetReps = completedEx.targetReps;
-            }
-        });
+    {
+        "name": "Dumbbell Bench Press",
+        "muscle": "Chest",
+        "type": "Primary",
+        "equipment": ["dumbbell", "bench"],
+        "alternatives": ["Barbell Bench Press", "Machine Chest Press"]
     },
-
-    // --- PRIVATE HELPER FUNCTIONS ---
-
-    _getSplitForDays(days) {
-        if (days <= 3) {
-            return { name: 'Full Body', muscles: ['chest', 'back', 'quads', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core'] };
-        } else if (days === 4) {
-            return { name: 'Upper/Lower', days: {
-                'Upper A': ['chest', 'back', 'shoulders', 'biceps', 'triceps'],
-                'Lower A': ['quads', 'hamstrings', 'core'],
-                'Upper B': ['back', 'chest', 'shoulders', 'triceps', 'biceps'],
-                'Lower B': ['hamstrings', 'quads', 'core']
-            }};
-        } else {
-            return { name: 'Push/Pull/Legs', days: {
-                'Push': ['chest', 'shoulders', 'triceps'],
-                'Pull': ['back', 'biceps'],
-                'Legs': ['quads', 'hamstrings', 'core'],
-            }};
-        }
+    {
+        "name": "Incline Barbell Press",
+        "muscle": "Chest",
+        "type": "Primary",
+        "equipment": ["barbell", "bench", "rack"],
+        "alternatives": ["Incline Dumbbell Press", "Incline Machine Press"]
     },
-
-    _calculateInitialWeeklyVolume(musclesInSplit, targetVolume) {
-        const weeklyVolume = {};
-        musclesInSplit.forEach(muscle => {
-            weeklyVolume[muscle] = targetVolume;
-        });
-        if (weeklyVolume.biceps) weeklyVolume.biceps = Math.round(targetVolume * 0.75);
-        if (weeklyVolume.triceps) weeklyVolume.triceps = Math.round(targetVolume * 0.75);
-        if (weeklyVolume.core) weeklyVolume.core = Math.round(targetVolume * 0.75);
-        return weeklyVolume;
+    {
+        "name": "Incline Dumbbell Press",
+        "muscle": "Chest",
+        "type": "Primary",
+        "equipment": ["dumbbell", "bench"],
+        "alternatives": ["Incline Barbell Press", "Incline Machine Press"]
     },
-
-    _buildWeekTemplate(split, weeklyVolumeTargets, allExercises, equipmentStyle) {
-        const weekTemplate = [];
-        const equipmentFilter = this._getEquipmentFilter(equipmentStyle);
-        let remainingVolume = { ...weeklyVolumeTargets };
-
-        for (const dayLabel in split.days) {
-            const dayMuscles = split.days[dayLabel];
-            const dayObject = { name: dayLabel, exercises: [] };
-            
-            dayMuscles.forEach(muscle => {
-                if (remainingVolume[muscle] > 0) {
-                    const exercises = this._selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, 'Primary', 1);
-                    if (exercises.length > 0) {
-                        dayObject.exercises.push(...exercises);
-                        remainingVolume[muscle] -= 3;
-                    }
-                }
-            });
-            
-            dayMuscles.forEach(muscle => {
-                while (remainingVolume[muscle] > 0) {
-                     const exercises = this._selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, 'Secondary', 1);
-                     if (exercises.length > 0) {
-                        dayObject.exercises.push(...exercises);
-                        remainingVolume[muscle] -= 3;
-                    } else {
-                        break;
-                    }
-                }
-            });
-
-            weekTemplate.push(dayObject);
-        }
-        return weekTemplate;
+    {
+        "name": "Machine Chest Press",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["machine"],
+        "alternatives": ["Dumbbell Bench Press", "Push-ups"]
     },
-
-    _selectExercisesForMuscleGroup(allExercises, muscle, equipmentFilter, type, count) {
-        const exercisePool = allExercises.filter(ex =>
-            ex.muscle.toLowerCase() === muscle.toLowerCase() &&
-            (ex.type === type) &&
-            (ex.equipment.includes('bodyweight') || ex.equipment.some(e => equipmentFilter.includes(e)))
-        );
-
-        const selected = exercisePool.sort(() => 0.5 - Math.random()).slice(0, count);
-
-        return selected.map(ex => ({
-            exerciseId: `ex_${ex.name.replace(/\s+/g, '_')}`,
-            name: ex.name,
-            muscle: ex.muscle,
-            type: ex.type,
-            targetSets: 3,
-            targetReps: 8,
-            targetRIR: 3,
-            targetLoad: null,
-            sets: [],
-            stallCount: 0,
-            note: ''
-        }));
+    {
+        "name": "Incline Machine Press",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["machine"],
+        "alternatives": ["Incline Dumbbell Press", "Incline Push-ups"]
     },
-    
-    _findAlternativeExercise(exerciseId, allExercises) {
-        const originalExerciseName = exerciseId.replace('ex_', '').replace(/_/g, ' ');
-        const originalExercise = allExercises.find(ex => ex.name === originalExerciseName);
-        if (!originalExercise || !originalExercise.alternatives || originalExercise.alternatives.length === 0) {
-            return null;
-        }
-        // Find the full exercise object for the first alternative name
-        const alternativeName = originalExercise.alternatives[0];
-        return allExercises.find(ex => ex.name === alternativeName) || null;
+    {
+        "name": "Cable Crossover",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["cable"],
+        "alternatives": ["Pec Deck Fly", "Dumbbell Fly"]
     },
-
-    _createFullMesocycle(weekTemplate, durationWeeks) {
-        const mesocycle = { weeks: {} };
-
-        for (let i = 1; i <= durationWeeks; i++) {
-            mesocycle.weeks[i] = {};
-            const isDeload = (i === durationWeeks);
-            const targetRIR = this._getRirForWeek(i, durationWeeks);
-
-            weekTemplate.forEach((dayTemplate, dayIndex) => {
-                const dayKey = dayIndex + 1;
-                const newDay = JSON.parse(JSON.stringify(dayTemplate));
-                newDay.completed = false;
-                
-                newDay.exercises.forEach(ex => {
-                    ex.targetRIR = targetRIR;
-                    if (isDeload) {
-                        ex.targetSets = Math.ceil(ex.targetSets / 2);
-                    }
-                });
-                mesocycle.weeks[i][dayKey] = newDay;
-            });
-        }
-        return mesocycle;
+    {
+        "name": "Pec Deck Fly",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["machine"],
+        "alternatives": ["Cable Crossover", "Dumbbell Fly"]
     },
-
-    _getRirForWeek(week, totalWeeks) {
-        if (week === totalWeeks) return 4;
-        const progress = (week - 1) / (totalWeeks - 2);
-        if (progress < 0.33) return 3;
-        if (progress < 0.66) return 2;
-        return 1;
+    {
+        "name": "Dumbbell Fly",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["dumbbell", "bench"],
+        "alternatives": ["Cable Crossover", "Pec Deck Fly"]
     },
-
-    _getEquipmentFilter(style) {
-        if (style === 'gym') return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
-        if (style === 'home') return ['bodyweight', 'dumbbell', 'pullup-bar'];
-        return ['barbell', 'dumbbell', 'machine', 'cable', 'rack', 'bench', 'bodyweight', 'pullup-bar'];
+    {
+        "name": "Push-up",
+        "muscle": "Chest",
+        "type": "Secondary",
+        "equipment": ["bodyweight"],
+        "alternatives": ["Machine Chest Press", "Dumbbell Bench Press"]
     },
-};
+    {
+        "name": "Barbell Squat",
+        "muscle": "Quads",
+        "type": "Primary",
+        "equipment": ["barbell", "rack"],
+        "alternatives": ["Leg Press", "Goblet Squat"]
+    },
+    {
+        "name": "Leg Press",
+        "muscle": "Quads",
+        "type": "Primary",
+        "equipment": ["machine"],
+        "alternatives": ["Barbell Squat", "Hack Squat"]
+    },
+    {
+        "name": "Hack Squat",
+        "muscle": "Quads",
+        "type": "Primary",
+        "equipment": ["machine"],
+        "alternatives": ["Leg Press", "Barbell Squat"]
+    },
+    {
+        "name": "Goblet Squat",
+        "muscle": "Quads",
+        "type": "Secondary",
+        "equipment": ["dumbbell"],
+        "alternatives": ["Leg Extension", "Bodyweight Squat"]
+    },
+    {
+        "name": "Leg Extension",
+        "muscle": "Quads",
+        "type": "Secondary",
+        "equipment": ["machine"],
+        "alternatives": ["Goblet Squat", "Walking Lunge"]
+    },
+    {
+        "name": "Walking Lunge",
+        "muscle": "Quads",
+        "type": "Secondary",
+        "equipment": ["dumbbell", "bodyweight"],
+        "alternatives": ["Leg Extension", "Bulgarian Split Squat"]
+    },
+    {
+        "name": "Deadlift",
+        "muscle": "Back",
+        "type": "Primary",
+        "equipment": ["barbell"],
+        "alternatives": ["Romanian Deadlift", "Good Morning"]
+    },
+    {
+        "name": "Pull-up",
+        "muscle": "Back",
+        "type": "Primary",
+        "equipment": ["pullup-bar", "bodyweight"],
+        "alternatives": ["Lat Pulldown", "Chin-up"]
+    },
+    {
+        "name": "Chin-up",
+        "muscle": "Back",
+        "type": "Primary",
+        "equipment": ["pullup-bar", "bodyweight"],
+        "alternatives": ["Lat Pulldown", "Pull-up"]
+    },
+    {
+        "name": "Barbell Row",
+        "muscle": "Back",
+        "type": "Primary",
+        "equipment": ["barbell"],
+        "alternatives": ["Dumbbell Row", "T-Bar Row"]
+    },
+    {
+        "name": "Dumbbell Row",
+        "muscle": "Back",
+        "type": "Primary",
+        "equipment": ["dumbbell", "bench"],
+        "alternatives": ["Barbell Row", "Machine Row"]
+    },
+    {
+        "name": "Lat Pulldown",
+        "muscle": "Back",
+        "type": "Secondary",
+        "equipment": ["cable", "machine"],
+        "alternatives": ["Pull-up", "Chin-up"]
+    },
+    {
+        "name": "T-Bar Row",
+        "muscle": "Back",
+        "type": "Secondary",
+        "equipment": ["barbell", "machine"],
+        "alternatives": ["Barbell Row", "Seated Cable Row"]
+    },
+    {
+        "name": "Seated Cable Row",
+        "muscle": "Back",
+        "type": "Secondary",
+        "equipment": ["cable"],
+        "alternatives": ["Machine Row", "Dumbbell Row"]
+    },
+    {
+        "name": "Romanian Deadlift",
+        "muscle": "Hamstrings",
+        "type": "Primary",
+        "equipment": ["barbell", "dumbbell"],
+        "alternatives": ["Good Morning", "Leg Curl"]
+    },
+    {
+        "name": "Leg Curl",
+        "muscle": "Hamstrings",
+        "type": "Secondary",
+        "equipment": ["machine"],
+        "alternatives": ["Romanian Deadlift", "Glute-Ham Raise"]
+    },
+    {
+        "name": "Good Morning",
+        "muscle": "Hamstrings",
+        "type": "Secondary",
+        "equipment": ["barbell", "rack"],
+        "alternatives": ["Romanian Deadlift", "Back Extension"]
+    },
+    {
+        "name": "Overhead Press",
+        "muscle": "Shoulders",
+        "type": "Primary",
+        "equipment": ["barbell", "rack"],
+        "alternatives": ["Seated Dumbbell Press", "Machine Shoulder Press"]
+    },
+    {
+        "name": "Seated Dumbbell Press",
+        "muscle": "Shoulders",
+        "type": "Primary",
+        "equipment": ["dumbbell", "bench"],
+        "alternatives": ["Overhead Press", "Arnold Press"]
+    },
+    {
+        "name": "Lateral Raise",
+        "muscle": "Shoulders",
+        "type": "Secondary",
+        "equipment": ["dumbbell", "cable"],
+        "alternatives": ["Upright Row", "Machine Lateral Raise"]
+    },
+    {
+        "name": "Face Pull",
+        "muscle": "Shoulders",
+        "type": "Secondary",
+        "equipment": ["cable"],
+        "alternatives": ["Reverse Pec Deck", "Bent-Over Dumbbell Raise"]
+    },
+    {
+        "name": "Barbell Curl",
+        "muscle": "Biceps",
+        "type": "Secondary",
+        "equipment": ["barbell"],
+        "alternatives": ["Dumbbell Curl", "Preacher Curl"]
+    },
+    {
+        "name": "Dumbbell Curl",
+        "muscle": "Biceps",
+        "type": "Secondary",
+        "equipment": ["dumbbell"],
+        "alternatives": ["Barbell Curl", "Hammer Curl"]
+    },
+    {
+        "name": "Hammer Curl",
+        "muscle": "Biceps",
+        "type": "Secondary",
+        "equipment": ["dumbbell"],
+        "alternatives": ["Dumbbell Curl", "Cable Curl"]
+    },
+    {
+        "name": "Triceps Pushdown",
+        "muscle": "Triceps",
+        "type": "Secondary",
+        "equipment": ["cable"],
+        "alternatives": ["Skull Crusher", "Overhead Triceps Extension"]
+    },
+    {
+        "name": "Skull Crusher",
+        "muscle": "Triceps",
+        "type": "Secondary",
+        "equipment": ["barbell", "dumbbell", "bench"],
+        "alternatives": ["Triceps Pushdown", "Close-Grip Bench Press"]
+    },
+    {
+        "name": "Close-Grip Bench Press",
+        "muscle": "Triceps",
+        "type": "Secondary",
+        "equipment": ["barbell", "bench", "rack"],
+        "alternatives": ["Dips", "Skull Crusher"]
+    },
+    {
+        "name": "Plank",
+        "muscle": "Core",
+        "type": "Secondary",
+        "equipment": ["bodyweight"],
+        "alternatives": ["Ab Wheel Rollout", "Hanging Leg Raise"]
+    },
+    {
+        "name": "Hanging Leg Raise",
+        "muscle": "Core",
+        "type": "Secondary",
+        "equipment": ["pullup-bar"],
+        "alternatives": ["Cable Crunch", "Decline Crunch"]
+    },
+    {
+        "name": "Cable Crunch",
+        "muscle": "Core",
+        "type": "Secondary",
+        "equipment": ["cable"],
+        "alternatives": ["Hanging Leg Raise", "Machine Crunch"]
+    }
+]
