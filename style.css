@@ -115,7 +115,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .sets-container .set-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-primary); transition: background-color 0.2s ease-in-out; }
 .sets-container .set-row:last-child { border-bottom: none; }
 .sets-container .set-row.active-set { background-color: rgba(0, 191, 255, 0.1); }
-.set-number { flex-basis: 50px; font-weight: 600; color: var(--color-text-secondary);test-align: center; }
+.set-number { flex-basis: 50px; font-weight: 600; color: var(--color-text-secondary); text-align: center; }
 .set-inputs-wrapper {
     flex: 1;
 }
