@@ -38,9 +38,13 @@ function findAndSetNextWorkout() {
 
 
 async function selectCard(element, field, value, shouldSave = false) {
-    state.userSelections[field] = value;
+    // Convert numeric values from string if necessary
+    const processedValue = /^\d+$/.test(value) ? parseInt(value) : value;
+    state.userSelections[field] = processedValue;
+    
     element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
+
     if (shouldSave) {
         await firebase.saveState();
     }
@@ -82,17 +86,6 @@ async function setRestDuration(duration) {
     if (state.currentViewName === 'workout') {
         ui.updateRestTimerDisplay();
     }
-}
-
-function openBuilderForEdit(planId) {
-    const planToEdit = state.allPlans.find(p => p.id === planId);
-    if (!planToEdit) return;
-    state.editingPlanId = planId;
-    // NOTE: The builder will need to be updated to handle the new plan structure.
-    // For now, this might not work as expected.
-    state.builderPlan = JSON.parse(JSON.stringify(planToEdit.builderTemplate || { days: [] }));
-    ui.elements.builderTitle.textContent = `Editing: ${planToEdit.name}`;
-    ui.showView('builder');
 }
 
 function confirmDeletePlan(planId) {
@@ -229,7 +222,6 @@ async function completeWorkout() {
     };
     state.workoutHistory.unshift(historyEntry);
 
-    // --- NEW: Use the Workout Engine for Progression ---
     const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
     if (nextWeekWorkout) {
         workoutEngine.calculateNextWorkoutProgression(workout, nextWeekWorkout);
@@ -240,7 +232,6 @@ async function completeWorkout() {
     
     ui.showView('workoutSummary');
 
-    // Find next available workout
     findAndSetNextWorkout();
 
     await firebase.saveState();
@@ -385,31 +376,30 @@ function handleStepTransition(stepChangeLogic) {
 }
 
 function selectOnboardingCard(element, field, value) {
-    state.userSelections[field] = value;
-    element.closest('.card-group').querySelectorAll('.goal-card').forEach(card => card.classList.remove('active'));
-    element.classList.add('active');
+    selectCard(element, field, value); // Use the main selectCard function
     nextOnboardingStep();
 }
 
 async function nextOnboardingStep() {
     handleStepTransition(async () => {
+        // Update total steps to match the new HTML
+        state.onboarding.totalSteps = 7;
+
         if (state.onboarding.currentStep < state.onboarding.totalSteps) {
             state.onboarding.currentStep++;
         }
         
         // Final step: Generate the plan using the new engine
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // This is a placeholder for where we'd ask for daysPerWeek
-            state.userSelections.daysPerWeek = 4; // Defaulting to 4 for now
-
-            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4); // Default 4 weeks
+            
+            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4); // Generate a 4-week plan
             
             const newPlan = {
                 id: `meso_${Date.now()}`,
                 name: "My First Intelligent Plan",
                 startDate: new Date().toISOString(),
                 durationWeeks: 4,
-                ...newMeso // Spread the generated weeks and structure
+                ...newMeso
             };
 
             state.allPlans.push(newPlan);
@@ -476,7 +466,6 @@ export function initEventListeners() {
             setActivePlan: () => setActivePlan(dataset.planId),
             confirmCompleteWorkout,
             closeModal: ui.closeModal,
-            switchTab: () => ui.renderTemplateLibrary(dataset.tab),
             startRestTimer,
             stopRestTimer,
             addSet: () => {
@@ -528,10 +517,27 @@ export function initEventListeners() {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
         const hubAction = hubOption.dataset.hubAction;
-        if (hubAction === 'scratch') {
-            // This flow needs to be redesigned for the new engine.
-            // For now, it will be disabled.
-            ui.showModal("Coming Soon", "The custom plan builder is being upgraded to use the new workout engine!");
+        if (hubAction === 'new') {
+            ui.showModal("Create New Plan?", 
+            "This will generate a new intelligent plan based on your current settings. Are you sure?",
+            [
+                { text: 'Cancel', class: 'secondary-button' },
+                { text: 'Yes, Create', class: 'cta-button', action: async () => {
+                    const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
+                    const newPlan = {
+                        id: `meso_${Date.now()}`,
+                        name: `Intelligent Plan - ${new Date().toLocaleDateString()}`,
+                        startDate: new Date().toISOString(),
+                        durationWeeks: 4,
+                        ...newMeso
+                    };
+                    state.allPlans.push(newPlan);
+                    state.activePlanId = newPlan.id;
+                    await firebase.saveState();
+                    ui.closeModal();
+                    ui.showView('settings');
+                }}
+            ]);
         }
         if (hubAction === 'manage') ui.showView('settings');
     });
