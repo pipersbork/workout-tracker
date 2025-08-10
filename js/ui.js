@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { createSetRowHTML, capitalize } from './utils.js';
 import { workoutEngine } from './planGenerator.js';
-import { findLastPerformance } from './eventHandlers.js'; // Import the new function
+import { findLastPerformance } from './eventHandlers.js';
 
 /**
  * @file ui.js handles all DOM manipulation and UI rendering for the application.
@@ -118,7 +118,6 @@ function _performViewChange(viewName, skipAnimation) {
     const targetViewEl = viewMap[viewName];
 
     if (targetViewEl) {
-        // Use a single timeout to prevent race conditions
         setTimeout(() => {
             targetViewEl.classList.remove('hidden');
             if (skipAnimation) {
@@ -128,7 +127,6 @@ function _performViewChange(viewName, skipAnimation) {
             }
             state.currentViewName = viewName;
             
-            // Render the content for the new view
             switch (viewName) {
                 case 'onboarding': renderOnboardingStep(); break;
                 case 'home': renderHomeScreen(); break;
@@ -138,7 +136,7 @@ function _performViewChange(viewName, skipAnimation) {
                 case 'performanceSummary': renderPerformanceSummary(); break;
                 case 'settings': renderSettings(); break;
             }
-        }, currentViewEl ? 400 : 0); // Delay should be slightly less than fade-out duration
+        }, currentViewEl ? 400 : 0);
     }
 }
 
@@ -150,15 +148,26 @@ export function renderOnboardingStep() {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
 
+    // FIX: Reverted to the original, robust logic for handling shimmer and step classes.
+    // This ensures proper cleanup and display during transitions.
+    const shimmer = elements.onboardingProgressBarContainer.querySelector('.shimmer-wrapper');
     if (currentStep === totalSteps) {
-        elements.onboardingProgressBarContainer.classList.add('shimmer');
+        if (!shimmer) {
+            const newShimmer = document.createElement('div');
+            newShimmer.className = 'shimmer-wrapper';
+            elements.onboardingProgressBarContainer.appendChild(newShimmer);
+        }
     } else {
-        elements.onboardingProgressBarContainer.classList.remove('shimmer');
+        if (shimmer) {
+            shimmer.remove();
+        }
     }
 
     document.querySelectorAll('.step').forEach(step => {
-        const isActive = parseInt(step.dataset.step) === currentStep;
-        step.classList.toggle('active', isActive);
+        step.classList.remove('active', 'fade-out'); // This is the key fix for cleanup
+        if (parseInt(step.dataset.step) === currentStep) {
+            step.classList.add('active');
+        }
     });
 }
 
@@ -169,8 +178,6 @@ export function renderHomeScreen() {
     } else {
         elements.activePlanDisplay.textContent = 'No active plan. Create one to get started!';
     }
-     // For mobile, we might want to change the layout of buttons, this is handled by CSS now.
-    // JS just ensures the view is visible.
 }
 
 function applyStaggeredAnimation(containerSelector, itemSelector) {
@@ -707,7 +714,6 @@ export function showTooltip(target) {
     let top = targetRect.top - tooltipRect.height - 10;
     let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
 
-    // Prevent tooltip from going off-screen
     if (top < 0) {
         top = targetRect.bottom + 10;
     }
@@ -717,7 +723,6 @@ export function showTooltip(target) {
     if (left + tooltipRect.width > window.innerWidth) {
         left = window.innerWidth - tooltipRect.width - 5;
     }
-
 
     elements.tooltip.style.top = `${top}px`;
     elements.tooltip.style.left = `${left}px`;
