@@ -56,6 +56,8 @@ export const elements = {
     summarySets: document.getElementById('summary-sets'),
     summaryPRs: document.getElementById('summary-prs'),
     summaryProgressionList: document.getElementById('summary-progression-list'),
+    summaryMesoCompleted: document.getElementById('summary-meso-completed'),
+    summaryMesoIncomplete: document.getElementById('summary-meso-incomplete'),
 
     // Modals
     modal: document.getElementById('modal'),
@@ -174,7 +176,6 @@ export function renderDailyWorkout() {
     workout.exercises.forEach((ex, exIndex) => {
         const hasNote = ex.note && ex.note.trim() !== '';
         
-        // NEW: Find the last performance for this exercise
         const lastPerformance = findLastPerformance(ex.exerciseId);
         let lastPerformanceHTML = '';
         if (lastPerformance) {
@@ -212,7 +213,7 @@ export function renderDailyWorkout() {
                     </div>
                     ${[...Array(ex.targetSets)].map((_, setIndex) => {
                         const currentSet = ex.sets?.[setIndex] || {};
-                        const lastWeekSet = null; // We now use the more robust findLastPerformance
+                        const lastWeekSet = null;
                         return createSetRowHTML(exIndex, setIndex, currentSet, lastWeekSet, ex.targetReps, ex.targetRIR, week);
                     }).join('')}
                 </div>
@@ -486,7 +487,7 @@ export function renderPlanHub() {
 
 export function renderWorkoutSummary() {
     const { workoutSummary, settings } = state;
-    const { totalVolume, totalSets, suggestions, newPRs } = workoutSummary;
+    const { totalVolume, totalSets, suggestions, newPRs, mesocycleStats } = workoutSummary;
     const totalSeconds = state.workoutTimer.elapsed;
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     const seconds = (totalSeconds % 60).toString().padStart(2, '0');
@@ -495,6 +496,11 @@ export function renderWorkoutSummary() {
     elements.summaryVolume.textContent = `${Math.round(totalVolume)} ${settings.units}`;
     elements.summarySets.textContent = totalSets;
     elements.summaryPRs.textContent = newPRs || '0';
+
+    if (mesocycleStats) {
+        elements.summaryMesoCompleted.textContent = mesocycleStats.completed;
+        elements.summaryMesoIncomplete.textContent = mesocycleStats.incomplete;
+    }
 
     if (suggestions && suggestions.length > 0) {
         elements.summaryProgressionList.innerHTML = suggestions.map(s => `
