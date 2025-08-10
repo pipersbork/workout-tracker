@@ -175,7 +175,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         }
         
         suggestions.push({
-            exerciseName: completedEx.name,
+            exerciseName: nextWeekEx.name, // Show the name for next week's exercise
             suggestion: suggestionText
         });
     });
@@ -419,6 +419,76 @@ function previousOnboardingStep() {
     });
 }
 
+// --- FEEDBACK TRIGGER LOGIC ---
+
+function triggerFeedbackModals(exercise, exerciseIndex, workout) {
+    // Sequence of feedback questions
+    const feedbackSequence = [];
+
+    // 1. Joint Pain (for Primary exercises)
+    if (exercise.type === 'Primary') {
+        feedbackSequence.push(() => {
+            ui.showFeedbackModal(
+                'Joint Pain',
+                `How did your joints feel during ${exercise.name}?`,
+                [
+                    { text: 'None', value: 'none' },
+                    { text: 'Mild', value: 'mild' },
+                    { text: 'Moderate', value: 'moderate' },
+                    { text: 'Severe', value: 'severe' }
+                ],
+                (value) => { state.feedbackState.jointPain[exercise.exerciseId] = value; runFeedbackSequence(); }
+            );
+        });
+    }
+
+    // 2. Pump (for Secondary/isolation exercises)
+    if (exercise.type === 'Secondary') {
+        feedbackSequence.push(() => {
+            ui.showFeedbackModal(
+                'Muscle Pump',
+                `How was the pump for your ${exercise.muscle}?`,
+                [
+                    { text: 'None', value: 'none' },
+                    { text: 'Decent', value: 'decent' },
+                    { text: 'Good', value: 'good' },
+                    { text: 'Excellent', value: 'excellent' }
+                ],
+                (value) => { state.feedbackState.pump[exercise.muscle.toLowerCase()] = value; runFeedbackSequence(); }
+            );
+        });
+    }
+
+    // 3. Soreness (after the last exercise for a given muscle group in the workout)
+    const remainingExercisesForMuscle = workout.exercises.slice(exerciseIndex + 1).some(ex => ex.muscle === exercise.muscle);
+    if (!remainingExercisesForMuscle) {
+        feedbackSequence.push(() => {
+            ui.showFeedbackModal(
+                'Muscle Soreness',
+                `How sore are your ${exercise.muscle} from the LAST time you trained them?`,
+                [
+                    { text: 'Not Sore', value: 'none' },
+                    { text: 'Mildly Sore', value: 'mild' },
+                    { text: 'Moderately Sore', value: 'moderate' },
+                    { text: 'Very Sore', value: 'severe' }
+                ],
+                (value) => { state.feedbackState.soreness[exercise.muscle.toLowerCase()] = value; runFeedbackSequence(); }
+            );
+        });
+    }
+    
+    // Function to run the sequence
+    const runFeedbackSequence = () => {
+        if (feedbackSequence.length > 0) {
+            const nextFeedback = feedbackSequence.shift();
+            nextFeedback();
+        }
+    };
+
+    // Start the sequence
+    runFeedbackSequence();
+}
+
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -571,21 +641,11 @@ export function initEventListeners() {
 
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
-                    // --- NEW: Trigger feedback modal on final set completion ---
                     const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
-                    if (isFinalSet && exercise.type === 'Primary') {
-                        setTimeout(() => {
-                           ui.showFeedbackModal(
-                               'Exercise Feedback',
-                               `How was the joint pain during ${exercise.name}?`,
-                               [
-                                   { text: 'None', value: 'none', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
-                                   { text: 'Mild', value: 'mild', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
-                                   { text: 'Moderate', value: 'moderate', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
-                                   { text: 'Severe', value: 'severe', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value }
-                               ]
-                           );
-                        }, 500); // Small delay to feel less abrupt
+                    if (isFinalSet) {
+                         setTimeout(() => {
+                           triggerFeedbackModals(exercise, parseInt(exerciseIndex), workout);
+                        }, 500);
                     }
                 }
             }
