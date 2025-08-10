@@ -27,7 +27,7 @@ export function capitalize(str) {
 export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps, targetRIR, week) {
     let placeholder;
     if (week === 1) {
-        placeholder = `Aim for ${targetRIR} RIR`;
+        placeholder = `e.g. ${targetRIR} RIR`;
     } else {
         const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
         placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
