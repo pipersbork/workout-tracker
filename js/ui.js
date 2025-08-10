@@ -262,9 +262,10 @@ export function renderSettings() {
     if (allPlans.length > 0) {
         elements.planManagementList.innerHTML = allPlans.map(plan => `
             <div class="plan-item ${plan.id === activePlanId ? 'active' : ''}">
-                <span class="plan-name-text">${plan.name}</span>
+                <span class="plan-name-text" data-action="startPlanWorkout" data-plan-id="${plan.id}">${plan.name}</span>
                 <div class="plan-actions">
                     ${plan.id !== activePlanId ? `<button class="cta-button plan-btn" data-action="setActivePlan" data-plan-id="${plan.id}">Set Active</button>` : ''}
+                    <button class="secondary-button plan-btn" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
                     <button class="secondary-button plan-btn" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
                 </div>
             </div>
