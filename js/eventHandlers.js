@@ -209,7 +209,6 @@ async function completeWorkout() {
     state.workoutSummary.totalVolume = totalVolume;
     state.workoutSummary.totalSets = totalSets;
 
-    // Add the detailed workout object to history
     const historyEntry = {
         id: `hist_${Date.now()}`,
         planName: activePlan.name,
@@ -218,7 +217,7 @@ async function completeWorkout() {
         duration: totalSeconds,
         volume: totalVolume,
         sets: totalSets,
-        exercises: JSON.parse(JSON.stringify(workout.exercises)) // Deep copy
+        exercises: JSON.parse(JSON.stringify(workout.exercises))
     };
     state.workoutHistory.unshift(historyEntry);
 
@@ -321,34 +320,25 @@ function openExerciseNotes(exerciseIndex) {
 }
 
 function showHistory(exerciseId) {
-    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     const exerciseName = state.exercises.find(ex => `ex_${ex.name.replace(/\s+/g, '_')}` === exerciseId)?.name || "Exercise";
     let historyHTML = '';
 
-    if (activePlan && activePlan.weeks) {
-        for (const weekKey in activePlan.weeks) {
-            const week = activePlan.weeks[weekKey];
-            for (const dayKey in week) {
-                const day = week[dayKey];
-                 if (day.completed) {
-                    const exerciseInstance = day.exercises.find(ex => ex.exerciseId === exerciseId);
-                    if (exerciseInstance && (exerciseInstance.sets.length > 0 || exerciseInstance.note)) {
-                        historyHTML += `<div class="history-item">`;
-                        historyHTML += `<div class="history-date">${new Date(day.completedDate).toLocaleDateString()} - ${day.name}</div>`;
-                        if (exerciseInstance.note) {
-                            historyHTML += `<div class="history-note">"${exerciseInstance.note}"</div>`;
-                        }
-                        exerciseInstance.sets.forEach((set, index) => {
-                            if (set.weight && (set.reps || set.rir)) {
-                                historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
-                            }
-                        });
-                        historyHTML += `</div>`;
-                    }
-                }
+    state.workoutHistory.forEach(historyItem => {
+        const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
+        if (exerciseInstance && (exerciseInstance.sets.length > 0 || exerciseInstance.note)) {
+            historyHTML += `<div class="history-item">`;
+            historyHTML += `<div class="history-date">${new Date(historyItem.completedDate).toLocaleDateString()} - ${historyItem.workoutName}</div>`;
+            if (exerciseInstance.note) {
+                historyHTML += `<div class="history-note">"${exerciseInstance.note}"</div>`;
             }
+            exerciseInstance.sets.forEach((set, index) => {
+                if (set.weight && (set.reps || set.rir)) {
+                    historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
+                }
+            });
+            historyHTML += `</div>`;
         }
-    }
+    });
 
     if (!historyHTML) {
         historyHTML = '<p class="placeholder-text">No completed history for this exercise yet.</p>';
@@ -357,11 +347,6 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
-/**
- * Finds the most recent performance of a specific exercise from the workout history.
- * @param {string} exerciseId - The ID of the exercise to look for.
- * @returns {object|null} The top set from the last performance, or null if not found.
- */
 export function findLastPerformance(exerciseId) {
     for (const historyItem of state.workoutHistory) {
         const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
@@ -372,7 +357,7 @@ export function findLastPerformance(exerciseId) {
             }
         }
     }
-    return null; // No previous performance found
+    return null;
 }
 
 
@@ -560,22 +545,37 @@ export function initEventListeners() {
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-                const currentExerciseName = workout.exercises[exerciseIndex].name;
-                const exerciseData = state.exercises.find(e => e.name === currentExerciseName);
+                const currentExercise = workout.exercises[exerciseIndex];
+                const exerciseData = state.exercises.find(e => e.name === currentExercise.name);
 
                 if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
                     ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
                     return;
                 }
-                const alternativesHTML = exerciseData.alternatives.map(altName => `<div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0"><h3>${altName}</h3></div>`).join('');
-                ui.showModal(`Swap ${currentExerciseName}`, `<p>Choose a replacement exercise:</p><div class="card-group">${alternativesHTML}</div>`, []);
+                
+                const alternativesHTML = exerciseData.alternatives.map(altName => {
+                    const altExerciseData = state.exercises.find(ex => ex.name === altName);
+                    if (!altExerciseData) return '';
+                    const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
+                    let performanceText = 'No recent history.';
+                    if (lastPerformance) {
+                        performanceText = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
+                    }
+                    return `
+                        <div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0">
+                            <h3>${altName}</h3>
+                            <p>${performanceText}</p>
+                        </div>`;
+                }).join('');
+
+                ui.showModal(`Swap ${currentExercise.name}`, `<div class="card-group vertical">${alternativesHTML}</div>`, []);
+                
                 ui.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
                     card.addEventListener('click', () => {
                         const newExerciseName = card.dataset.newExerciseName;
-                        const oldExercise = workout.exercises[exerciseIndex];
                         const newExerciseData = state.exercises.find(e => e.name === newExerciseName);
                         if (!newExerciseData) return;
-                        workout.exercises[exerciseIndex] = { ...oldExercise, name: newExerciseData.name, muscle: newExerciseData.muscle, exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, sets: [] };
+                        workout.exercises[exerciseIndex] = { ...currentExercise, name: newExerciseData.name, muscle: newExerciseData.muscle, exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, sets: [] };
                         ui.renderDailyWorkout();
                         ui.closeModal();
                     });
