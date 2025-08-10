@@ -11,10 +11,15 @@ export const state = {
 
     // Onboarding and User Preferences
     userSelections: {
-        goal: 'muscle',
-        experience: 'beginner',
+        goal: 'hypertrophy', // More specific goals: 'hypertrophy', 'strength', 'fatLoss'
+        experience: 'beginner', // 'novice', 'beginner', 'intermediate', 'advanced'
         style: 'gym',
-        onboardingCompleted: false
+        onboardingCompleted: false,
+        // NEW: Detailed user factors for the "brain"
+        trainingAge: 'beginner', // novice, beginner, intermediate, advanced, highlyAdvanced, masters
+        dietaryStatus: 'maintenance', // surplus, maintenance, deficit
+        sleepQuality: 8, // Scale of 1-10
+        stressLevels: 3, // Scale of 1-10
     },
 
     // App-wide Settings
@@ -35,6 +40,13 @@ export const state = {
         day: 1
     },
 
+    // NEW: Volume landmarks for each muscle group, will be calculated by the "brain"
+    volumeLandmarks: {
+        // Example structure:
+        // chest: { mv: 8, mev: 10, mav: 16, mrv: 20 },
+        // back: { mv: 10, mev: 12, mav: 18, mrv: 22 },
+    },
+    
     // User-Created Templates
     savedTemplates: [], // Stores plans saved as reusable templates
 
@@ -44,7 +56,7 @@ export const state = {
     // Onboarding Wizard State
     onboarding: {
         currentStep: 1,
-        totalSteps: 5,
+        totalSteps: 5, // Will likely increase with more detailed questions
     },
 
     // Temporary state for building a new plan
@@ -59,7 +71,7 @@ export const state = {
     // Chart.js instances for the performance summary
     progressChart: null,
     volumeChart: null,
-    e1rmChart: null, 
+    e1rmChart: null,
 
     // Main Workout Stopwatch State
     workoutTimer: {
@@ -79,7 +91,7 @@ export const state = {
     // Temporary state for the workout summary screen
     workoutSummary: {
         suggestions: [],
-        newPRs: 0, 
+        newPRs: 0,
     },
 
     // Holds the chronological history of all completed workouts
@@ -92,5 +104,9 @@ export const state = {
     feedbackState: {
         currentExercise: null,
         currentExerciseIndex: null,
+        // NEW: To store feedback from the user
+        soreness: {}, // e.g., { chest: 'moderate', back: 'mild' }
+        pump: {},
+        jointPain: {},
     },
 };
