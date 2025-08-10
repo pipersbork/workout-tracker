@@ -364,43 +364,6 @@ function showHistory(exerciseId) {
             }
             exerciseInstance.sets.forEach((set, index) => {
                 if (set.weight && (set.reps || set.rir)) {
-                    startRestTimer();
-                    
-                    const recommendation = workoutEngine.generateIntraWorkoutRecommendation(set, exercise);
-                    ui.displayIntraWorkoutRecommendation(parseInt(exerciseIndex), parseInt(setIndex), recommendation);
-
-                    const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
-                    if (isFinalSet) {
-                         setTimeout(() => {
-                           triggerFeedbackModals(exercise, parseInt(exerciseIndex), workout);
-                        }, 500);
-                    }
-                }
-            }
-        }
-    });
-
-    ui.elements.workoutView.addEventListener('focusin', (e) => {
-        if (e.target.matches('.weight-input, .rep-rir-input')) {
-            document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
-            e.target.closest('.set-row').classList.add('active-set');
-        }
-    });
-
-    ui.elements.workoutView.addEventListener('focusout', (e) => {
-        if (e.target.matches('.weight-input, .rep-rir-input')) {
-            e.target.closest('.set-row').classList.remove('active-set');
-        }
-    });
-
-    ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
-        const exerciseName = e.target.value;
-        if (exerciseName) {
-            ui.renderProgressChart(exerciseName);
-            ui.renderE1RMChart(exerciseName);
-        }
-    });
-} set.rir)) {
                     historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
                 }
             });
@@ -447,13 +410,11 @@ function handleStepTransition(stepChangeLogic) {
 
 function selectOnboardingCard(element, field, value) {
     selectCard(element, field, value);
-    setTimeout(() => {
-        nextOnboardingStep();
-    }, 100);
+    nextOnboardingStep();
 }
 
-function nextOnboardingStep() {
-    handleStepTransition(() => {
+async function nextOnboardingStep() {
+    handleStepTransition(async () => {
         state.onboarding.totalSteps = 7;
 
         if (state.onboarding.currentStep < state.onboarding.totalSteps) {
@@ -474,26 +435,15 @@ function nextOnboardingStep() {
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
             
-            // Use async operation properly
-            firebase.saveState().then(() => {
-                setTimeout(() => {
-                    ui.showModal(
-                        'Plan Generated!',
-                        'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                        [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
-                    );
-                }, 1000);
-            }).catch(error => {
-                console.error('Error saving state:', error);
-                // Still show the modal even if save fails
-                setTimeout(() => {
-                    ui.showModal(
-                        'Plan Generated!',
-                        'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                        [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
-                    );
-                }, 1000);
-            });
+            await firebase.saveState();
+            
+            setTimeout(() => {
+                ui.showModal(
+                    'Plan Generated!',
+                    'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
+                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
+                );
+            }, 1000);
         }
     });
 }
@@ -739,4 +689,41 @@ export function initEventListeners() {
                     set.rir = '';
                 }
 
-                if (set.weight && (set.reps ||
+                if (set.weight && (set.reps || set.rir)) {
+                    startRestTimer();
+                    
+                    const recommendation = workoutEngine.generateIntraWorkoutRecommendation(set, exercise);
+                    ui.displayIntraWorkoutRecommendation(parseInt(exerciseIndex), parseInt(setIndex), recommendation);
+
+                    const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
+                    if (isFinalSet) {
+                         setTimeout(() => {
+                           triggerFeedbackModals(exercise, parseInt(exerciseIndex), workout);
+                        }, 500);
+                    }
+                }
+            }
+        }
+    });
+
+    ui.elements.workoutView.addEventListener('focusin', (e) => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
+            e.target.closest('.set-row').classList.add('active-set');
+        }
+    });
+
+    ui.elements.workoutView.addEventListener('focusout', (e) => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            e.target.closest('.set-row').classList.remove('active-set');
+        }
+    });
+
+    ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
+        const exerciseName = e.target.value;
+        if (exerciseName) {
+            ui.renderProgressChart(exerciseName);
+            ui.renderE1RMChart(exerciseName);
+        }
+    });
+}
