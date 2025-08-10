@@ -38,7 +38,6 @@ function findAndSetNextWorkout() {
 
 
 async function selectCard(element, field, value, shouldSave = false) {
-    // Convert numeric values from string if necessary
     const processedValue = /^\d+$/.test(value) ? parseInt(value) : value;
     state.userSelections[field] = processedValue;
     
@@ -121,7 +120,6 @@ function confirmCompleteWorkout() {
 function calculateE1RM(weight, reps) {
     if (!weight || !reps || reps < 1) return 0;
     if (reps === 1) return weight;
-    // Brzycki formula
     return weight / (1.0278 - 0.0278 * reps);
 }
 
@@ -231,9 +229,7 @@ async function completeWorkout() {
     }
     
     ui.showView('workoutSummary');
-
     findAndSetNextWorkout();
-
     await firebase.saveState();
 }
 
@@ -249,7 +245,7 @@ function setChartType(chartType) {
     if (chartType === 'weight') {
         weightContainer.classList.remove('hidden');
         e1rmContainer.classList.add('hidden');
-    } else { // e1rm
+    } else {
         weightContainer.classList.add('hidden');
         e1rmContainer.classList.remove('hidden');
     }
@@ -359,7 +355,7 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
-// --- ONBOARDING FUNCTIONS (REVISED) ---
+// --- ONBOARDING FUNCTIONS ---
 
 function handleStepTransition(stepChangeLogic) {
     const currentStepEl = document.querySelector('.step.active');
@@ -376,24 +372,20 @@ function handleStepTransition(stepChangeLogic) {
 }
 
 function selectOnboardingCard(element, field, value) {
-    selectCard(element, field, value); // Use the main selectCard function
+    selectCard(element, field, value);
     nextOnboardingStep();
 }
 
 async function nextOnboardingStep() {
     handleStepTransition(async () => {
-        // Update total steps to match the new HTML
         state.onboarding.totalSteps = 7;
 
         if (state.onboarding.currentStep < state.onboarding.totalSteps) {
             state.onboarding.currentStep++;
         }
         
-        // Final step: Generate the plan using the new engine
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            
-            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4); // Generate a 4-week plan
-            
+            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
             const newPlan = {
                 id: `meso_${Date.now()}`,
                 name: "My First Intelligent Plan",
@@ -579,6 +571,22 @@ export function initEventListeners() {
 
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
+                    // --- NEW: Trigger feedback modal on final set completion ---
+                    const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
+                    if (isFinalSet && exercise.type === 'Primary') {
+                        setTimeout(() => {
+                           ui.showFeedbackModal(
+                               'Exercise Feedback',
+                               `How was the joint pain during ${exercise.name}?`,
+                               [
+                                   { text: 'None', value: 'none', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
+                                   { text: 'Mild', value: 'mild', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
+                                   { text: 'Moderate', value: 'moderate', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value },
+                                   { text: 'Severe', value: 'severe', action: (value) => state.feedbackState.jointPain[exercise.exerciseId] = value }
+                               ]
+                           );
+                        }, 500); // Small delay to feel less abrupt
+                    }
                 }
             }
         }
