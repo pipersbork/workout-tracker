@@ -39,10 +39,19 @@ export const workoutEngine = {
         }
 
         const { weightIncrement } = state.settings;
+        const { sleep, stress } = state.dailyCheckin;
         const repsPerformed = completedSet.reps;
         const rir = completedSet.rir;
         const targetReps = exercise.targetReps;
         const effectiveReps = repsPerformed + (rir || 0); // Estimated reps to failure
+
+        // Auto-regulation based on daily check-in
+        if (sleep < 6 || stress > 7) {
+            const reducedWeight = completedSet.weight - weightIncrement;
+            if (reducedWeight > 0) {
+                 return `Feeling tired/stressed. Consider reducing to ${reducedWeight} ${state.settings.units} to focus on form.`;
+            }
+        }
 
         // If performance is significantly above target, recommend increasing weight.
         if (effectiveReps > targetReps + 2) {
