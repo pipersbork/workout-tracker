@@ -26,6 +26,7 @@ export const state = {
         progressionModel: 'double',
         weightIncrement: 5,
         restDuration: 90, // Default rest duration in seconds
+        haptics: true, // User setting to enable/disable haptic feedback
     },
 
     // Workout Plans and Progress
@@ -46,7 +47,7 @@ export const state = {
     // Onboarding Wizard State
     onboarding: {
         currentStep: 1,
-        totalSteps: 7, // Updated to reflect new onboarding questions
+        totalSteps: 7,
     },
 
     // Static Data Loaded from JSON
@@ -76,6 +77,9 @@ export const state = {
     workoutSummary: {
         suggestions: [],
         newPRs: 0,
+        totalVolume: 0,
+        totalSets: 0,
+        mesocycleStats: {},
     },
 
     // Holds the chronological history of all completed workouts
