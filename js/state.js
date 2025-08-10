@@ -17,8 +17,6 @@ export const state = {
         dietaryStatus: 'maintenance', // 'surplus', 'maintenance', 'deficit'
         style: 'gym',
         onboardingCompleted: false,
-        sleepQuality: 8, // Scale of 1-10
-        stressLevels: 3, // Scale of 1-10
     },
 
     // App-wide Settings
@@ -39,12 +37,6 @@ export const state = {
         day: 1
     },
 
-    // Volume landmarks for each muscle group, will be calculated by the "brain"
-    volumeLandmarks: {
-        // Example structure:
-        // chest: { mv: 8, mev: 10, mav: 16, mrv: 20 },
-    },
-    
     // User-Created Templates
     savedTemplates: [],
 
@@ -56,12 +48,6 @@ export const state = {
         currentStep: 1,
         totalSteps: 7, // Updated to reflect new onboarding questions
     },
-
-    // Temporary state for building a new plan (DEPRECATED - will be removed)
-    builderPlan: {
-        days: []
-    },
-    isPlanBuilderDirty: false,
 
     // Static Data Loaded from JSON
     exercises: [],
@@ -97,6 +83,15 @@ export const state = {
 
     // Holds all personal records achieved by the user
     personalRecords: [],
+    
+    // Holds the user's daily readiness check-in
+    dailyCheckin: {
+        sleep: 8, // hours
+        stress: 3, // 1-10 scale
+    },
+
+    // Holds the history of daily check-ins
+    dailyCheckinHistory: [],
 
     // Temporary state for the feedback modal
     feedbackState: {
