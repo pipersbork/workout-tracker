@@ -182,6 +182,36 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     return suggestions;
 }
 
+/**
+ * Calculates statistics for the entire active mesocycle.
+ * @returns {object} An object with total, completed, and incomplete workout counts.
+ */
+function calculateMesocycleStats() {
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    if (!activePlan) return { total: 0, completed: 0, incomplete: 0 };
+
+    let total = 0;
+    let completed = 0;
+
+    Object.values(activePlan.weeks).forEach(week => {
+        Object.values(week).forEach(day => {
+            if (day.exercises && day.exercises.length > 0) { // Count only actual workout days
+                total++;
+                if (day.completed) {
+                    completed++;
+                }
+            }
+        });
+    });
+
+    return {
+        total,
+        completed,
+        incomplete: total - completed
+    };
+}
+
+
 async function completeWorkout() {
     stopStopwatch();
     ui.closeModal();
@@ -208,6 +238,7 @@ async function completeWorkout() {
 
     state.workoutSummary.totalVolume = totalVolume;
     state.workoutSummary.totalSets = totalSets;
+    state.workoutSummary.mesocycleStats = calculateMesocycleStats(); // NEW: Calculate meso stats
 
     const historyEntry = {
         id: `hist_${Date.now()}`,
