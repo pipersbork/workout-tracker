@@ -520,6 +520,22 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
     runFeedbackSequence();
 }
 
+async function submitCheckin() {
+    state.dailyCheckin.sleep = parseFloat(ui.elements.sleepSlider.value);
+    state.dailyCheckin.stress = parseInt(ui.elements.stressSlider.value);
+    
+    state.dailyCheckinHistory.push({
+        date: new Date().toISOString(),
+        ...state.dailyCheckin
+    });
+
+    await firebase.saveState();
+    ui.closeDailyCheckinModal();
+
+    if (!state.workoutTimer.isRunning) startStopwatch();
+    ui.showView('workout');
+}
+
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -541,8 +557,7 @@ export function initEventListeners() {
                 if (dataset.viewName === 'workout') {
                     const workoutFound = findAndSetNextWorkout();
                     if (workoutFound) {
-                        if (!state.workoutTimer.isRunning) startStopwatch();
-                        ui.showView(dataset.viewName);
+                        ui.showDailyCheckinModal();
                     }
                 } else {
                     ui.showView(dataset.viewName);
@@ -561,6 +576,7 @@ export function initEventListeners() {
             closeModal: ui.closeModal,
             startRestTimer,
             stopRestTimer,
+            submitCheckin,
             addSet: () => {
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
@@ -727,5 +743,14 @@ export function initEventListeners() {
             ui.renderProgressChart(exerciseName);
             ui.renderE1RMChart(exerciseName);
         }
+    });
+
+    // Event listeners for the daily check-in sliders
+    ui.elements.sleepSlider?.addEventListener('input', (e) => {
+        ui.elements.sleepLabel.textContent = `Sleep: ${e.target.value} hours`;
+    });
+
+    ui.elements.stressSlider?.addEventListener('input', (e) => {
+        ui.elements.stressLabel.textContent = `Stress Level: ${e.target.value}`;
     });
 }
