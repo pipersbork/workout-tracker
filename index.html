@@ -326,12 +326,24 @@
         </section>
 
     </main>
-
+    
+    <!-- General Purpose Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" data-action="closeModal">&times;</span>
             <div id="modal-body"></div>
             <div id="modal-actions" class="modal-actions"></div>
+        </div>
+    </div>
+
+    <!-- NEW: Feedback Modal -->
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="feedback-modal-title">Feedback</h2>
+            <p id="feedback-modal-question">Question goes here...</p>
+            <div id="feedback-modal-options" class="button-group vertical">
+                <!-- Feedback options will be dynamically inserted here by ui.js -->
+            </div>
         </div>
     </div>
 
