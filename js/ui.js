@@ -225,22 +225,31 @@ export function renderDailyWorkout() {
 }
 
 export function renderSettings() {
-    const { settings, allPlans, activePlanId } = state;
+    const { settings, userSelections, allPlans, activePlanId } = state;
 
-    document.querySelectorAll('.toggle-switch').forEach(group => {
-        const field = group.parentElement.querySelector('.settings-label')?.textContent.toLowerCase().replace(' ', '') || group.id.split('-')[0];
-        const activeValue = settings[field] || (field === 'weightincrement' ? settings.weightIncrement : settings.restDuration);
-        group.querySelectorAll('.toggle-btn').forEach(btn => {
-            const btnValue = btn.dataset[field] || btn.dataset.increment || btn.dataset.duration;
-            btn.classList.toggle('active', btnValue == activeValue);
-        });
-    });
+    // Helper function to update a toggle switch
+    const updateToggleSwitch = (switchId, stateValue, dataAttribute) => {
+        const switchElement = document.getElementById(switchId);
+        if (switchElement) {
+            switchElement.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset[dataAttribute] == stateValue);
+            });
+        }
+    };
+
+    // Update all toggle switches
+    updateToggleSwitch('progression-model-switch', settings.progressionModel, 'progression');
+    updateToggleSwitch('weight-increment-switch', settings.weightIncrement, 'increment');
+    updateToggleSwitch('rest-duration-switch', settings.restDuration, 'duration');
+    updateToggleSwitch('units-switch', settings.units, 'unit');
+    updateToggleSwitch('theme-switch', settings.theme, 'theme');
+
 
     document.querySelectorAll('.settings-card-group').forEach(group => {
         const field = group.dataset.field;
         const activeValue = state.userSelections[field];
         group.querySelectorAll('.goal-card').forEach(card => {
-            card.classList.toggle('active', card.dataset.value === activeValue);
+            card.classList.toggle('active', card.dataset.value == activeValue);
         });
     });
 
@@ -473,6 +482,20 @@ export function renderPlanHub() {
             <div class="hub-option-text">
                 <h3>Create New Intelligent Plan</h3>
                 <p>Generate a new mesocycle based on your current profile.</p>
+            </div>
+        </button>
+        <button class="hub-option" data-hub-action="premade">
+            <div class="hub-option-icon">📚</div>
+            <div class="hub-option-text">
+                <h3>Premade Templates</h3>
+                <p>Choose from a list of expert-designed workout plans.</p>
+            </div>
+        </button>
+        <button class="hub-option" data-hub-action="custom">
+            <div class="hub-option-icon">✏️</div>
+            <div class="hub-option-text">
+                <h3>Custom Plans</h3>
+                <p>Build your own workout from scratch or edit a template.</p>
             </div>
         </button>
          <button class="hub-option" data-hub-action="manage">
