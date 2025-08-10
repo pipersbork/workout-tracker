@@ -27,15 +27,15 @@ export function capitalize(str) {
 export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps, targetRIR, week) {
     let placeholder;
     if (week === 1) {
-        placeholder = `e.g. ${targetRIR} RIR`;
+        placeholder = `e.g. ${targetReps} reps @ ${targetRIR} RIR`;
     } else {
-        const lastWeekEReps = (lastWeekSet?.reps || 0) + (lastWeekSet?.rir || 0);
-        placeholder = lastWeekSet ? `${lastWeekEReps} reps` : `e.g. ${targetReps} reps`;
+        const lastWeekPerformance = lastWeekSet ? `${lastWeekSet.weight}x${lastWeekSet.reps}` : `e.g. ${targetReps} reps`;
+        placeholder = lastWeekPerformance;
     }
     
-    // NEW: Added the recommendation-text div below the inputs.
+    // Added the 'slide-in-bottom' class for a subtle animation on render.
     return `
-        <div class="set-row" data-set-index="${setIndex}">
+        <div class="set-row slide-in-bottom" data-set-index="${setIndex}" style="animation-delay: ${setIndex * 0.05}s;">
             <div class="set-number">${setIndex + 1}</div>
             <div class="set-inputs-wrapper">
                 <div class="set-inputs">
@@ -45,7 +45,7 @@ export function createSetRowHTML(exIndex, setIndex, set, lastWeekSet, targetReps
                 <div class="recommendation-text" data-exercise-index="${exIndex}" data-set-index="${setIndex}"></div>
             </div>
             <div class="set-actions">
-                </div>
+            </div>
         </div>
     `;
 }
