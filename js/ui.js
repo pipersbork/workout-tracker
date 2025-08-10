@@ -13,7 +13,7 @@ export const elements = {
     // Views
     onboardingView: document.getElementById('onboarding-container'),
     homeScreenView: document.getElementById('home-screen'),
-    planHubView: document.getElementById('plan-hub-view'),
+    templatePortalView: document.getElementById('template-portal-view'),
     workoutView: document.getElementById('daily-workout-view'),
     workoutSummaryView: document.getElementById('workout-summary-view'),
     performanceSummaryView: document.getElementById('performance-summary-view'),
@@ -32,8 +32,8 @@ export const elements = {
     workoutStopwatch: document.getElementById('workout-stopwatch-display'),
     restTimer: document.getElementById('rest-timer-display'),
 
-    // Plan Hub
-    planHubOptions: document.getElementById('plan-hub-options'),
+    // Template Portal
+    templatePortalOptions: document.getElementById('template-portal-options'),
 
     // Settings
     settingsContent: document.getElementById('settings-content'),
@@ -97,7 +97,7 @@ function _performViewChange(viewName, skipAnimation) {
     const viewMap = {
         onboarding: elements.onboardingView,
         home: elements.homeScreenView,
-        planHub: elements.planHubView,
+        templatePortal: elements.templatePortalView,
         workout: elements.workoutView,
         workoutSummary: elements.workoutSummaryView,
         performanceSummary: elements.performanceSummaryView,
@@ -119,7 +119,7 @@ function _performViewChange(viewName, skipAnimation) {
             switch (viewName) {
                 case 'onboarding': renderOnboardingStep(); break;
                 case 'home': renderHomeScreen(); break;
-                case 'planHub': renderPlanHub(); break;
+                case 'templatePortal': renderTemplatePortal(); break;
                 case 'workout': renderDailyWorkout(); break;
                 case 'workoutSummary': renderWorkoutSummary(); break;
                 case 'performanceSummary': renderPerformanceSummary(); break;
@@ -481,8 +481,8 @@ function renderWorkoutHistory() {
     }
 }
 
-export function renderPlanHub() {
-    elements.planHubOptions.innerHTML = `
+export function renderTemplatePortal() {
+    elements.templatePortalOptions.innerHTML = `
         <button class="hub-option" data-hub-action="new">
             <div class="hub-option-icon">✨</div>
             <div class="hub-option-text">
