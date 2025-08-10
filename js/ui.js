@@ -21,6 +21,7 @@ export const elements = {
 
     // Onboarding
     onboardingProgressBar: document.getElementById('onboarding-progress'),
+    onboardingProgressBarContainer: document.getElementById('onboarding-progress-bar'),
 
     // Home Screen
     activePlanDisplay: document.getElementById('active-plan-display'),
@@ -72,7 +73,15 @@ export const elements = {
     stressSlider: document.getElementById('stress-slider'),
     sleepLabel: document.getElementById('sleep-label'),
     stressLabel: document.getElementById('stress-label'),
+
+    // Tooltip
+    tooltip: document.createElement('div'),
 };
+
+// Initialize Tooltip
+elements.tooltip.className = 'tooltip';
+document.body.appendChild(elements.tooltip);
+
 
 // --- VIEW MANAGEMENT ---
 
@@ -136,6 +145,18 @@ export function renderOnboardingStep() {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
 
+    // Add shimmer effect when loading the last step
+    if (currentStep === totalSteps) {
+        const shimmer = document.createElement('div');
+        shimmer.className = 'shimmer-wrapper';
+        elements.onboardingProgressBarContainer.appendChild(shimmer);
+    } else {
+        const shimmer = elements.onboardingProgressBarContainer.querySelector('.shimmer-wrapper');
+        if (shimmer) {
+            shimmer.remove();
+        }
+    }
+
     document.querySelectorAll('.step').forEach(step => {
         step.classList.remove('active', 'fade-out');
         if (parseInt(step.dataset.step) === currentStep) {
@@ -192,14 +213,14 @@ export function renderDailyWorkout() {
             <div class="exercise-card ${isStalled ? 'stalled' : ''}" data-exercise-index="${exIndex}">
                 <div class="exercise-card-header">
                     <div class="exercise-title-group">
-                        <h3>${ex.name} ${isStalled ? '<span class="stall-indicator" title="You\'ve stalled on this exercise. Consider swapping it.">⚠️</span>' : ''}</h3>
-                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise">
+                        <h3 data-tooltip="This is your main lift for the day. Focus on good form and progressive overload.">${ex.name} ${isStalled ? '<span class="stall-indicator" data-tooltip="You\'ve stalled on this exercise. Consider swapping it.">⚠️</span>' : ''}</h3>
+                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise" data-tooltip="Swap for an alternative exercise">
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
                         </button>
-                        <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History">
+                        <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History" data-tooltip="View past performance for this exercise">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
                         </button>
-                        <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes">
+                        <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes" data-tooltip="Add or view exercise notes">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                     </div>
@@ -622,4 +643,23 @@ export function updateRestTimerDisplay() {
 // --- THEME ---
 export function applyTheme() {
     document.body.dataset.theme = state.settings.theme;
+}
+
+// --- TOOLTIPS ---
+export function showTooltip(target) {
+    const tooltipText = target.dataset.tooltip;
+    if (!tooltipText) return;
+
+    elements.tooltip.textContent = tooltipText;
+    elements.tooltip.classList.add('active');
+
+    const targetRect = target.getBoundingClientRect();
+    const tooltipRect = elements.tooltip.getBoundingClientRect();
+
+    elements.tooltip.style.left = `${targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2)}px`;
+    elements.tooltip.style.top = `${targetRect.top - tooltipRect.height - 10}px`;
+}
+
+export function hideTooltip() {
+    elements.tooltip.classList.remove('active');
 }
