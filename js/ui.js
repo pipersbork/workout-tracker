@@ -67,6 +67,11 @@ export const elements = {
     feedbackModalTitle: document.getElementById('feedback-modal-title'),
     feedbackModalQuestion: document.getElementById('feedback-modal-question'),
     feedbackModalOptions: document.getElementById('feedback-modal-options'),
+    dailyCheckinModal: document.getElementById('daily-checkin-modal'),
+    sleepSlider: document.getElementById('sleep-slider'),
+    stressSlider: document.getElementById('stress-slider'),
+    sleepLabel: document.getElementById('sleep-label'),
+    stressLabel: document.getElementById('stress-label'),
 };
 
 // --- VIEW MANAGEMENT ---
@@ -579,6 +584,14 @@ export function showFeedbackModal(title, question, options, callback) {
 
 export function closeFeedbackModal() {
     elements.feedbackModal.classList.remove('active');
+}
+
+export function showDailyCheckinModal() {
+    elements.dailyCheckinModal.classList.add('active');
+}
+
+export function closeDailyCheckinModal() {
+    elements.dailyCheckinModal.classList.remove('active');
 }
 
 export function displayIntraWorkoutRecommendation(exerciseIndex, setIndex, recommendationText) {
