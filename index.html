@@ -14,23 +14,19 @@
 
     <main>
 
-        <!-- =================================================================================== -->
-        <!-- ONBOARDING WIZARD: Revised with more detailed questions for the new workout engine  -->
-        <!-- =================================================================================== -->
         <div class="container view" id="onboarding-container">
             <div class="onboarding-wizard">
                 <div class="progress-bar" id="onboarding-progress-bar">
                     <div class="progress" id="onboarding-progress"></div>
+                    <div class="shimmer-wrapper"></div>
                 </div>
 
-                <!-- Step 1: Welcome -->
                 <div class="step active" data-step="1">
                     <h2 class="main-title">Welcome to Progression</h2>
                     <p>Let's build your perfect workout plan. First, tell us a little about yourself.</p>
                     <button class="cta-button" data-action="nextOnboardingStep">Get Started</button>
                 </div>
 
-                <!-- Step 2: Primary Goal -->
                 <div class="step" data-step="2">
                     <h3>What is your primary fitness goal?</h3>
                     <p>This helps us tailor your training volume and intensity.</p>
@@ -44,7 +40,6 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Training Age (Replaces old "Experience") -->
                 <div class="step" data-step="3">
                     <h3>What is your training age?</h3>
                     <p>Be honest! This determines your starting volume and progression rate.</p>
@@ -59,7 +54,6 @@
                     </div>
                 </div>
 
-                <!-- Step 4: Training Frequency -->
                 <div class="step" data-step="4">
                     <h3>How many days per week can you train?</h3>
                     <p>We'll use this to create an optimal training split for you.</p>
@@ -74,8 +68,7 @@
                     </div>
                 </div>
 
-                <!-- Step 5: Dietary Status -->
-                 <div class="step" data-step="5">
+                <div class="step" data-step="5">
                     <h3>What is your current dietary status?</h3>
                     <p>Your nutrition impacts recovery and how much training volume you can handle.</p>
                     <div class="card-group vertical">
@@ -88,7 +81,6 @@
                     </div>
                 </div>
                 
-                <!-- Step 6: Workout Location -->
                 <div class="step" data-step="6">
                     <h3>Where do you prefer to work out?</h3>
                     <p>No gym? No problem. We'll build workouts you can do anywhere.</p>
@@ -101,7 +93,6 @@
                     </div>
                 </div>
 
-                <!-- Step 7: Final Calculation -->
                 <div class="step" data-step="7">
                     <h2 class="main-title">Building Your Plan...</h2>
                     <p>We're analyzing your profile to create a personalized mesocycle just for you.</p>
@@ -109,9 +100,6 @@
             </div>
         </div>
 
-        <!-- =================================================================================== -->
-        <!-- HOME SCREEN                                                                         -->
-        <!-- =================================================================================== -->
         <div id="home-screen" class="container view hidden">
             <div class="main-title">PROGRESSION</div>
             <div class="divider"></div>
@@ -130,17 +118,14 @@
                 </button>
             </nav>
             <div id="active-plan-display" class="active-plan-display"></div>
-            <button class="home-icon-btn" data-action="showView" data-view-name="settings" aria-label="Settings">
+            <button class="home-icon-btn" data-action="showView" data-view-name="settings" aria-label="Settings" data-tooltip="Open Settings">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
         </div>
 
-        <!-- =================================================================================== -->
-        <!-- TEMPLATE PORTAL & OTHER VIEWS                                                       -->
-        <!-- =================================================================================== -->
         <div id="template-portal-view" class="container view hidden">
             <div class="workout-header">
-                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2>Template Portal</h2>
@@ -150,7 +135,7 @@
 
         <div id="daily-workout-view" class="view hidden">
             <div class="workout-header">
-                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2 id="workout-day-title">Workout Title</h2>
@@ -166,8 +151,8 @@
                     <span class="timer-label">REST</span>
                     <span id="rest-timer-display" class="timer-display">01:30</span>
                     <div class="timer-controls">
-                        <button class="timer-control-btn" data-action="startRestTimer">▶</button>
-                        <button class="timer-control-btn" data-action="stopRestTimer">◼</button>
+                        <button class="timer-control-btn" data-action="startRestTimer" data-tooltip="Start Rest Timer">▶</button>
+                        <button class="timer-control-btn" data-action="stopRestTimer" data-tooltip="Stop Rest Timer">◼</button>
                     </div>
                 </div>
             </div>
@@ -201,7 +186,6 @@
                         <p id="summary-prs">0</p>
                     </div>
                 </div>
-                <!-- NEW: Mesocycle Summary Section -->
                 <div class="summary-section">
                     <h3>Mesocycle Summary</h3>
                     <div id="mesocycle-summary-list">
@@ -229,7 +213,7 @@
 
         <section id="performance-summary-view" class="container view hidden">
             <div class="workout-header">
-                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2>Performance Summary</h2>
@@ -273,7 +257,7 @@
 
         <section id="settings-view" class="container view hidden">
             <div class="workout-header">
-                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home">
+                <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2>Settings</h2>
@@ -303,18 +287,18 @@
                 </section>
                 <section class="settings-section">
                     <h3>Workout Settings</h3>
-                    <label class="settings-label">Progression Model</label>
+                    <label class="settings-label" data-tooltip="Choose between linear and double progression models">Progression Model</label>
                     <div class="toggle-switch" id="progression-model-switch">
                         <button class="toggle-btn" data-action="setProgressionModel" data-progression="linear">Linear</button>
                         <button class="toggle-btn" data-action="setProgressionModel" data-progression="double">Double</button>
                     </div>
-                    <label class="settings-label">Weight Increment</label>
+                    <label class="settings-label" data-tooltip="Set the smallest weight increment you can make">Weight Increment</label>
                     <div class="toggle-switch" id="weight-increment-switch">
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="2.5">2.5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="5">5</button>
                         <button class="toggle-btn" data-action="setWeightIncrement" data-increment="10">10</button>
                     </div>
-                    <label class="settings-label">Default Rest Duration (seconds)</label>
+                    <label class="settings-label" data-tooltip="Set the default rest duration between sets">Default Rest Duration (seconds)</label>
                     <div class="toggle-switch" id="rest-duration-switch">
                         <button class="toggle-btn" data-action="setRestDuration" data-duration="60">60s</button>
                         <button class="toggle-btn" data-action="setRestDuration" data-duration="90">90s</button>
@@ -341,7 +325,6 @@
 
     </main>
     
-    <!-- General Purpose Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" data-action="closeModal">&times;</span>
@@ -350,7 +333,6 @@
         </div>
     </div>
 
-    <!-- Feedback Modal -->
     <div id="feedback-modal" class="modal">
         <div class="modal-content">
             <h2 id="feedback-modal-title">Feedback</h2>
@@ -360,7 +342,6 @@
         </div>
     </div>
 
-    <!-- Daily Check-in Modal -->
     <div id="daily-checkin-modal" class="modal">
         <div class="modal-content">
             <h2>Daily Check-in</h2>
