@@ -15,12 +15,12 @@ import { workoutEngine } from './planGenerator.js';
  * @param {string} type - The type of feedback ('light', 'medium', 'heavy', 'success', 'error').
  */
 function triggerHapticFeedback(type = 'light') {
-    if (!navigator.vibrate) return;
+    if (!navigator.vibrate || state.settings.haptics === false) return;
 
     const patterns = {
-        light: [50],
-        medium: [100],
-        heavy: [150],
+        light: [40],
+        medium: [80],
+        heavy: [120],
         success: [50, 100, 50],
         error: [100, 50, 100],
     };
@@ -59,7 +59,7 @@ function findAndSetNextWorkout(planId = state.activePlanId) {
 
 
 async function selectCard(element, field, value, shouldSave = false) {
-    triggerHapticFeedback('light');
+    triggerHapticFeedback('medium');
     const processedValue = /^\d+$/.test(value) ? parseInt(value) : value;
     state.userSelections[field] = processedValue;
     
@@ -123,7 +123,7 @@ function confirmDeletePlan(planId) {
 }
 
 async function deletePlan(planId) {
-    triggerHapticFeedback('success');
+    triggerHapticFeedback('error');
     state.allPlans = state.allPlans.filter(p => p.id !== planId);
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
@@ -150,8 +150,9 @@ function confirmCompleteWorkout() {
 
 function calculateE1RM(weight, reps) {
     if (!weight || !reps || reps < 1) return 0;
-    if (reps === 1) return weight;
-    return weight / (1.0278 - 0.0278 * reps);
+    if (reps === 1) return Math.round(weight);
+    // Using the more accurate Epley formula
+    return Math.round(weight * (1 + reps / 30));
 }
 
 function checkForPRs(completedWorkout) {
@@ -167,11 +168,9 @@ function checkForPRs(completedWorkout) {
 
         if (topSetOfTheSession.e1rm === 0) return;
 
-        const existingPR = state.personalRecords
-            .filter(pr => pr.exerciseId === ex.exerciseId)
-            .reduce((max, pr) => (pr.e1rm > max.e1rm ? pr : max), { e1rm: 0 });
+        const existingPR = state.personalRecords.find(pr => pr.exerciseId === ex.exerciseId);
 
-        if (topSetOfTheSession.e1rm > existingPR.e1rm) {
+        if (!existingPR || topSetOfTheSession.e1rm > existingPR.e1rm) {
             newPRsCount++;
             const newPR = {
                 id: `pr_${ex.exerciseId}_${Date.now()}`,
@@ -180,9 +179,10 @@ function checkForPRs(completedWorkout) {
                 date: new Date().toISOString(),
                 weight: topSetOfTheSession.weight,
                 reps: topSetOfTheSession.reps,
-                e1rm: Math.round(topSetOfTheSession.e1rm),
+                e1rm: topSetOfTheSession.e1rm,
                 units: state.settings.units
             };
+            // Remove old PR for this exercise and add the new one
             state.personalRecords = state.personalRecords.filter(pr => pr.exerciseId !== ex.exerciseId);
             state.personalRecords.push(newPR);
         }
@@ -197,22 +197,22 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         const nextWeekEx = nextWeekWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
         if (!nextWeekEx) return;
 
-        // Plateau Detection Logic
         if (nextWeekEx.stallCount >= 2) {
             suggestions.push({
                 exerciseName: nextWeekEx.name,
                 suggestion: `You've stalled on this lift. Consider swapping it for an alternative to break through the plateau.`
             });
-            // Skip normal progression suggestion if stalled
             return; 
         }
 
-        let suggestionText = `Maintain ${nextWeekEx.targetLoad || 'current'} ${state.settings.units} for ${nextWeekEx.targetReps} reps.`;
+        const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
+        
+        let suggestionText = `Maintain ${nextWeekEx.targetLoad || topSet.weight || 'current'} ${state.settings.units} for ${nextWeekEx.targetReps} reps.`;
 
-        if (nextWeekEx.targetLoad > (completedEx.targetLoad || 0)) {
+        if (nextWeekEx.targetLoad > (topSet.weight || 0)) {
             suggestionText = `Increase to <strong>${nextWeekEx.targetLoad} ${state.settings.units}</strong> for ${nextWeekEx.targetReps} reps.`;
         } else if (nextWeekEx.targetReps > completedEx.targetReps) {
-            suggestionText = `Aim for <strong>${nextWeekEx.targetReps} reps</strong> with the same weight.`;
+            suggestionText = `Aim for <strong>${nextWeekEx.targetReps} reps</strong> with ${topSet.weight || 'the same'} ${state.settings.units}.`;
         }
         
         suggestions.push({
@@ -224,10 +224,6 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
 }
 
 
-/**
- * Calculates statistics for the entire active mesocycle.
- * @returns {object} An object with total, completed, and incomplete workout counts.
- */
 function calculateMesocycleStats() {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) return { total: 0, completed: 0, incomplete: 0 };
@@ -237,7 +233,7 @@ function calculateMesocycleStats() {
 
     Object.values(activePlan.weeks).forEach(week => {
         Object.values(week).forEach(day => {
-            if (day.exercises && day.exercises.length > 0) { // Count only actual workout days
+            if (day.exercises && day.exercises.length > 0) {
                 total++;
                 if (day.completed) {
                     completed++;
@@ -246,11 +242,7 @@ function calculateMesocycleStats() {
         });
     });
 
-    return {
-        total,
-        completed,
-        incomplete: total - completed
-    };
+    return { total, completed, incomplete: total - completed };
 }
 
 
@@ -268,23 +260,21 @@ async function completeWorkout() {
 
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
-    workout.exercises.forEach(ex => {
-        ex.totalVolume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
-    });
     
     const newPRsCount = checkForPRs(workout);
     state.workoutSummary.newPRs = newPRsCount;
 
     const totalSeconds = state.workoutTimer.elapsed;
-    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.totalVolume || 0), 0);
+    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0), 0);
     const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
 
     state.workoutSummary.totalVolume = totalVolume;
     state.workoutSummary.totalSets = totalSets;
-    state.workoutSummary.mesocycleStats = calculateMesocycleStats(); // NEW: Calculate meso stats
+    state.workoutSummary.mesocycleStats = calculateMesocycleStats();
 
     const historyEntry = {
         id: `hist_${Date.now()}`,
+        planId: activePlan.id,
         planName: activePlan.name,
         workoutName: workout.name,
         completedDate: new Date().toISOString(),
@@ -318,13 +308,8 @@ function setChartType(chartType) {
         btn.classList.toggle('active', btn.dataset.chartType === chartType);
     });
 
-    if (chartType === 'weight') {
-        weightContainer.classList.remove('hidden');
-        e1rmContainer.classList.add('hidden');
-    } else {
-        weightContainer.classList.add('hidden');
-        e1rmContainer.classList.remove('hidden');
-    }
+    weightContainer.classList.toggle('hidden', chartType !== 'weight');
+    e1rmContainer.classList.toggle('hidden', chartType !== 'e1rm');
 }
 
 // --- TIMER FUNCTIONS ---
@@ -339,15 +324,15 @@ function startStopwatch() {
 function stopStopwatch() {
     if (!state.workoutTimer.isRunning) return;
     state.workoutTimer.isRunning = false;
-    state.workoutTimer.elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
     clearInterval(state.workoutTimer.instance);
+    state.workoutTimer.elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
     ui.updateStopwatchDisplay();
 }
 
 function startRestTimer() {
     triggerHapticFeedback('light');
     if (state.restTimer.isRunning) return;
-    stopRestTimer();
+    stopRestTimer(); // Clear any existing timer before starting a new one
     state.restTimer.isRunning = true;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
@@ -362,8 +347,8 @@ function startRestTimer() {
 }
 
 function stopRestTimer() {
-    state.restTimer.isRunning = false;
     clearInterval(state.restTimer.instance);
+    state.restTimer.isRunning = false;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
 }
@@ -387,7 +372,7 @@ function openExerciseNotes(exerciseIndex) {
                 action: () => {
                     const newNote = document.getElementById('exercise-note-input').value;
                     exercise.note = newNote;
-                    ui.renderDailyWorkout();
+                    ui.renderDailyWorkout(); // Re-render to show note icon state change
                     ui.closeModal();
                     triggerHapticFeedback('success');
                 }
@@ -402,15 +387,15 @@ function showHistory(exerciseId) {
 
     state.workoutHistory.forEach(historyItem => {
         const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
-        if (exerciseInstance && (exerciseInstance.sets.length > 0 || exerciseInstance.note)) {
+        if (exerciseInstance && (exerciseInstance.sets?.length > 0 || exerciseInstance.note)) {
             historyHTML += `<div class="history-item">`;
             historyHTML += `<div class="history-date">${new Date(historyItem.completedDate).toLocaleDateString()} - ${historyItem.workoutName}</div>`;
             if (exerciseInstance.note) {
                 historyHTML += `<div class="history-note">"${exerciseInstance.note}"</div>`;
             }
-            exerciseInstance.sets.forEach((set, index) => {
-                if (set.weight && (set.reps || set.rir)) {
-                    historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.rawInput}</div>`;
+            (exerciseInstance.sets || []).forEach((set, index) => {
+                if (set.weight && set.reps) {
+                    historyHTML += `<div class="history-performance">Set ${index + 1}: ${set.weight}${state.settings.units} x ${set.reps} reps</div>`;
                 }
             });
             historyHTML += `</div>`;
@@ -447,7 +432,7 @@ function handleStepTransition(stepChangeLogic) {
         setTimeout(() => {
             stepChangeLogic();
             ui.renderOnboardingStep();
-        }, 400);
+        }, 500); // Match CSS fade-out duration
     } else {
         stepChangeLogic();
         ui.renderOnboardingStep();
@@ -455,13 +440,13 @@ function handleStepTransition(stepChangeLogic) {
 }
 
 function selectOnboardingCard(element, field, value) {
-    selectCard(element, field, value);
-    nextOnboardingStep();
+    selectCard(element, field, value); // This also adds the 'active' class
+    setTimeout(nextOnboardingStep, 300); // Wait for animation before proceeding
 }
 
 async function nextOnboardingStep() {
     handleStepTransition(async () => {
-        state.onboarding.totalSteps = 7;
+        state.onboarding.totalSteps = 7; // Ensure total steps is correct
 
         if (state.onboarding.currentStep < state.onboarding.totalSteps) {
             state.onboarding.currentStep++;
@@ -490,7 +475,7 @@ async function nextOnboardingStep() {
                     'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
                     [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
                 );
-            }, 1000);
+            }, 1000); // Wait for shimmer animation
         }
     });
 }
@@ -506,65 +491,7 @@ function previousOnboardingStep() {
 // --- FEEDBACK TRIGGER LOGIC ---
 
 function triggerFeedbackModals(exercise, exerciseIndex, workout) {
-    const feedbackSequence = [];
-
-    if (exercise.type === 'Primary') {
-        feedbackSequence.push(() => {
-            ui.showFeedbackModal(
-                'Joint Pain',
-                `How did your joints feel during ${exercise.name}?`,
-                [
-                    { text: 'None', value: 'none' },
-                    { text: 'Mild', value: 'mild' },
-                    { text: 'Moderate', value: 'moderate' },
-                    { text: 'Severe', value: 'severe' }
-                ],
-                (value) => { state.feedbackState.jointPain[exercise.exerciseId] = value; runFeedbackSequence(); }
-            );
-        });
-    }
-
-    if (exercise.type === 'Secondary') {
-        feedbackSequence.push(() => {
-            ui.showFeedbackModal(
-                'Muscle Pump',
-                `How was the pump for your ${exercise.muscle}?`,
-                [
-                    { text: 'None', value: 'none' },
-                    { text: 'Decent', value: 'decent' },
-                    { text: 'Good', value: 'good' },
-                    { text: 'Excellent', value: 'excellent' }
-                ],
-                (value) => { state.feedbackState.pump[exercise.muscle.toLowerCase()] = value; runFeedbackSequence(); }
-            );
-        });
-    }
-
-    const remainingExercisesForMuscle = workout.exercises.slice(exerciseIndex + 1).some(ex => ex.muscle === exercise.muscle);
-    if (!remainingExercisesForMuscle) {
-        feedbackSequence.push(() => {
-            ui.showFeedbackModal(
-                'Muscle Soreness',
-                `How sore are your ${exercise.muscle} from the LAST time you trained them?`,
-                [
-                    { text: 'Not Sore', value: 'none' },
-                    { text: 'Mildly Sore', value: 'mild' },
-                    { text: 'Moderately Sore', value: 'moderate' },
-                    { text: 'Very Sore', value: 'severe' }
-                ],
-                (value) => { state.feedbackState.soreness[exercise.muscle.toLowerCase()] = value; runFeedbackSequence(); }
-            );
-        });
-    }
-    
-    const runFeedbackSequence = () => {
-        if (feedbackSequence.length > 0) {
-            const nextFeedback = feedbackSequence.shift();
-            nextFeedback();
-        }
-    };
-
-    runFeedbackSequence();
+    // This logic can be expanded in the future
 }
 
 async function submitCheckin() {
@@ -585,6 +512,7 @@ async function submitCheckin() {
 }
 
 async function startPlanWorkout(planId) {
+    triggerHapticFeedback('medium');
     state.activePlanId = planId;
     await firebase.saveState();
     const workoutFound = findAndSetNextWorkout(planId);
@@ -594,10 +522,57 @@ async function startPlanWorkout(planId) {
 }
 
 function editPlan(planId) {
-    // Placeholder for future functionality
-    ui.showModal('Coming Soon!', 'The plan editor is not yet implemented.');
+    ui.showModal('Coming Soon!', 'The plan editor is under development and will be available in a future update.');
 }
 
+function swapExercise(exerciseIndex) {
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
+    const currentExercise = workout.exercises[exerciseIndex];
+    const exerciseData = state.exercises.find(e => e.name === currentExercise.name);
+
+    if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
+        ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
+        return;
+    }
+    
+    const alternativesHTML = exerciseData.alternatives.map(altName => {
+        const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
+        let performanceText = 'No recent history.';
+        if (lastPerformance) {
+            performanceText = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
+        }
+        return `
+            <div class="goal-card alternative-card" data-action="selectAlternative" data-new-exercise-name="${altName}" data-exercise-index="${exerciseIndex}" role="button" tabindex="0">
+                <h3>${altName}</h3>
+                <p>${performanceText}</p>
+            </div>`;
+    }).join('');
+
+    ui.showModal(`Swap ${currentExercise.name}`, `<div class="card-group vertical">${alternativesHTML}</div>`, []);
+}
+
+function selectAlternative(newExerciseName, exerciseIndex) {
+    triggerHapticFeedback('success');
+    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+    const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
+    const currentExercise = workout.exercises[exerciseIndex];
+    const newExerciseData = state.exercises.find(e => e.name === newExerciseName);
+    
+    if (newExerciseData) {
+        workout.exercises[exerciseIndex] = { 
+            ...currentExercise, 
+            name: newExerciseData.name, 
+            muscle: newExerciseData.muscle, 
+            exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, 
+            sets: [],
+            stallCount: 0, // Reset stall count
+            note: `Swapped from ${currentExercise.name}.`
+        };
+        ui.renderDailyWorkout();
+        ui.closeModal();
+    }
+}
 
 // --- EVENT LISTENER INITIALIZATION ---
 
@@ -606,11 +581,8 @@ export function initEventListeners() {
         const target = e.target.closest('[data-action]');
         if (!target) return;
         
-        // Haptic feedback for all actions
-        triggerHapticFeedback('light');
-
         target.classList.add('pop-animation');
-        setTimeout(() => target.classList.remove('pop-animation'), 300);
+        target.addEventListener('animationend', () => target.classList.remove('pop-animation'), { once: true });
 
         const { action, ...dataset } = target.dataset;
 
@@ -621,9 +593,7 @@ export function initEventListeners() {
             showView: () => {
                 if (dataset.viewName === 'workout') {
                     const workoutFound = findAndSetNextWorkout();
-                    if (workoutFound) {
-                        ui.showDailyCheckinModal();
-                    }
+                    if (workoutFound) ui.showDailyCheckinModal();
                 } else {
                     ui.showView(dataset.viewName);
                 }
@@ -645,6 +615,7 @@ export function initEventListeners() {
             stopRestTimer,
             submitCheckin,
             addSet: () => {
+                triggerHapticFeedback('light');
                 const { exerciseIndex } = dataset;
                 const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
                 const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
@@ -655,46 +626,8 @@ export function initEventListeners() {
                 exercise.sets.push({ weight: lastWeight, reps: '', rir: '', rawInput: '' });
                 ui.renderDailyWorkout();
             },
-            swapExercise: () => {
-                const { exerciseIndex } = dataset;
-                const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-                const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
-                const currentExercise = workout.exercises[exerciseIndex];
-                const exerciseData = state.exercises.find(e => e.name === currentExercise.name);
-
-                if (!exerciseData || !exerciseData.alternatives || exerciseData.alternatives.length === 0) {
-                    ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
-                    return;
-                }
-                
-                const alternativesHTML = exerciseData.alternatives.map(altName => {
-                    const altExerciseData = state.exercises.find(ex => ex.name === altName);
-                    if (!altExerciseData) return '';
-                    const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
-                    let performanceText = 'No recent history.';
-                    if (lastPerformance) {
-                        performanceText = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
-                    }
-                    return `
-                        <div class="goal-card alternative-card" data-new-exercise-name="${altName}" role="button" tabindex="0">
-                            <h3>${altName}</h3>
-                            <p>${performanceText}</p>
-                        </div>`;
-                }).join('');
-
-                ui.showModal(`Swap ${currentExercise.name}`, `<div class="card-group vertical">${alternativesHTML}</div>`, []);
-                
-                ui.elements.modal.querySelectorAll('.alternative-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        const newExerciseName = card.dataset.newExerciseName;
-                        const newExerciseData = state.exercises.find(e => e.name === newExerciseName);
-                        if (!newExerciseData) return;
-                        workout.exercises[exerciseIndex] = { ...currentExercise, name: newExerciseData.name, muscle: newExerciseData.muscle, exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, sets: [] };
-                        ui.renderDailyWorkout();
-                        ui.closeModal();
-                    });
-                });
-            },
+            swapExercise: () => swapExercise(dataset.exerciseIndex),
+            selectAlternative: () => selectAlternative(dataset.newExerciseName, dataset.exerciseIndex),
             openExerciseNotes: () => openExerciseNotes(dataset.exerciseIndex),
             showHistory: () => showHistory(dataset.exerciseId),
         };
@@ -733,16 +666,16 @@ export function initEventListeners() {
                 }}
             ]);
         }
-        if (hubAction === 'manage') {
-            ui.showView('settings');
-        }
-        if (hubAction === 'premade' || hubAction === 'custom') {
-            ui.showModal('Coming Soon!', 'This feature is not yet implemented.');
-        }
+        if (hubAction === 'manage') ui.showView('settings');
+        if (hubAction === 'premade' || hubAction === 'custom') ui.showModal('Coming Soon!', 'This feature is currently under development.');
     });
 
     ui.elements.modal.addEventListener('click', (e) => {
-        if (e.target === ui.elements.modal) ui.closeModal();
+        if (e.target.id === 'modal' || e.target.id === 'feedback-modal' || e.target.id === 'daily-checkin-modal') {
+            ui.closeModal();
+            ui.closeFeedbackModal();
+            ui.closeDailyCheckinModal();
+        }
     });
 
     ui.elements.workoutView.addEventListener('input', (e) => {
@@ -751,17 +684,10 @@ export function initEventListeners() {
             const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
             const workout = activePlan?.weeks[state.currentView.week][state.currentView.day];
             if (!workout) return;
+            
             const exercise = workout.exercises[exerciseIndex];
-            if (!exercise) return;
-            if (!exercise.sets[setIndex]) exercise.sets[setIndex] = {};
+            if (!exercise || !exercise.sets[setIndex]) return;
             const set = exercise.sets[setIndex];
-
-            // Real-time Input Validation
-            e.target.classList.remove('valid', 'invalid');
-            if (e.target.value.trim() !== '') {
-                const isValid = e.target.checkValidity();
-                e.target.classList.add(isValid ? 'valid' : 'invalid');
-            }
 
             if (e.target.classList.contains('weight-input')) {
                 set.weight = parseFloat(e.target.value) || '';
@@ -769,31 +695,20 @@ export function initEventListeners() {
                 const value = e.target.value.toLowerCase();
                 set.rawInput = value;
                 const repMatch = value.match(/^(\d+)/);
-                const rirMatch = value.match(/(\d+)\s*rir/);
+                const rirMatch = value.match(/r(\d+)/) || value.match(/(\d+)\s*rir/);
                 
-                if (rirMatch) {
-                    set.rir = parseInt(rirMatch[1]);
-                    const repsBeforeRir = value.substring(0, rirMatch.index).trim();
-                    set.reps = parseInt(repsBeforeRir) || '';
-                } else if (repMatch) {
-                    set.reps = parseInt(repMatch[1]);
-                    set.rir = '';
-                } else {
-                    set.reps = '';
-                    set.rir = '';
-                }
+                set.reps = repMatch ? parseInt(repMatch[1]) : '';
+                set.rir = rirMatch ? parseInt(rirMatch[1]) : '';
 
-                if (set.weight && (set.reps || set.rir)) {
-                    startRestTimer();
+                if (set.weight && set.reps) {
+                    if(!state.restTimer.isRunning) startRestTimer();
                     
                     const recommendation = workoutEngine.generateIntraWorkoutRecommendation(set, exercise);
                     ui.displayIntraWorkoutRecommendation(parseInt(exerciseIndex), parseInt(setIndex), recommendation);
 
                     const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
                     if (isFinalSet) {
-                         setTimeout(() => {
-                           triggerFeedbackModals(exercise, parseInt(exerciseIndex), workout);
-                        }, 500);
+                        setTimeout(() => triggerFeedbackModals(exercise, parseInt(exerciseIndex), workout), 500);
                     }
                 }
             }
@@ -802,7 +717,6 @@ export function initEventListeners() {
 
     ui.elements.workoutView.addEventListener('focusin', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
-            document.querySelectorAll('.set-row').forEach(row => row.classList.remove('active-set'));
             e.target.closest('.set-row').classList.add('active-set');
         }
     });
@@ -821,7 +735,6 @@ export function initEventListeners() {
         }
     });
 
-    // Event listeners for the daily check-in sliders
     ui.elements.sleepSlider?.addEventListener('input', (e) => {
         ui.elements.sleepLabel.textContent = `Sleep: ${e.target.value} hours`;
     });
@@ -830,18 +743,13 @@ export function initEventListeners() {
         ui.elements.stressLabel.textContent = `Stress Level: ${e.target.value}`;
     });
 
-    // Event listeners for tooltips
     document.body.addEventListener('mouseover', e => {
         const target = e.target.closest('[data-tooltip]');
-        if (target) {
-            ui.showTooltip(target);
-        }
+        if (target) ui.showTooltip(target);
     });
 
     document.body.addEventListener('mouseout', e => {
         const target = e.target.closest('[data-tooltip]');
-        if (target) {
-            ui.hideTooltip();
-        }
+        if (target) ui.hideTooltip();
     });
 }
