@@ -648,10 +648,6 @@ export function initEventListeners() {
             ]);
         }
         if (hubAction === 'manage') ui.showView('settings');
-        if (hubAction === 'premade' || hubAction === 'custom') {
-        ui.showModal("Coming Soon!", "This feature is currently under development. Stay tuned!");
-    }
-});
     });
 
     ui.elements.modal.addEventListener('click', (e) => {
