@@ -166,6 +166,16 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         const nextWeekEx = nextWeekWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
         if (!nextWeekEx) return;
 
+        // Plateau Detection Logic
+        if (nextWeekEx.stallCount >= 2) {
+            suggestions.push({
+                exerciseName: nextWeekEx.name,
+                suggestion: `You've stalled on this lift. Consider swapping it for an alternative to break through the plateau.`
+            });
+            // Skip normal progression suggestion if stalled
+            return; 
+        }
+
         let suggestionText = `Maintain ${nextWeekEx.targetLoad || 'current'} ${state.settings.units} for ${nextWeekEx.targetReps} reps.`;
 
         if (nextWeekEx.targetLoad > (completedEx.targetLoad || 0)) {
@@ -181,6 +191,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     });
     return suggestions;
 }
+
 
 /**
  * Calculates statistics for the entire active mesocycle.
