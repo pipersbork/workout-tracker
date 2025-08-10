@@ -475,6 +475,20 @@ export function renderPlanHub() {
                 <p>Generate a new mesocycle based on your current profile.</p>
             </div>
         </button>
+        <button class="hub-option" data-hub-action="premade">
+            <div class="hub-option-icon">📚</div>
+            <div class="hub-option-text">
+                <h3>Premade Templates</h3>
+                <p>Choose from a list of expert-designed workout plans.</p>
+            </div>
+        </button>
+        <button class="hub-option" data-hub-action="custom">
+            <div class="hub-option-icon">✏️</div>
+            <div class="hub-option-text">
+                <h3>Custom</h3>
+                <p>Build your own workout plan from scratch.</p>
+            </div>
+        </button>
          <button class="hub-option" data-hub-action="manage">
             <div class="hub-option-icon">⚙️</div>
             <div class="hub-option-text">
