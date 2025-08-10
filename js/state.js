@@ -11,13 +11,12 @@ export const state = {
 
     // Onboarding and User Preferences
     userSelections: {
-        goal: 'hypertrophy', // More specific goals: 'hypertrophy', 'strength', 'fatLoss'
-        experience: 'beginner', // 'novice', 'beginner', 'intermediate', 'advanced'
+        goal: 'hypertrophy', // 'hypertrophy', 'strength', 'fatLoss'
+        trainingAge: 'beginner', // 'novice', 'beginner', 'intermediate', 'advanced'
+        daysPerWeek: 4, // Default value, will be updated by user
+        dietaryStatus: 'maintenance', // 'surplus', 'maintenance', 'deficit'
         style: 'gym',
         onboardingCompleted: false,
-        // NEW: Detailed user factors for the "brain"
-        trainingAge: 'beginner', // novice, beginner, intermediate, advanced, highlyAdvanced, masters
-        dietaryStatus: 'maintenance', // surplus, maintenance, deficit
         sleepQuality: 8, // Scale of 1-10
         stressLevels: 3, // Scale of 1-10
     },
@@ -34,21 +33,20 @@ export const state = {
     // Workout Plans and Progress
     allPlans: [],
     activePlanId: null,
-    editingPlanId: null, // Holds the ID of the plan being edited
+    editingPlanId: null,
     currentView: {
         week: 1,
         day: 1
     },
 
-    // NEW: Volume landmarks for each muscle group, will be calculated by the "brain"
+    // Volume landmarks for each muscle group, will be calculated by the "brain"
     volumeLandmarks: {
         // Example structure:
         // chest: { mv: 8, mev: 10, mav: 16, mrv: 20 },
-        // back: { mv: 10, mev: 12, mav: 18, mrv: 22 },
     },
     
     // User-Created Templates
-    savedTemplates: [], // Stores plans saved as reusable templates
+    savedTemplates: [],
 
     // UI and View State
     currentViewName: 'onboarding',
@@ -56,14 +54,14 @@ export const state = {
     // Onboarding Wizard State
     onboarding: {
         currentStep: 1,
-        totalSteps: 5, // Will likely increase with more detailed questions
+        totalSteps: 7, // Updated to reflect new onboarding questions
     },
 
-    // Temporary state for building a new plan
+    // Temporary state for building a new plan (DEPRECATED - will be removed)
     builderPlan: {
         days: []
     },
-    isPlanBuilderDirty: false, // Tracks if there are unsaved changes in the builder
+    isPlanBuilderDirty: false,
 
     // Static Data Loaded from JSON
     exercises: [],
@@ -104,8 +102,7 @@ export const state = {
     feedbackState: {
         currentExercise: null,
         currentExerciseIndex: null,
-        // NEW: To store feedback from the user
-        soreness: {}, // e.g., { chest: 'moderate', back: 'mild' }
+        soreness: {},
         pump: {},
         jointPain: {},
     },
