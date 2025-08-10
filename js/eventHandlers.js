@@ -32,7 +32,7 @@ function findAndSetNextWorkout() {
         }
     }
 
-    ui.showModal("Plan Complete!", "Congratulations! You've completed all the workouts in this plan. You can start a new one from the plan hub.", [{ text: 'Go to Plan Hub', class: 'cta-button', action: () => ui.showView('planHub') }]);
+    ui.showModal("Plan Complete!", "Congratulations! You've completed all the workouts in this plan. You can start a new one from the template portal.", [{ text: 'Go to Template Portal', class: 'cta-button', action: () => ui.showView('templatePortal') }]);
     return false;
 }
 
@@ -648,7 +648,7 @@ export function initEventListeners() {
         }
     });
 
-    ui.elements.planHubView.addEventListener('click', e => {
+    ui.elements.templatePortalView.addEventListener('click', e => {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
         const hubAction = hubOption.dataset.hubAction;
