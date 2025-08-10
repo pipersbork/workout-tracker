@@ -175,7 +175,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         }
         
         suggestions.push({
-            exerciseName: nextWeekEx.name, // Show the name for next week's exercise
+            exerciseName: nextWeekEx.name,
             suggestion: suggestionText
         });
     });
@@ -422,10 +422,8 @@ function previousOnboardingStep() {
 // --- FEEDBACK TRIGGER LOGIC ---
 
 function triggerFeedbackModals(exercise, exerciseIndex, workout) {
-    // Sequence of feedback questions
     const feedbackSequence = [];
 
-    // 1. Joint Pain (for Primary exercises)
     if (exercise.type === 'Primary') {
         feedbackSequence.push(() => {
             ui.showFeedbackModal(
@@ -442,7 +440,6 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
         });
     }
 
-    // 2. Pump (for Secondary/isolation exercises)
     if (exercise.type === 'Secondary') {
         feedbackSequence.push(() => {
             ui.showFeedbackModal(
@@ -459,7 +456,6 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
         });
     }
 
-    // 3. Soreness (after the last exercise for a given muscle group in the workout)
     const remainingExercisesForMuscle = workout.exercises.slice(exerciseIndex + 1).some(ex => ex.muscle === exercise.muscle);
     if (!remainingExercisesForMuscle) {
         feedbackSequence.push(() => {
@@ -477,7 +473,6 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
         });
     }
     
-    // Function to run the sequence
     const runFeedbackSequence = () => {
         if (feedbackSequence.length > 0) {
             const nextFeedback = feedbackSequence.shift();
@@ -485,7 +480,6 @@ function triggerFeedbackModals(exercise, exerciseIndex, workout) {
         }
     };
 
-    // Start the sequence
     runFeedbackSequence();
 }
 
@@ -641,6 +635,11 @@ export function initEventListeners() {
 
                 if (set.weight && (set.reps || set.rir)) {
                     startRestTimer();
+                    
+                    // --- NEW: Trigger Intra-Workout Recommendation ---
+                    const recommendation = workoutEngine.generateIntraWorkoutRecommendation(set, exercise);
+                    ui.displayIntraWorkoutRecommendation(parseInt(exerciseIndex), parseInt(setIndex), recommendation);
+
                     const isFinalSet = parseInt(setIndex) === exercise.targetSets - 1;
                     if (isFinalSet) {
                          setTimeout(() => {
