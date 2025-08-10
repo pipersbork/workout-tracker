@@ -13,7 +13,6 @@ export const elements = {
     onboardingView: document.getElementById('onboarding-container'),
     homeScreenView: document.getElementById('home-screen'),
     planHubView: document.getElementById('plan-hub-view'),
-    // REMOVED: templateLibraryView and customPlanWizardView as they are replaced by a more dynamic flow
     workoutView: document.getElementById('daily-workout-view'),
     workoutSummaryView: document.getElementById('workout-summary-view'),
     performanceSummaryView: document.getElementById('performance-summary-view'),
@@ -57,16 +56,19 @@ export const elements = {
     summaryPRs: document.getElementById('summary-prs'),
     summaryProgressionList: document.getElementById('summary-progression-list'),
 
-    // Modal
+    // Modals
     modal: document.getElementById('modal'),
     modalBody: document.getElementById('modal-body'),
     modalActions: document.getElementById('modal-actions'),
+    feedbackModal: document.getElementById('feedback-modal'),
+    feedbackModalTitle: document.getElementById('feedback-modal-title'),
+    feedbackModalQuestion: document.getElementById('feedback-modal-question'),
+    feedbackModalOptions: document.getElementById('feedback-modal-options'),
 };
 
 // --- VIEW MANAGEMENT ---
 
 export function showView(viewName, skipAnimation = false) {
-    // Simplified: No longer checking for builder dirty state as it's removed
     _performViewChange(viewName, skipAnimation);
 }
 
@@ -516,6 +518,36 @@ export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-b
 export function closeModal() {
     elements.modal.classList.remove('active');
 }
+
+/**
+ * Shows the dedicated feedback modal with a specific question and options.
+ * @param {string} title - The title for the modal.
+ * @param {string} question - The question to ask the user.
+ * @param {Array<object>} options - An array of option objects, e.g., [{ text: 'No Pain', value: 'none', action: callback }]
+ */
+export function showFeedbackModal(title, question, options) {
+    elements.feedbackModalTitle.textContent = title;
+    elements.feedbackModalQuestion.textContent = question;
+    elements.feedbackModalOptions.innerHTML = options.map(opt => 
+        `<button class="cta-button secondary-button" data-value="${opt.value}">${opt.text}</button>`
+    ).join('');
+
+    elements.feedbackModalOptions.querySelectorAll('button').forEach((button, index) => {
+        button.addEventListener('click', () => {
+            if (options[index].action) {
+                options[index].action(button.dataset.value);
+            }
+            closeFeedbackModal();
+        }, { once: true });
+    });
+
+    elements.feedbackModal.classList.add('active');
+}
+
+export function closeFeedbackModal() {
+    elements.feedbackModal.classList.remove('active');
+}
+
 
 export function updateStopwatchDisplay() {
     const totalSeconds = state.workoutTimer.elapsed + (state.workoutTimer.isRunning ? Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : 0);
