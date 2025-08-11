@@ -64,6 +64,7 @@ export const elements = {
 
     // Modals
     modal: document.getElementById('modal'),
+    modalContent: document.querySelector('#modal .modal-content'), // More specific selector
     modalBody: document.getElementById('modal-body'),
     modalActions: document.getElementById('modal-actions'),
     feedbackModal: document.getElementById('feedback-modal'),
@@ -173,7 +174,7 @@ export function renderOnboardingStep() {
 export function renderHomeScreen() {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (activePlan) {
-        elements.activePlanDisplay.textContent = `Active Plan: ${activePlan.name}`;
+        elements.activePlanDisplay.textContent = activePlan.name;
     } else {
         elements.activePlanDisplay.textContent = 'No active plan. Create one to get started!';
     }
@@ -233,10 +234,10 @@ export function renderDailyWorkout() {
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
                         </button>
                         <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History" data-tooltip="View past performance for this exercise">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
+                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
                         </button>
                         <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes" data-tooltip="Add or view exercise notes">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                     </div>
                     ${lastPerformanceHTML}
@@ -621,7 +622,34 @@ export function renderWorkoutSummary() {
 // --- MODAL & TIMERS ---
 
 export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-button' }]) {
-    elements.modalBody.innerHTML = `<h2>${title}</h2><div class="modal-content-body">${content}</div>`;
+    // **SECURITY FIX: Separate title and content handling**
+    const titleElement = elements.modalContent.querySelector('h2');
+    const contentElement = elements.modalContent.querySelector('.modal-content-body');
+
+    if (!contentElement) { // Create content body if it doesn't exist
+        const newContentElement = document.createElement('div');
+        newContentElement.className = 'modal-content-body';
+        titleElement.after(newContentElement);
+    }
+    
+    // Safely set the title using textContent
+    titleElement.textContent = title;
+
+    // Clear previous content
+    const bodyElement = elements.modalContent.querySelector('.modal-content-body');
+    bodyElement.innerHTML = ''; 
+
+    // Handle content safely
+    if (typeof content === 'string') {
+        // This is still potentially unsafe if the string contains HTML.
+        // Functions calling showModal with HTML strings need to be refactored.
+        bodyElement.innerHTML = content;
+    } else if (content instanceof HTMLElement) {
+        // If content is a DOM element, it's safe to append
+        bodyElement.appendChild(content);
+    }
+
+    // Handle actions
     elements.modalActions.innerHTML = actions.map(action =>
         `<button class="${action.class}" data-action="closeModal">${action.text}</button>`
     ).join('');
