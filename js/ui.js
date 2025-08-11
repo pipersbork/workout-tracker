@@ -148,8 +148,6 @@ export function renderOnboardingStep() {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
     elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
 
-    // FIX: Reverted to the original, robust logic for handling shimmer and step classes.
-    // This ensures proper cleanup and display during transitions.
     const shimmer = elements.onboardingProgressBarContainer.querySelector('.shimmer-wrapper');
     if (currentStep === totalSteps) {
         if (!shimmer) {
@@ -164,7 +162,8 @@ export function renderOnboardingStep() {
     }
 
     document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('active', 'fade-out'); // This is the key fix for cleanup
+        // This is the crucial fix: remove old classes before adding the new one.
+        step.classList.remove('active', 'fade-out');
         if (parseInt(step.dataset.step) === currentStep) {
             step.classList.add('active');
         }
