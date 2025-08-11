@@ -472,53 +472,6 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
     .container, #daily-workout-view, #performance-summary-view, #settings-view { padding: 1rem; padding-bottom: 90px; } 
     .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } 
     .back-btn { top: 1rem; left: 1rem; } 
-    .home-icon-btn {
-        position: static; /* Overwrite absolute positioning */
-        margin-top: 1.5rem;
-    }
-
-    /* Thumb-Friendly Bottom Navigation */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        background: var(--color-surface-secondary);
-        padding: 0.5rem;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-        z-index: 100;
-    }
-    .home-nav-buttons {
-        flex-direction: row;
-        gap: 0.5rem;
-        margin-top: 0;
-        max-width: 100%;
-    }
-    .home-nav-btn {
-        flex-direction: column;
-        padding: 0.5rem;
-        height: 70px;
-    }
-     .home-nav-btn .hub-option-icon {
-        margin-right: 0;
-        margin-bottom: 0.25rem;
-    }
-    .home-nav-btn .hub-option-text h3 {
-        font-size: 0.8rem;
-        text-align: center;
-    }
-    #home-screen .home-nav-buttons {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 0.5rem;
-        background: var(--color-surface-secondary);
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-    }
 }
 
 /* ===========================
@@ -719,4 +672,3 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
   visibility: visible;
   transform: translateY(0);
 }
-
