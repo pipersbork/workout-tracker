@@ -433,7 +433,12 @@ select.builder-select { background-color: var(--color-surface-tertiary); color: 
 .toggle-switch { display: flex; background-color: var(--color-surface-tertiary); border-radius: 8px; padding: 4px; border: 1px solid var(--color-border-primary); position: relative; }
 .toggle-btn { flex: 1; background-color: transparent; border: none; color: var(--color-text-secondary); padding: 0.75rem 0.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-family); font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease; text-align: center; z-index: 1; }
 .toggle-btn:hover { color: var(--color-text-primary); }
-.toggle-btn.active { color: var(--color-text-primary); font-weight: 600; }
+.toggle-btn.active {
+    background-color: var(--color-accent-primary);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 191, 255, 0.3);
+}
 #plan-management-list .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border-primary); }
 #plan-management-list .plan-item:last-child { border-bottom: none; }
 #plan-management-list .plan-item.active .plan-name-text { color: var(--color-accent-primary); font-weight: 600; }
@@ -467,7 +472,10 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
     .container, #daily-workout-view, #performance-summary-view, #settings-view { padding: 1rem; padding-bottom: 90px; } 
     .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } 
     .back-btn { top: 1rem; left: 1rem; } 
-    .home-icon-btn { top: 1rem; right: 1rem; }
+    .home-icon-btn {
+        position: static; /* Overwrite absolute positioning */
+        margin-top: 1.5rem;
+    }
 
     /* Thumb-Friendly Bottom Navigation */
     .bottom-nav {
