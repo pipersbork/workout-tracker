@@ -10,14 +10,13 @@ import { showModal } from './ui.js';
  */
 
 // --- FIREBASE CONFIGURATION ---
-// The configuration is now securely loaded from environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
+  authDomain: "progression-700a3.firebaseapp.com",
+  projectId: "progression-700a3",
+  storageBucket: "progression-700a3.firebasestorage.app",
+  messagingSenderId: "525938060953",
+  appId: "1:525938060953:web:e453db795cd89aabc15208"
 };
 
 // --- FIREBASE INITIALIZATION ---
