@@ -423,58 +423,68 @@ export function findLastPerformance(exerciseId) {
 }
 
 
-// --- ONBOARDING FUNCTIONS (FIXED) ---
+// --- ONBOARDING FUNCTIONS ---
 
 function selectOnboardingCard(element, field, value) {
-    selectCard(element, field, value); // This also adds the 'active' class
-    setTimeout(nextOnboardingStep, 300); // Wait for animation before proceeding
+    selectCard(element, field, value);
+    // Use a small delay to allow the card selection animation to be seen
+    setTimeout(nextOnboardingStep, 250);
 }
 
 async function nextOnboardingStep() {
-    // FIXED: Simplified without problematic handleStepTransition
-    state.onboarding.totalSteps = 7;
-
-    if (state.onboarding.currentStep < state.onboarding.totalSteps) {
-        state.onboarding.currentStep++;
-    }
-    
-    if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-        const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
-        const newPlan = {
-            id: `meso_${Date.now()}`,
-            name: "My First Intelligent Plan",
-            startDate: new Date().toISOString(),
-            durationWeeks: 4,
-            ...newMeso
-        };
-
-        state.allPlans.push(newPlan);
-        state.activePlanId = newPlan.id;
-        state.userSelections.onboardingCompleted = true;
-        
-        await firebase.saveState();
-        
-        setTimeout(() => {
-            triggerHapticFeedback('success');
-            ui.showModal(
-                'Plan Generated!',
-                'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
-            );
-        }, 1000); // Wait for shimmer animation
+    const currentStepEl = document.querySelector('.step.active');
+    if (currentStepEl) {
+        currentStepEl.classList.add('fade-out');
     }
 
-    // Direct call to render - no transition wrapper
-    ui.renderOnboardingStep();
+    // This timeout allows the fade-out animation to complete before changing the content.
+    setTimeout(async () => {
+        if (state.onboarding.currentStep < state.onboarding.totalSteps) {
+            state.onboarding.currentStep++;
+        }
+
+        if (state.onboarding.currentStep === state.onboarding.totalSteps) {
+            // Final step logic
+            const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
+            const newPlan = {
+                id: `meso_${Date.now()}`,
+                name: "My First Intelligent Plan",
+                startDate: new Date().toISOString(),
+                durationWeeks: 4,
+                ...newMeso
+            };
+            state.allPlans.push(newPlan);
+            state.activePlanId = newPlan.id;
+            state.userSelections.onboardingCompleted = true;
+            await firebase.saveState();
+
+            setTimeout(() => {
+                triggerHapticFeedback('success');
+                ui.showModal(
+                    'Plan Generated!',
+                    'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
+                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
+                );
+            }, 1200);
+        }
+        ui.renderOnboardingStep();
+    }, 400); // This duration should match your fadeOut animation time
 }
 
 function previousOnboardingStep() {
-    // FIXED: Simplified without problematic handleStepTransition
-    if (state.onboarding.currentStep > 1) {
-        state.onboarding.currentStep--;
+    const currentStepEl = document.querySelector('.step.active');
+    if (currentStepEl) {
+        currentStepEl.classList.add('fade-out');
     }
-    ui.renderOnboardingStep();
+
+    setTimeout(() => {
+        if (state.onboarding.currentStep > 1) {
+            state.onboarding.currentStep--;
+        }
+        ui.renderOnboardingStep();
+    }, 400);
 }
+
 
 // --- FEEDBACK TRIGGER LOGIC ---
 
