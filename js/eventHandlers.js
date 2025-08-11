@@ -425,26 +425,40 @@ export function findLastPerformance(exerciseId) {
 
 // --- ONBOARDING FUNCTIONS ---
 
+/**
+ * Handles the visual transition between onboarding steps.
+ * @param {Function} stepChangeLogic - The logic to run after the fade-out animation.
+ */
+function handleStepTransition(stepChangeLogic) {
+    const currentStepEl = document.querySelector('.step.active');
+    if (currentStepEl) {
+        currentStepEl.classList.add('fade-out');
+        // Wait for the animation to finish before changing the content
+        setTimeout(() => {
+            stepChangeLogic();
+            ui.renderOnboardingStep();
+        }, 500); // This duration must match the CSS animation duration
+    } else {
+        // If there's no active step, just run the logic immediately
+        stepChangeLogic();
+        ui.renderOnboardingStep();
+    }
+}
+
 function selectOnboardingCard(element, field, value) {
     selectCard(element, field, value);
-    // Use a small delay to allow the card selection animation to be seen
+    // Add a slight delay to let the user see their selection before transitioning
     setTimeout(nextOnboardingStep, 250);
 }
 
 async function nextOnboardingStep() {
-    const currentStepEl = document.querySelector('.step.active');
-    if (currentStepEl) {
-        currentStepEl.classList.add('fade-out');
-    }
-
-    // This timeout allows the fade-out animation to complete before changing the content.
-    setTimeout(async () => {
+    handleStepTransition(async () => {
         if (state.onboarding.currentStep < state.onboarding.totalSteps) {
             state.onboarding.currentStep++;
         }
-
+        
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // Final step logic
+            // This is the final "Building your plan..." step
             const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
             const newPlan = {
                 id: `meso_${Date.now()}`,
@@ -457,7 +471,8 @@ async function nextOnboardingStep() {
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
             await firebase.saveState();
-
+            
+            // Wait for the shimmer animation on the progress bar before showing the final modal
             setTimeout(() => {
                 triggerHapticFeedback('success');
                 ui.showModal(
@@ -467,22 +482,15 @@ async function nextOnboardingStep() {
                 );
             }, 1200);
         }
-        ui.renderOnboardingStep();
-    }, 400); // This duration should match your fadeOut animation time
+    });
 }
 
 function previousOnboardingStep() {
-    const currentStepEl = document.querySelector('.step.active');
-    if (currentStepEl) {
-        currentStepEl.classList.add('fade-out');
-    }
-
-    setTimeout(() => {
+    handleStepTransition(() => {
         if (state.onboarding.currentStep > 1) {
             state.onboarding.currentStep--;
         }
-        ui.renderOnboardingStep();
-    }, 400);
+    });
 }
 
 
