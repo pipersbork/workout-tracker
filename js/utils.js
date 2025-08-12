@@ -1,18 +1,23 @@
 import { state } from './state.js';
+// Import DOMPurify for robust input sanitization.
+// We'll load this globally in index.html for simplicity.
 
 /**
  * @file utils.js contains small, reusable helper functions used throughout the application.
  */
 
 /**
- * NEW: Sanitizes a string by removing HTML tags to prevent XSS attacks.
+ * Sanitizes a string by removing HTML tags to prevent XSS attacks.
+ * Now uses the DOMPurify library for a more robust solution.
  * @param {string} str - The input string from a user.
  * @returns {string} The sanitized string.
  */
 export function sanitizeInput(str) {
-    if (typeof str !== 'string') return '';
-    // This regex finds anything that looks like an HTML tag and removes it.
-    return str.replace(/<[^>]*>?/gm, '');
+    if (typeof str !== 'string' || !window.DOMPurify) {
+        console.error("DOMPurify is not available. Please make sure the script is loaded.");
+        return '';
+    }
+    return window.DOMPurify.sanitize(str, { USE_PROFILES: { html: false } });
 }
 
 
