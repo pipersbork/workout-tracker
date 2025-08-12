@@ -61,9 +61,11 @@ export async function saveFullState() {
     try {
         const userDocRef = doc(db, "users", state.userId);
         await setDoc(userDocRef, dataToSave);
+        return true;
     } catch (error) {
         console.error("Error saving full state to Firestore:", error);
         showModal('Sync Error', 'Could not save your data to the cloud. You may be offline or have a permissions issue.', [{ text: 'OK', class: 'cta-button' }]);
+        return false;
     }
 }
 
@@ -72,6 +74,7 @@ export async function saveFullState() {
  * This is much more efficient than saving the entire state for small changes.
  * @param {string} key - The top-level key in the state object to update (e.g., 'settings').
  * @param {*} value - The new value for the key.
+ * @returns {Promise<boolean>} A promise that resolves to true if the update was successful, false otherwise.
  */
 export async function updateState(key, value) {
     if (!state.userId) return;
@@ -91,9 +94,11 @@ export async function updateState(key, value) {
     try {
         const userDocRef = doc(db, "users", state.userId);
         await updateDoc(userDocRef, { [key]: value });
+        return true;
     } catch (error) {
         console.error(`Error updating '${key}' in Firestore:`, error);
         showModal('Sync Error', `Could not update your settings. You may be offline or have a permissions issue.`, [{ text: 'OK', class: 'cta-button' }]);
+        return false;
     }
 }
 
