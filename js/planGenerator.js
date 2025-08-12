@@ -28,6 +28,41 @@ const EXERCISE_COUNT_PER_SESSION = {
 export const workoutEngine = {
 
     /**
+     * NEW: Adjusts the current day's workout based on user-reported recovery metrics.
+     * @param {number} sleep - Hours of sleep reported by the user.
+     * @param {number} stress - Stress level (1-10) reported by the user.
+     * @returns {boolean} True if the workout was adjusted, false otherwise.
+     */
+    adjustWorkoutForRecovery(sleep, stress) {
+        const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
+        if (!activePlan) return false;
+
+        const { week, day } = state.currentView;
+        const workout = activePlan.weeks[week]?.[day];
+        if (!workout) return false;
+
+        const sleepThreshold = 6; // Less than 6 hours is considered low
+        const stressThreshold = 7; // 7 or higher is considered high
+        let adjustmentMade = false;
+
+        if (sleep < sleepThreshold || stress >= stressThreshold) {
+            workout.exercises.forEach(exercise => {
+                // Reduce target sets by 1, but not below a minimum of 2 sets.
+                if (exercise.targetSets > 2) {
+                    exercise.targetSets -= 1;
+                    adjustmentMade = true;
+                }
+            });
+        }
+        
+        if(adjustmentMade) {
+            console.log("Workout adjusted for recovery. New sets:", workout.exercises.map(e => e.targetSets));
+        }
+
+        return adjustmentMade;
+    },
+
+    /**
      * Generates a real-time recommendation for the next set based on the performance of the last set.
      * @param {object} completedSet - The set object that was just completed by the user.
      * @param {object} exercise - The full exercise object from the current workout plan.
