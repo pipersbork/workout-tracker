@@ -13,12 +13,10 @@ import { state } from './state.js';
  * @returns {string} The sanitized string.
  */
 export function sanitizeInput(str) {
-    if (typeof str !== 'string' || !window.DOMPurify) {
-        console.error("DOMPurify is not available. Please make sure the script is loaded.");
-        return '';
-    }
-    return window.DOMPurify.sanitize(str, { USE_PROFILES: { html: false } });
-}
+    if (typeof str !== 'string') return '';
+    // This regex finds anything that looks like an HTML tag and removes it.
+    return str.replace(/<[^>]*>?/gm, '');
+}}
 
 
 /**
