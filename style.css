@@ -437,3 +437,51 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
   font-weight: 700;
   animation: fadeIn 0.5s ease-out;
 }
+
+/* ===========================
+  NEW TOAST NOTIFICATION STYLES
+=========================== */
+.toast {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  text-align: center;
+  border-radius: 8px;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1001;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0;
+  transition: visibility 0.5s, opacity 0.5s, bottom 0.5s;
+}
+
+.toast.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}
+
+.toast.success {
+  background-color: var(--color-state-success);
+  color: #fff;
+}
+.toast.warning {
+  background-color: var(--color-state-warning);
+  color: #fff;
+}
+.toast.error {
+  background-color: var(--color-state-error);
+  color: #fff;
+}
+.toast.info {
+  background-color: var(--color-accent-primary);
+  color: #fff;
+}
