@@ -311,7 +311,7 @@ function setChartType(chartType) {
     const toggleButtons = document.querySelectorAll('.chart-toggle-switch .toggle-btn');
 
     toggleButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.chart-type === chartType);
+        btn.classList.toggle('active', btn.dataset.chartType === chartType);
     });
 
     weightContainer.classList.toggle('hidden', chartType !== 'weight');
@@ -439,6 +439,45 @@ function exportData() {
     downloadAnchorNode.remove();
     ui.showModal("Backup Complete!", "Your workout data has been successfully downloaded. Keep this file safe!", [{ text: 'OK', class: 'cta-button' }]);
 }
+
+function confirmResetApp() {
+    ui.showModal('Reset All Data?', 'Are you sure you want to permanently delete all your data and start over? This cannot be undone.', [
+        { text: 'Cancel', class: 'secondary-button' },
+        { text: 'Yes, Reset', class: 'cta-button', action: () => resetAppData() }
+    ]);
+}
+
+async function resetAppData() {
+    triggerHapticFeedback('error');
+    state.userSelections = {
+        goal: 'hypertrophy',
+        trainingAge: 'beginner',
+        daysPerWeek: 4,
+        dietaryStatus: 'maintenance',
+        style: 'gym',
+        onboardingCompleted: false,
+    };
+    state.settings = {
+        units: 'lbs',
+        theme: 'dark',
+        progressionModel: 'double',
+        weightIncrement: 5,
+        restDuration: 90,
+        haptics: true,
+    };
+    state.allPlans = [];
+    state.activePlanId = null;
+    state.editingPlanId = null;
+    state.workoutHistory = [];
+    state.personalRecords = [];
+    state.dailyCheckinHistory = [];
+    state.currentView = { week: 1, day: 1 };
+
+    await firebase.saveFullState();
+    ui.closeModal();
+    ui.showModal("App Reset", "All your data has been deleted. You will now be taken to the onboarding screen.", [{ text: 'OK', class: 'cta-button', action: () => ui.showView('onboarding') }]);
+}
+
 
 export function findLastPerformance(exerciseId) {
     for (const historyItem of state.workoutHistory) {
@@ -821,5 +860,10 @@ export function initEventListeners() {
     document.getElementById('export-data-btn')?.addEventListener('click', () => {
         triggerHapticFeedback('light');
         exportData();
+    });
+
+    document.getElementById('reset-app-btn')?.addEventListener('click', () => {
+        triggerHapticFeedback('heavy');
+        confirmResetApp();
     });
 }
