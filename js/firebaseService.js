@@ -11,7 +11,9 @@ import { showModal } from './ui.js';
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  // NOTE: This API key is intentionally hardcoded to make the app work in the local environment without a build tool.
+  // The Firebase security rules still protect the data from unauthorized access.
+  apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
   projectId: "progression-700a3",
   storageBucket: "progression-700a3.firebasestorage.app",
