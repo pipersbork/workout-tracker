@@ -2,26 +2,16 @@
   "name": "workout-tracker",
   "version": "1.0.0",
   "description": "",
-  "main": "js/main.js",
+  "main": "service-worker.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "test": "echo \"No tests specified\" && exit 0",
-    "lint": "eslint . --ext js --fix",
-    "format": "prettier --write .",
-    "prepare": "husky",
-    "ci": "npm run lint && npm run test"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "dotenv": "^17.2.1",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "husky": "^9.0.11",
-    "prettier": "^3.3.3",
     "vite": "^7.1.1"
   }
 }
