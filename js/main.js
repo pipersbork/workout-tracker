@@ -1,6 +1,6 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-import { applyTheme, showView, showModal } from './ui.js';
+import { applyTheme, showView, showModal, initUI } from './ui.js';
 import { state } from './state.js';
 
 /**
@@ -23,6 +23,9 @@ window.onerror = function(message, source, lineno, colno, error) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // CRITICAL FIX: Initialize UI elements only after the DOM is fully loaded.
+    initUI();
+
     // Register the service worker for offline functionality
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
