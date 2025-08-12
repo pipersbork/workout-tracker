@@ -410,6 +410,31 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
+/**
+ * Creates and downloads a JSON file containing the user's data.
+ */
+function exportData() {
+    // Create a data object with only the essential user data
+    const userData = {
+        userSelections: state.userSelections,
+        settings: state.settings,
+        allPlans: state.allPlans,
+        workoutHistory: state.workoutHistory,
+        personalRecords: state.personalRecords,
+        savedTemplates: state.savedTemplates,
+        dailyCheckinHistory: state.dailyCheckinHistory
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "progression_backup_" + new Date().toISOString().slice(0,10) + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    ui.showModal("Backup Complete!", "Your workout data has been successfully downloaded. Keep this file safe!", [{ text: 'OK', class: 'cta-button' }]);
+}
+
 export function findLastPerformance(exerciseId) {
     for (const historyItem of state.workoutHistory) {
         const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
@@ -787,5 +812,9 @@ export function initEventListeners() {
         const target = e.target.closest('[data-tooltip]');
         if (target) ui.hideTooltip();
     });
-}
 
+    document.getElementById('export-data-btn')?.addEventListener('click', () => {
+        triggerHapticFeedback('light');
+        exportData();
+    });
+}
