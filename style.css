@@ -165,7 +165,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 /* ===========================
   COMPONENTS (Buttons, Modal)
 =========================== */
-.cta-button, .secondary-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.cta-button, .secondary-button { border: none; border-radius: 8-x; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
 .cta-button { background-color: var(--color-accent-primary); color: #fff; }
 .cta-button:hover { background-color: var(--color-accent-secondary); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 191, 255, 0.2); }
 .cta-button:active, .secondary-button:active { transform: scale(0.98); }
@@ -182,7 +182,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .modal.active .modal-content { transform: scale(1); }
 .modal-content .close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--color-text-secondary); cursor: pointer; transition: color 0.2s ease; }
 .modal-content .close-btn:hover { color: var(--color-text-primary); }
-.modal .card-group { grid-template-columns: repeat(auto-fit, min (100px, 1fr)); }
+.modal .card-group { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
 .modal-body h2 { margin-top: 0.5rem; }
 .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .modal-actions.vertical { flex-direction: column; }
