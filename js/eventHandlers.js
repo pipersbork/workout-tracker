@@ -1,4 +1,3 @@
-
 import { state } from './state.js';
 import * as ui from './ui.js';
 import * as firebase from './firebaseService.js';
@@ -801,14 +800,16 @@ export function initEventListeners() {
         if (hubAction === 'premade' || hubAction === 'custom') ui.showModal('Coming Soon!', 'This feature is currently under development.');
     });
 
-    // Debounced input event listener for real-time saving
+    // Debounced input event listener for real-time saving of workout progress.
+    // This is more efficient than saving the entire state.
     let saveTimeout;
     const saveDelay = 1000; // 1 second debounce
     document.body.addEventListener('input', e => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                firebase.saveFullState();
+                // Only save the 'allPlans' object, as that's what's being modified.
+                firebase.updateState('allPlans', state.allPlans);
             }, saveDelay);
         }
     });
