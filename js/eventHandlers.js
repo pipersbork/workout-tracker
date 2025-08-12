@@ -196,6 +196,87 @@ function checkForPRs(completedWorkout) {
     return newPRsCount;
 }
 
+/**
+ * NEW: Finds the most recent previous instance of the same workout.
+ * @param {string} planId - The ID of the current plan.
+ * @param {string} workoutName - The name of the workout to find.
+ * @returns {object|null} The previous workout history entry, or null if not found.
+ */
+function findPreviousWorkout(planId, workoutName) {
+    // Find the most recent entry in history that matches the plan and workout name.
+    return state.workoutHistory.find(entry => entry.planId === planId && entry.workoutName === workoutName) || null;
+}
+
+
+async function completeWorkout() {
+    triggerHapticFeedback('success');
+    stopStopwatch();
+    ui.closeModal();
+
+    const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
+    if (planIndex === -1) return;
+
+    const activePlan = state.allPlans[planIndex];
+    const { week, day } = state.currentView;
+    const workout = activePlan.weeks[week][day];
+
+    workout.completed = true;
+    workout.completedDate = new Date().toISOString();
+    
+    state.workoutTimer.isWorkoutInProgress = false;
+    
+    const newPRsCount = checkForPRs(workout);
+    state.workoutSummary.newPRs = newPRsCount;
+
+    const totalSeconds = state.workoutTimer.elapsed;
+    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0), 0);
+    const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+
+    // NEW: Compare with previous workout
+    const previousWorkout = findPreviousWorkout(activePlan.id, workout.name);
+    if (previousWorkout) {
+        state.workoutSummary.volumeChange = totalVolume - previousWorkout.volume;
+        state.workoutSummary.setsChange = totalSets - previousWorkout.sets;
+        state.workoutSummary.durationChange = totalSeconds - previousWorkout.duration;
+    } else {
+        // Reset changes if no previous workout is found
+        state.workoutSummary.volumeChange = null;
+        state.workoutSummary.setsChange = null;
+        state.workoutSummary.durationChange = null;
+    }
+
+    state.workoutSummary.totalVolume = totalVolume;
+    state.workoutSummary.totalSets = totalSets;
+    state.workoutSummary.mesocycleStats = calculateMesocycleStats();
+
+    const historyEntry = {
+        id: `hist_${Date.now()}`,
+        planId: activePlan.id,
+        planName: activePlan.name,
+        workoutName: workout.name,
+        completedDate: new Date().toISOString(),
+        duration: totalSeconds,
+        volume: totalVolume,
+        sets: totalSets,
+        exercises: JSON.parse(JSON.stringify(workout.exercises))
+    };
+    state.workoutHistory.unshift(historyEntry);
+
+    const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
+    if (nextWeekWorkout) {
+        workoutEngine.calculateNextWorkoutProgression(workout, nextWeekWorkout);
+        state.workoutSummary.suggestions = generateProgressionSuggestions(workout, nextWeekWorkout);
+    } else {
+        state.workoutSummary.suggestions = [];
+    }
+    
+    ui.showView('workoutSummary');
+    findAndSetNextWorkout();
+    await firebase.saveFullState(); // Use full save after a workout as many things change
+}
+
+// ... (rest of the file is unchanged) ...
+
 function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     if (!nextWeekWorkout) return [];
     const suggestions = [];
@@ -249,61 +330,6 @@ function calculateMesocycleStats() {
     });
 
     return { total, completed, incomplete: total - completed };
-}
-
-
-async function completeWorkout() {
-    triggerHapticFeedback('success');
-    stopStopwatch();
-    ui.closeModal();
-
-    const planIndex = state.allPlans.findIndex(p => p.id === state.activePlanId);
-    if (planIndex === -1) return;
-
-    const activePlan = state.allPlans[planIndex];
-    const { week, day } = state.currentView;
-    const workout = activePlan.weeks[week][day];
-
-    workout.completed = true;
-    workout.completedDate = new Date().toISOString();
-    
-    state.workoutTimer.isWorkoutInProgress = false;
-    
-    const newPRsCount = checkForPRs(workout);
-    state.workoutSummary.newPRs = newPRsCount;
-
-    const totalSeconds = state.workoutTimer.elapsed;
-    const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0), 0);
-    const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
-
-    state.workoutSummary.totalVolume = totalVolume;
-    state.workoutSummary.totalSets = totalSets;
-    state.workoutSummary.mesocycleStats = calculateMesocycleStats();
-
-    const historyEntry = {
-        id: `hist_${Date.now()}`,
-        planId: activePlan.id,
-        planName: activePlan.name,
-        workoutName: workout.name,
-        completedDate: new Date().toISOString(),
-        duration: totalSeconds,
-        volume: totalVolume,
-        sets: totalSets,
-        exercises: JSON.parse(JSON.stringify(workout.exercises))
-    };
-    state.workoutHistory.unshift(historyEntry);
-
-    const nextWeekWorkout = activePlan.weeks[week + 1]?.[day];
-    if (nextWeekWorkout) {
-        workoutEngine.calculateNextWorkoutProgression(workout, nextWeekWorkout);
-        state.workoutSummary.suggestions = generateProgressionSuggestions(workout, nextWeekWorkout);
-    } else {
-        state.workoutSummary.suggestions = [];
-    }
-    
-    ui.showView('workoutSummary');
-    findAndSetNextWorkout();
-    await firebase.saveFullState(); // Use full save after a workout as many things change
 }
 
 function setChartType(chartType) {
