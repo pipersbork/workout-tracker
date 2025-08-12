@@ -583,6 +583,7 @@ async function submitCheckin() {
     await firebase.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
     ui.closeDailyCheckinModal();
 
+    state.workoutTimer.isWorkoutInProgress = true;
     if (!state.workoutTimer.isRunning) startStopwatch();
     ui.showView('workout');
 }
