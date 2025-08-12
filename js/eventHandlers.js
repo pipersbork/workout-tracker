@@ -311,7 +311,7 @@ function setChartType(chartType) {
     const toggleButtons = document.querySelectorAll('.chart-toggle-switch .toggle-btn');
 
     toggleButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.chartType === chartType);
+        btn.classList.toggle('active', btn.dataset.chart-type === chartType);
     });
 
     weightContainer.classList.toggle('hidden', chartType !== 'weight');
