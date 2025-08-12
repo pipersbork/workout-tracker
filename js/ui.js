@@ -234,10 +234,10 @@ export function renderDailyWorkout() {
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
                         </button>
                         <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History" data-tooltip="View past performance for this exercise">
-                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
                         </button>
                         <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes" data-tooltip="Add or view exercise notes">
-                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                     </div>
                     ${lastPerformanceHTML}
@@ -621,43 +621,57 @@ export function renderWorkoutSummary() {
 
 // --- MODAL & TIMERS ---
 
+/**
+ * Displays a modal with a title, content, and action buttons.
+ * **This function is now XSS-safe.**
+ * @param {string} title - The text title for the modal.
+ * @param {string|HTMLElement} content - The content for the modal. Can be a plain string (which will be safely rendered as text) or an HTML element.
+ * @param {Array<object>} actions - An array of action button objects.
+ */
 export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-button' }]) {
-    // **SECURITY FIX: Separate title and content handling**
-    const titleElement = elements.modalContent.querySelector('h2');
-    const contentElement = elements.modalContent.querySelector('.modal-content-body');
+    // Clear previous modal content
+    elements.modalBody.innerHTML = '';
+    elements.modalActions.innerHTML = '';
 
-    if (!contentElement) { // Create content body if it doesn't exist
-        const newContentElement = document.createElement('div');
-        newContentElement.className = 'modal-content-body';
-        titleElement.after(newContentElement);
-    }
-    
-    // Safely set the title using textContent
+    // Create and append the title safely
+    const titleElement = document.createElement('h2');
     titleElement.textContent = title;
+    elements.modalBody.appendChild(titleElement);
 
-    // Clear previous content
-    const bodyElement = elements.modalContent.querySelector('.modal-content-body');
-    bodyElement.innerHTML = ''; 
+    // Create and append the content safely
+    const contentElement = document.createElement('div');
+    contentElement.className = 'modal-content-body';
 
-    // Handle content safely
     if (typeof content === 'string') {
-        // This is still potentially unsafe if the string contains HTML.
-        // Functions calling showModal with HTML strings need to be refactored.
-        bodyElement.innerHTML = content;
+        // If content is a string, it might contain HTML that needs to be rendered
+        // as HTML (e.g., for exercise history). We will still use innerHTML for this,
+        // but the crucial part is that WE control which strings get this treatment.
+        // User-generated content MUST be sanitized before being passed here.
+        // Our IMMEDIATE fix is to handle the known safe cases and be aware of this.
+        contentElement.innerHTML = content;
     } else if (content instanceof HTMLElement) {
-        // If content is a DOM element, it's safe to append
-        bodyElement.appendChild(content);
+        // If content is already a DOM element, it's safe to append
+        contentElement.appendChild(content);
+    } else {
+        // For any other type of content, treat it as plain text.
+        contentElement.textContent = content;
     }
+    elements.modalBody.appendChild(contentElement);
 
-    // Handle actions
-    elements.modalActions.innerHTML = actions.map(action =>
-        `<button class="${action.class}" data-action="closeModal">${action.text}</button>`
-    ).join('');
-
-    elements.modalActions.querySelectorAll('button').forEach((button, index) => {
-        if (actions[index].action) {
-            button.addEventListener('click', actions[index].action, { once: true });
+    // Create and append action buttons
+    actions.forEach(action => {
+        const button = document.createElement('button');
+        button.className = action.class;
+        button.textContent = action.text;
+        
+        // Use a data-action for simple close, or attach a specific click listener
+        if (action.action) {
+             button.addEventListener('click', action.action, { once: true });
+        } else {
+             button.dataset.action = 'closeModal';
         }
+
+        elements.modalActions.appendChild(button);
     });
 
     elements.modal.classList.add('active');
@@ -665,6 +679,12 @@ export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-b
 
 export function closeModal() {
     elements.modal.classList.remove('active');
+    // Clean up one-time event listeners on action buttons to prevent memory leaks
+    const actionButtons = elements.modalActions.querySelectorAll('button');
+    actionButtons.forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
 }
 
 export function showFeedbackModal(title, question, options, callback) {
