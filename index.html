@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
+    <!-- Added Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     </head>
 <body>
     <!-- Added for confetti animation -->
@@ -253,9 +256,7 @@
                 <section class="summary-section">
                     <h3>Volume by Muscle Group</h3>
                     <div class="chart-container">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            Charts will be available in a future update
-                        </div>
+                        <canvas id="volume-chart"></canvas>
                     </div>
                 </section>
                 <section class="summary-section">
@@ -266,14 +267,10 @@
                         <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
                     </div>
                     <div id="weight-chart-container" class="chart-container">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            Progress charts will be available in a future update
-                        </div>
+                        <canvas id="weight-progress-chart"></canvas>
                     </div>
                     <div id="e1rm-chart-container" class="chart-container hidden">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            E1RM charts will be available in a future update
-                        </div>
+                        <canvas id="e1rm-progress-chart"></canvas>
                     </div>
                 </section>
                 <section class="summary-section">
