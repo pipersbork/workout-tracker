@@ -267,6 +267,8 @@ async function completeWorkout() {
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
     
+    state.workoutTimer.isWorkoutInProgress = false;
+    
     const newPRsCount = checkForPRs(workout);
     state.workoutSummary.newPRs = newPRsCount;
 
@@ -472,6 +474,7 @@ async function resetAppData() {
     state.personalRecords = [];
     state.dailyCheckinHistory = [];
     state.currentView = { week: 1, day: 1 };
+    state.workoutTimer.isWorkoutInProgress = false;
 
     await firebase.saveFullState();
     ui.closeModal();
@@ -594,7 +597,13 @@ async function startPlanWorkout(planId) {
     await firebase.updateState('activePlanId', state.activePlanId);
     const workoutFound = findAndSetNextWorkout(planId);
     if (workoutFound) {
-        ui.showDailyCheckinModal();
+        if (state.workoutTimer.isWorkoutInProgress) {
+            // If a workout is already in progress, go straight to it.
+            ui.showView('workout');
+        } else {
+            // Otherwise, show the daily check-in modal.
+            ui.showDailyCheckinModal();
+        }
     }
 }
 
