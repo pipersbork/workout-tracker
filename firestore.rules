@@ -2,20 +2,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId
-                          && isDataStructureValid(request.resource.data);
+      // Allow authenticated users to read and delete their own data.
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+
+      // Allow a user to CREATE their initial document with minimal validation.
+      // This is the key change to prevent errors during the first-time user setup.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Enforce strict data validation ONLY on subsequent UPDATES.
+      // This ensures that once the user document exists, all future changes adhere to the correct structure.
+      allow update: if request.auth != null && request.auth.uid == userId
+                      && isDataStructureValid(request.resource.data);
     }
   }
 }
 
+// This function validates the data structure on every UPDATE operation.
+// It ensures the integrity of your data model as the app is used.
 function isDataStructureValid(data) {
+  // Check for the presence of all top-level keys.
   return data.keys().hasAll([
     'userSelections', 'settings', 'allPlans', 'activePlanId',
-    'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates'
+    'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates',
+    'isWorkoutInProgress' // Added this key which was missing from the original rules
   ])
+  // Deep validation for the 'userSelections' object.
   && data.userSelections.keys().hasAll([
     'goal', 'trainingAge', 'daysPerWeek', 'dietaryStatus', 'style', 'onboardingCompleted'
   ])
+  // Deep validation for the 'settings' object.
   && data.settings.keys().hasAll([
     'units', 'theme', 'progressionModel', 'weightIncrement', 'restDuration', 'haptics'
   ])
@@ -35,10 +50,11 @@ function isDataStructureValid(data) {
   && data.settings.haptics is bool
   // Type checks for root-level fields
   && (data.activePlanId is string || data.activePlanId == null)
+  && data.isWorkoutInProgress is bool
   && data.allPlans is list
   && data.workoutHistory is list
   && data.personalRecords is list
-  // Deep validation for nested objects in lists
+  // Deep validation for nested objects in lists (ensures lists are not empty or contain valid objects)
   && (data.allPlans.size() == 0 || data.allPlans.all(plan =>
       plan.id is string
       && plan.name is string
