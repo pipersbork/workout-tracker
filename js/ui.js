@@ -32,6 +32,11 @@ export const elements = {
     stressLabel: document.getElementById('stress-label'),
     homeWorkoutTitle: document.getElementById('home-workout-title'),
     homeWorkoutIcon: document.getElementById('home-workout-icon'),
+    toast: document.getElementById('toast'),
+    toastMessage: document.getElementById('toast-message'),
+    toastIcon: document.getElementById('toast-icon'),
+    saveIndicator: document.getElementById('save-indicator'),
+    offlineToast: document.getElementById('offline-toast'),
 };
 
 let currentTooltip = null;
@@ -58,6 +63,9 @@ export function showView(viewName, skipAnimation = false) {
         settings: elements.settingsView,
         workoutSummary: elements.workoutSummaryView,
     };
+
+    // Update the document title
+    document.title = `Progression - ${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`;
 
     // Hide all views
     Object.values(views).forEach(view => {
@@ -581,7 +589,7 @@ function formatTime(seconds) {
 }
 
 /**
- * Updates the stopwatch display
+ * Updates the stopwatch display and document title
  */
 export function updateStopwatchDisplay() {
     if (!elements.workoutStopwatchDisplay) return;
@@ -590,6 +598,7 @@ export function updateStopwatchDisplay() {
         const elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
         state.workoutTimer.elapsed = elapsed;
         elements.workoutStopwatchDisplay.textContent = formatTime(elapsed);
+        document.title = `Workout - ${formatTime(elapsed)}`;
     } else {
         elements.workoutStopwatchDisplay.textContent = formatTime(state.workoutTimer.elapsed);
     }
@@ -737,5 +746,54 @@ export function hideTooltip() {
     if (currentTooltip) {
         currentTooltip.remove();
         currentTooltip = null;
+    }
+}
+
+export function showToast(message, icon) {
+    elements.toastMessage.textContent = message;
+    elements.toastIcon.innerHTML = icon;
+    elements.toast.classList.remove('hidden');
+    elements.toast.classList.add('show');
+    setTimeout(() => {
+        elements.toast.classList.remove('show');
+        elements.toast.classList.add('hidden');
+    }, 3000);
+}
+
+export function renderWorkoutCelebration(newPRs) {
+    const title = newPRs > 0 ? "🎉 PRs Achieved!" : "Workout Complete!";
+    const content = newPRs > 0 ?
+        `Congratulations! You hit <strong>${newPRs} new Personal Record${newPRs > 1 ? 's' : ''}</strong> today! Keep up the great work.` :
+        "You crushed your workout! You can check out your progress in the Performance Summary.";
+    
+    // New celebratory modal
+    showModal(title, content, [{ text: 'View Summary', class: 'cta-button', action: () => showView('workoutSummary') }]);
+}
+
+export function toggleOfflineToast(isOffline) {
+    if (isOffline) {
+        elements.offlineToast.classList.remove('hidden');
+    } else {
+        elements.offlineToast.classList.add('hidden');
+    }
+}
+
+export function showSaveIndicator() {
+    if (elements.saveIndicator) {
+        elements.saveIndicator.classList.add('active');
+        elements.saveIndicator.textContent = 'Saving...';
+    }
+}
+
+export function hideSaveIndicator(success) {
+    if (elements.saveIndicator) {
+        elements.saveIndicator.textContent = success ? 'Saved!' : 'Save Error';
+        elements.saveIndicator.classList.remove('active');
+        elements.saveIndicator.classList.add(success ? 'success' : 'error');
+
+        setTimeout(() => {
+            elements.saveIndicator.classList.remove('success', 'error');
+            elements.saveIndicator.textContent = '';
+        }, 3000);
     }
 }
