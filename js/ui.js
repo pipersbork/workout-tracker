@@ -30,6 +30,8 @@ export const elements = {
     stressSlider: document.getElementById('stress-slider'),
     sleepLabel: document.getElementById('sleep-label'),
     stressLabel: document.getElementById('stress-label'),
+    homeWorkoutTitle: document.getElementById('home-workout-title'),
+    homeWorkoutIcon: document.getElementById('home-workout-icon'),
 };
 
 let currentTooltip = null;
@@ -77,6 +79,9 @@ export function showView(viewName, skipAnimation = false) {
             case 'onboarding':
                 renderOnboardingStep();
                 break;
+            case 'home':
+                renderHomeView();
+                break;
             case 'templatePortal':
                 renderTemplatePortal();
                 break;
@@ -95,6 +100,21 @@ export function showView(viewName, skipAnimation = false) {
         }
     }
 }
+
+/**
+ * Renders the home view, updating the button based on workout status.
+ */
+export function renderHomeView() {
+    if (!elements.homeWorkoutTitle || !elements.homeWorkoutIcon) return;
+    if (state.workoutTimer.isWorkoutInProgress) {
+        elements.homeWorkoutTitle.textContent = "Continue Workout";
+        elements.homeWorkoutIcon.textContent = "▶️";
+    } else {
+        elements.homeWorkoutTitle.textContent = "Start Next Workout";
+        elements.homeWorkoutIcon.textContent = "▶️";
+    }
+}
+
 
 /**
  * Renders the current onboarding step
