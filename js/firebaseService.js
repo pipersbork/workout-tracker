@@ -128,7 +128,7 @@ async function loadInitialState() {
                 state.workoutHistory = userData.workoutHistory || [];
                 state.personalRecords = userData.personalRecords || [];
                 state.workoutTimer.isWorkoutInProgress = userData.isWorkoutInProgress || false;
-                dataLoaded = true;
+                await saveFullState();
             }
         }
     } catch (error) {
