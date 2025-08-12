@@ -34,12 +34,11 @@ const LOCAL_STORAGE_KEY = 'progressionAppState';
 export async function saveFullState() {
     if (!state.userId) return;
 
-    // THE FIX IS HERE: Added 'savedTemplates' to match the security rules.
     const dataToSave = {
         userSelections: state.userSelections,
         settings: state.settings,
         allPlans: state.allPlans,
-        savedTemplates: state.savedTemplates, // This line was missing
+        savedTemplates: state.savedTemplates,
         activePlanId: state.activePlanId,
         currentView: state.currentView,
         workoutHistory: state.workoutHistory,
@@ -61,6 +60,7 @@ export async function saveFullState() {
         await setDoc(userDocRef, dataToSave);
     } catch (error) {
         console.error("Error saving full state to Firestore:", error);
+        showModal('Sync Error', 'Could not save your data to the cloud. You may be offline or have a permissions issue.', [{ text: 'OK', class: 'cta-button' }]);
     }
 }
 
@@ -90,7 +90,7 @@ export async function updateState(key, value) {
         await updateDoc(userDocRef, { [key]: value });
     } catch (error) {
         console.error(`Error updating '${key}' in Firestore:`, error);
-        // Optionally, notify the user of a sync failure
+        showModal('Sync Error', `Could not update your settings. You may be offline or have a permissions issue.`, [{ text: 'OK', class: 'cta-button' }]);
     }
 }
 
@@ -118,13 +118,13 @@ async function loadInitialState() {
                 state.activePlanId = userData.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
                 state.currentView = userData.currentView || state.currentView;
                 state.workoutHistory = userData.workoutHistory || [];
-                state.personalRecords = userData.personalRecords || []; // Load personal records
+                state.personalRecords = userData.personalRecords || [];
                 dataLoaded = true;
             }
         }
     } catch (error) {
         console.error("Error loading state from localStorage:", error);
-        localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted data
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
 
     // 2. If no local data, try loading from Firestore
@@ -141,16 +141,14 @@ async function loadInitialState() {
                 state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
                 state.currentView = data.currentView || state.currentView;
                 state.workoutHistory = data.workoutHistory || [];
-                state.personalRecords = data.personalRecords || []; // Load personal records
-                // Save the fetched data back to local storage for next time
+                state.personalRecords = data.personalRecords || [];
                 await saveFullState();
             } else {
-                // This is a new user. Save the default state.
                 await saveFullState();
             }
         } catch (error) {
             console.error("Error loading state from Firestore:", error);
-            showModal('Error', 'Could not load your saved data. Please refresh the page.');
+            showModal('Data Load Error', 'Could not load your saved data. Please check your connection and refresh the page.', [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]);
         }
     }
 
@@ -195,4 +193,3 @@ export async function loadExercises() {
         );
     }
 }
-
