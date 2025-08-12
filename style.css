@@ -79,7 +79,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .active-plan-display { margin-top: 2rem; color: var(--color-text-secondary); font-style: italic; }
 .home-icon-btn { position: absolute; bottom: 2rem; right: 2rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; }
 .home-icon-btn svg { stroke: var(--color-text-secondary); transition: all 0.2s ease; }
-.home-icon-btn:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+.home-icon-btn:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); transform: translateY(-2px); }
 .home-icon-btn:hover svg { stroke: #fff; }
 
 .progress-bar { width: 100%; height: 8px; background-color: var(--color-surface-secondary); border-radius: 4px; margin-bottom: 2rem; overflow: hidden; }
@@ -87,8 +87,8 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .splash-bar { max-width: 300px; margin: 2rem auto 0 auto; }
 
 .card-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-.goal-card { background-color: var(--color-surface-secondary); border: 2px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
-.goal-card:hover { transform: translateY(-5px); border-color: var(--color-accent-secondary); }
+.goal-card { background-color: var(--color-surface-secondary); border: 2px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease-out; }
+.goal-card:hover { transform: translateY(-5px); border-color: var(--color-accent-secondary); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 .goal-card.active { border-color: var(--color-accent-primary); box-shadow: 0 0 15px rgba(0, 191, 255, 0.3); transform: scale(1.05); }
 .goal-card .icon { display: flex; justify-content: center; align-items: center; height: 40px; margin: 0 auto 0.5rem auto; }
 .goal-card .icon img { height: 100%; width: auto; }
@@ -103,13 +103,14 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .workout-header { text-align: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 1.5rem; position: relative; }
 .workout-header h2 { margin-bottom: 0.25rem; }
 .workout-header p { margin-bottom: 0; color: var(--color-text-secondary); }
-.exercise-card { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.exercise-card { background-color: var(--color-surface-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.2s ease-out;}
+.exercise-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 .exercise-card.stalled { border-left: 4px solid var(--color-state-warning); }
 .exercise-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .exercise-title-group { display: flex; align-items: center; gap: 0.75rem; }
 .exercise-title-group h3 { margin: 0; font-size: 1.5rem; }
 .stall-indicator { cursor: help; }
-.swap-exercise-btn, .history-btn, .note-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 0.5rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; border-radius: 50%; }
+.swap-exercise-btn, .history-btn, .note-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 0.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%; }
 .swap-exercise-btn:hover, .history-btn:hover, .note-btn:hover { color: var(--color-accent-secondary); background-color: var(--color-surface-tertiary);}
 .swap-exercise-btn svg, .history-btn svg, .note-btn svg { pointer-events: none; }
 .note-btn.has-note { color: var(--color-accent-primary); }
@@ -124,7 +125,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .set-inputs input.valid { border-color: var(--color-state-success); background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2348bb78' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e"); }
 .set-inputs input.invalid { border-color: var(--color-state-error); background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23f56565'%3e%3cpath d='M2 2l8 8M10 2l-8 8' stroke-width='2'/%3e%3c/svg%3e"); }
 .add-set-btn { background: none; border: 1px dashed var(--color-border-primary); color: var(--color-text-secondary); width: 100%; padding: 0.75rem; margin-top: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-.add-set-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); }
+.add-set-btn:hover { background-color: var(--color-border-primary); color: var(--color-text-primary); transform: translateY(-2px); }
 .workout-actions { margin-top: 2rem; text-align: center; }
 
 /* Styles for Notes and History */
@@ -166,14 +167,14 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 =========================== */
 .cta-button, .secondary-button { border: none; border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
 .cta-button { background-color: var(--color-accent-primary); color: #fff; }
-.cta-button:hover { background-color: var(--color-accent-secondary); transform: translateY(-2px); }
+.cta-button:hover { background-color: var(--color-accent-secondary); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 191, 255, 0.2); }
 .cta-button:active, .secondary-button:active { transform: scale(0.98); }
 .button-group { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .secondary-button { background-color: transparent; border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); font-weight: 600; }
 .secondary-button:hover { background-color: var(--color-surface-tertiary); color: var(--color-text-primary); transform: translateY(-2px); }
 .back-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); border-radius: 50%; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
 .back-btn svg { stroke: var(--color-text-secondary); transition: all 0.2s ease; }
-.back-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+.back-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); transform: translateY(-2px); }
 .back-btn:hover svg { stroke: #fff; }
 .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .modal.active { opacity: 1; pointer-events: auto; }
@@ -190,8 +191,8 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 /* ===========================
   TEMPLATE PORTAL & TEMPLATE STYLES
 =========================== */
-.hub-option { display: flex; align-items: center; background-color: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-family); color: var(--color-text-primary); }
-.hub-option:hover { border-color: var(--color-accent-primary); transform: translateY(-3px); }
+.hub-option { display: flex; align-items: center; background-color: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s ease-out; font-family: var(--font-family); color: var(--color-text-primary); }
+.hub-option:hover { border-color: var(--color-accent-primary); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 .hub-option.active, .hub-option:active { border-color: var(--color-accent-primary); background-color: var(--color-surface-tertiary); box-shadow: 0 0 15px rgba(0, 191, 255, 0.3); transform: scale(0.98); }
 .hub-option-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-surface-primary); display: flex; justify-content: center; align-items: center; margin-right: 1.5rem; }
 .hub-option-icon img { height: 28px; width: 28px; }
@@ -199,7 +200,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .hub-option-text p { margin: 0; font-size: 0.9rem; color: var(--color-text-secondary); }
 .hub-actions { margin-top: 2rem; text-align: center; }
 .header-icon-btn { position: absolute; top: 1.5rem; right: 1.5rem; background: var(--color-surface-secondary); border: 1px solid var(--color-border-primary); color: var(--color-text-secondary); border-radius: 50%; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-.header-icon-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); color: #fff; }
+.header-icon-btn:hover { background-color: var(--color-accent-primary); border-color: var(--color-accent-primary); color: #fff; transform: translateY(-2px); }
 .tab-container { display: flex; border-bottom: 1px solid var(--color-border-primary); margin-bottom: 2rem; }
 .tab-btn { flex: 1; padding: 1rem; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease; border-bottom: 2px solid transparent; }
 .tab-btn.active { color: var(--color-accent-primary); border-bottom-color: var(--color-accent-primary); font-weight: 600; }
@@ -504,3 +505,4 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
     opacity: 1;
     transform: translateY(0);
 }
+
