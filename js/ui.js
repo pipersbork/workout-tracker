@@ -32,7 +32,7 @@ export const elements = {
     workoutDayTitle: document.getElementById('workout-day-title'),
     workoutDate: document.getElementById('workout-date'),
     exerciseListContainer: document.getElementById('exercise-list-container'),
-    exerciseListLoader: document.getElementById('exercise-list-loader'), // <-- ADDED
+    exerciseListLoader: document.getElementById('exercise-list-loader'),
     workoutStopwatch: document.getElementById('workout-stopwatch-display'),
     restTimer: document.getElementById('rest-timer-display'),
 
@@ -164,7 +164,6 @@ export function renderOnboardingStep() {
     }
 
     document.querySelectorAll('.step').forEach(step => {
-        // This is the crucial fix: remove old classes before adding the new one.
         step.classList.remove('active', 'fade-out');
         if (parseInt(step.dataset.step) === currentStep) {
             step.classList.add('active');
@@ -192,7 +191,6 @@ function applyStaggeredAnimation(containerSelector, itemSelector) {
 }
 
 export function renderDailyWorkout() {
-    // --- SKELETON LOADER LOGIC ---
     elements.exerciseListLoader.classList.remove('hidden');
     elements.exerciseListContainer.classList.add('hidden');
 
@@ -273,14 +271,12 @@ export function renderDailyWorkout() {
         `;
     });
     
-    // --- SKELETON LOADER LOGIC ---
-    // Use a small timeout to ensure the DOM has a moment to process the loader
     setTimeout(() => {
         elements.exerciseListContainer.innerHTML = html;
         elements.exerciseListLoader.classList.add('hidden');
         elements.exerciseListContainer.classList.remove('hidden');
         applyStaggeredAnimation('#exercise-list-container', '.exercise-card');
-    }, 300); // A short delay to simulate loading and let the animation be seen
+    }, 300);
 }
 
 export function renderSettings() {
@@ -309,7 +305,7 @@ export function renderSettings() {
         });
     });
 
-    if (allPlans.length > 0) {
+    if (allPlans && allPlans.length > 0) {
         elements.planManagementList.innerHTML = allPlans.map(plan => `
             <div class="plan-item ${plan.id === activePlanId ? 'active' : ''}">
                 <span class="plan-name-text" data-action="startPlanWorkout" data-plan-id="${plan.id}">${plan.name}</span>
@@ -321,7 +317,8 @@ export function renderSettings() {
             </div>
         `).join('');
     } else {
-        elements.planManagementList.innerHTML = '<p class="placeholder-text">You haven\'t created any plans yet.</p>';
+        // --- EMPTY STATE FIX ---
+        elements.planManagementList.innerHTML = '<p class="placeholder-text">You haven\'t created any plans yet. Go to the Template Portal to get started!</p>';
     }
 }
 
@@ -340,7 +337,7 @@ export function renderPerformanceSummary() {
     applyStaggeredAnimation('#workout-history-list', '.summary-item');
 }
 
-// --- CHART RENDERING WITH ENHANCED OPTIONS ---
+// --- CHART RENDERING ---
 
 const getChartOptions = (titleText) => ({
     responsive: true,
@@ -352,18 +349,6 @@ const getChartOptions = (titleText) => ({
                 font: {
                     family: 'var(--font-family)'
                 }
-            },
-            onHover: (event, legendItem, legend) => {
-                legend.chart.data.datasets.forEach((dataset, i) => {
-                    dataset.borderWidth = (i === legendItem.datasetIndex) ? 3 : 1;
-                });
-                legend.chart.update();
-            },
-            onLeave: (event, legendItem, legend) => {
-                legend.chart.data.datasets.forEach(dataset => {
-                    dataset.borderWidth = 1;
-                });
-                legend.chart.update();
             }
         },
         tooltip: {
@@ -503,7 +488,8 @@ export function renderVolumeChart() {
 
 function renderTrophyCase() {
     const { personalRecords } = state;
-    if (personalRecords.length === 0) {
+    // --- EMPTY STATE FIX ---
+    if (!personalRecords || personalRecords.length === 0) {
         elements.trophyCaseList.innerHTML = '<p class="placeholder-text">You haven\'t set any personal records yet. Keep lifting!</p>';
         return;
     }
@@ -558,19 +544,21 @@ function populateExerciseTrackerSelect() {
 }
 
 function renderWorkoutHistory() {
-    if (state.workoutHistory.length > 0) {
-        elements.workoutHistoryList.innerHTML = state.workoutHistory.slice(0, 15).map(h => `
-            <div class="summary-item">
-                <div>
-                    <h4>${h.workoutName}</h4>
-                    <p>${new Date(h.completedDate).toLocaleDateString()}</p>
-                </div>
-                <p>${Math.round(h.volume)} ${state.settings.units}</p>
-            </div>
-        `).join('');
-    } else {
-        elements.workoutHistoryList.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
+    // --- EMPTY STATE FIX ---
+    if (!state.workoutHistory || state.workoutHistory.length === 0) {
+        elements.workoutHistoryList.innerHTML = '<p class="placeholder-text">No completed workouts yet. Go crush a session!</p>';
+        return;
     }
+
+    elements.workoutHistoryList.innerHTML = state.workoutHistory.slice(0, 15).map(h => `
+        <div class="summary-item">
+            <div>
+                <h4>${h.workoutName}</h4>
+                <p>${new Date(h.completedDate).toLocaleDateString()}</p>
+            </div>
+            <p>${Math.round(h.volume)} ${state.settings.units}</p>
+        </div>
+    `).join('');
 }
 
 export function renderTemplatePortal() {
@@ -637,50 +625,31 @@ export function renderWorkoutSummary() {
 
 // --- MODAL & TIMERS ---
 
-/**
- * Displays a modal with a title, content, and action buttons.
- * **This function is now XSS-safe.**
- * @param {string} title - The text title for the modal.
- * @param {string|HTMLElement} content - The content for the modal. Can be a plain string (which will be safely rendered as text) or an HTML element.
- * @param {Array<object>} actions - An array of action button objects.
- */
 export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-button' }]) {
-    // Clear previous modal content
     elements.modalBody.innerHTML = '';
     elements.modalActions.innerHTML = '';
 
-    // Create and append the title safely
     const titleElement = document.createElement('h2');
     titleElement.textContent = title;
     elements.modalBody.appendChild(titleElement);
 
-    // Create and append the content safely
     const contentElement = document.createElement('div');
     contentElement.className = 'modal-content-body';
 
     if (typeof content === 'string') {
-        // If content is a string, it might contain HTML that needs to be rendered
-        // as HTML (e.g., for exercise history). We will still use innerHTML for this,
-        // but the crucial part is that WE control which strings get this treatment.
-        // User-generated content MUST be sanitized before being passed here.
-        // Our IMMEDIATE fix is to handle the known safe cases and be aware of this.
         contentElement.innerHTML = content;
     } else if (content instanceof HTMLElement) {
-        // If content is already a DOM element, it's safe to append
         contentElement.appendChild(content);
     } else {
-        // For any other type of content, treat it as plain text.
         contentElement.textContent = content;
     }
     elements.modalBody.appendChild(contentElement);
 
-    // Create and append action buttons
     actions.forEach(action => {
         const button = document.createElement('button');
         button.className = action.class;
         button.textContent = action.text;
         
-        // Use a data-action for simple close, or attach a specific click listener
         if (action.action) {
              button.addEventListener('click', action.action, { once: true });
         } else {
@@ -695,7 +664,6 @@ export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-b
 
 export function closeModal() {
     elements.modal.classList.remove('active');
-    // Clean up one-time event listeners on action buttons to prevent memory leaks
     const actionButtons = elements.modalActions.querySelectorAll('button');
     actionButtons.forEach(btn => {
         const newBtn = btn.cloneNode(true);
