@@ -1,6 +1,5 @@
 import { state } from './state.js';
-import { findLastPerformance } from './eventHandlers.js';
-import { createSetRowHTML } from './utils.js';
+import { createSetRowHTML, findLastPerformance } from './utils.js';
 
 /**
  * @file ui.js handles all user interface updates and DOM manipulation.
