@@ -588,6 +588,13 @@ async function submitCheckin() {
     });
 
     await firebase.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
+
+    // NEW: Call the workout adjustment logic
+    const wasAdjusted = workoutEngine.adjustWorkoutForRecovery(state.dailyCheckin.sleep, state.dailyCheckin.stress);
+    if (wasAdjusted) {
+        ui.showToast("Recovery is low. Workout volume adjusted.", "warning");
+    }
+
     ui.closeDailyCheckinModal();
 
     state.workoutTimer.isWorkoutInProgress = true;
