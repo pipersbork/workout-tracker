@@ -32,9 +32,6 @@ export const elements = {
     stressLabel: document.getElementById('stress-label'),
     homeWorkoutTitle: document.getElementById('home-workout-title'),
     homeWorkoutIcon: document.getElementById('home-workout-icon'),
-    toast: document.getElementById('toast'),
-    toastMessage: document.getElementById('toast-message'),
-    toastIcon: document.getElementById('toast-icon'),
     saveIndicator: document.getElementById('save-indicator'),
     offlineToast: document.getElementById('offline-toast'),
 };
@@ -331,7 +328,13 @@ function renderTrophyCase() {
     if (!container) return;
 
     if (state.personalRecords.length === 0) {
-        container.innerHTML = '<p class="placeholder-text">No personal records yet. Complete some workouts to start building your trophy case!</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🏆</div>
+                <h4 class="empty-state-title">No Personal Records yet!</h4>
+                <p class="empty-state-text">Complete workouts to start building your trophy case.</p>
+            </div>
+        `;
         return;
     }
 
@@ -385,7 +388,24 @@ function renderConsistencyCalendar() {
  */
 function renderVolumeChart() {
     // This would integrate with Chart.js - simplified for now
-    console.log('Volume chart rendering would happen here');
+    const container = document.getElementById('volume-chart-container');
+    if (!container) return;
+
+    if (state.workoutHistory.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">Charts will be available in a future update.</p>
+            </div>
+        `;
+    } else {
+         container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">Charts will be available in a future update.</p>
+            </div>
+        `;
+    }
 }
 
 /**
@@ -410,6 +430,21 @@ export function renderExerciseTracker() {
         <option value="">Select an exercise...</option>
         ${exerciseArray.map(name => `<option value="${name}">${name}</option>`).join('')}
     `;
+    
+    if (exerciseArray.length === 0) {
+        if (elements.weightChartContainer) elements.weightChartContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📈</div>
+                <p class="empty-state-text">Track your progress here after you complete a workout!</p>
+            </div>
+        `;
+        if (elements.e1rmChartContainer) elements.e1rmChartContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📈</div>
+                <p class="empty-state-text">Track your E1RM here after you complete a workout!</p>
+            </div>
+        `;
+    }
 }
 
 /**
@@ -436,7 +471,13 @@ function renderWorkoutHistory() {
     if (!container) return;
 
     if (state.workoutHistory.length === 0) {
-        container.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📖</div>
+                <h4 class="empty-state-title">No Workout History yet.</h4>
+                <p class="empty-state-text">Complete a workout to see your history here!</p>
+            </div>
+        `;
         return;
     }
 
@@ -472,7 +513,13 @@ function renderPlanManagement() {
     if (!container) return;
 
     if (state.allPlans.length === 0) {
-        container.innerHTML = '<p class="placeholder-text">No plans created yet.</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <h4 class="empty-state-title">No Plans yet.</h4>
+                <p class="empty-state-text">Create your first plan to get started.</p>
+            </div>
+        `;
         return;
     }
 
@@ -772,9 +819,9 @@ export function renderWorkoutCelebration(newPRs) {
 
 export function toggleOfflineToast(isOffline) {
     if (isOffline) {
-        elements.offlineToast.classList.remove('hidden');
+        elements.offlineToast.classList.add('visible');
     } else {
-        elements.offlineToast.classList.add('hidden');
+        elements.offlineToast.classList.remove('visible');
     }
 }
 
