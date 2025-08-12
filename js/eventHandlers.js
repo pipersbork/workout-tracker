@@ -222,7 +222,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         }
         
         suggestions.push({
-            exerciseName: nextWeekEx.name,
+            exerciseName: completedEx.name,
             suggestion: suggestionText
         });
     });
@@ -478,7 +478,13 @@ async function resetAppData() {
 
     await firebase.saveFullState();
     ui.closeModal();
-    ui.showModal("App Reset", "All your data has been deleted. You will now be taken to the onboarding screen.", [{ text: 'OK', class: 'cta-button', action: () => ui.showView('onboarding') }]);
+    // Wait for data to be loaded before showing onboarding
+    let maxAttempts = 20;
+    while (!state.isDataLoaded && maxAttempts > 0) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+        maxAttempts--;
+    }
+    ui.showView('onboarding');
 }
 
 
@@ -712,7 +718,10 @@ export function initEventListeners() {
                     stopRestTimer();
                 }
 
-                if (dataset.viewName === 'workout') {
+                // If a workout is in progress, clicking the "workout" button should go straight to the workout.
+                if (dataset.viewName === 'workout' && state.workoutTimer.isWorkoutInProgress) {
+                    ui.showView('workout');
+                } else if (dataset.viewName === 'workout') {
                     const workoutFound = findAndSetNextWorkout();
                     if (workoutFound) ui.showDailyCheckinModal();
                 } else {
