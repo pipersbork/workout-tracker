@@ -452,6 +452,7 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
+            // This is the final "Building your plan..." step
             const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
             const newPlan = {
                 id: `meso_${Date.now()}`,
@@ -460,9 +461,14 @@ async function nextOnboardingStep() {
                 durationWeeks: 4,
                 ...newMeso
             };
+            
+            // --- PERMANENT FIX ---
+            // Update all the necessary state fields before the final save.
             state.allPlans.push(newPlan);
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
+            
+            // Now, save the entire, fully valid state object.
             await firebase.saveFullState();
             
             setTimeout(() => {
@@ -474,7 +480,7 @@ async function nextOnboardingStep() {
                         text: 'Let\'s Go!', 
                         class: 'cta-button', 
                         action: () => {
-                            ui.closeModal(); // <-- THE FIX IS HERE
+                            ui.closeModal();
                             ui.showView('home');
                         } 
                     }]
