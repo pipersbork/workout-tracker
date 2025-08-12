@@ -47,10 +47,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     handleAuthentication(() => {
         // Apply the user's saved theme (or default)
         applyTheme();
-
-        // Explicitly determine the starting view based on onboarding status.
-        // This prevents skipping the onboarding flow for new or reset users.
-        const initialView = state.userSelections.onboardingCompleted ? 'home' : 'onboarding';
+        
+        // Determine the initial view based on onboarding status and whether a workout is in progress.
+        let initialView = 'onboarding';
+        if (state.userSelections.onboardingCompleted) {
+            initialView = state.workoutTimer.isWorkoutInProgress ? 'workout' : 'home';
+        }
         showView(initialView, true);
     });
 });
