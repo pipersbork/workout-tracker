@@ -34,40 +34,28 @@ export const workoutEngine = {
      * @returns {string|null} A recommendation string (e.g., "Increase weight to 135 lbs") or null if no recommendation.
      */
     generateIntraWorkoutRecommendation(completedSet, exercise) {
-        if (!completedSet.reps || !completedSet.weight) {
-            return "Enter weight and reps to get a recommendation.";
+        if (!completedSet.reps || !completedSet.weight || completedSet.rir === null) {
+            return "Enter weight, reps, and RIR to get a recommendation.";
         }
 
         const { weightIncrement } = state.settings;
-        const { sleep, stress } = state.dailyCheckin;
-        const repsPerformed = completedSet.reps;
-        const rir = completedSet.rir;
-        const targetReps = exercise.targetReps;
-        const effectiveReps = repsPerformed + (rir || 0); // Estimated reps to failure
+        const targetRIR = exercise.targetRIR || 3;
+        const actualRIR = completedSet.rir;
+        const diff = actualRIR - targetRIR;
 
-        // Auto-regulation based on daily check-in
-        if (sleep < 6 || stress > 7) {
-            const reducedWeight = completedSet.weight - weightIncrement;
-            if (reducedWeight > 0) {
-                 return `Feeling tired/stressed. Consider reducing to ${reducedWeight} ${state.settings.units} to focus on form.`;
-            }
-        }
-
-        // If performance is significantly above target, recommend increasing weight.
-        if (effectiveReps > targetReps + 2) {
+        if (diff > 1) {
             const newWeight = completedSet.weight + weightIncrement;
-            return `We recommend increasing to ${newWeight} ${state.settings.units}`;
-        }
-
-        // If performance is below target, recommend decreasing weight.
-        if (effectiveReps < targetReps - 1 && completedSet.weight > weightIncrement) {
-            const newWeight = completedSet.weight - weightIncrement;
-            return `We recommend decreasing to ${newWeight} ${state.settings.units}`;
+            return `You were a bit light. Try increasing to ${newWeight} ${state.settings.units}`;
         }
         
-        // If performance is on target, recommend maintaining weight.
-        if (effectiveReps >= targetReps && effectiveReps <= targetReps + 2) {
-            return `Good set! Stay at ${completedSet.weight} ${state.settings.units}`;
+        if (diff < -1) {
+            const newWeight = Math.max(0, completedSet.weight - weightIncrement);
+            if (newWeight === 0) return `Drop weight significantly to focus on form.`;
+            return `That was very hard. Try decreasing to ${newWeight} ${state.settings.units}`;
+        }
+
+        if (Math.abs(diff) <= 1) {
+            return `Perfect! Stay at ${completedSet.weight} ${state.settings.units} for the next set.`;
         }
 
         return "No recommendation at this time.";
@@ -84,57 +72,59 @@ export const workoutEngine = {
     },
 
     calculateNextWorkoutProgression(completedWorkout, nextWorkout) {
-        const { progressionModel, weightIncrement } = state.settings;
-
+        const { weightIncrement } = state.settings;
+        
         completedWorkout.exercises.forEach((completedEx) => {
             const nextWeekEx = nextWorkout.exercises.find(ex => ex.exerciseId === completedEx.exerciseId);
             if (!nextWeekEx) return;
-
-            const jointPainFeedback = state.feedbackState.jointPain[completedEx.exerciseId];
-            if (jointPainFeedback === 'moderate' || jointPainFeedback === 'severe') {
-                const alternative = this._findAlternativeExercise(completedEx.exerciseId, state.exercises);
-                if (alternative) {
-                    nextWeekEx.name = alternative.name;
-                    nextWeekEx.exerciseId = `ex_${alternative.name.replace(/\s+/g, '_')}`;
-                    nextWeekEx.targetLoad = null; 
-                    nextWeekEx.targetReps = 8;
-                    console.log(`Substituted ${completedEx.name} with ${alternative.name} due to joint pain.`);
-                    return;
-                }
-            }
             
-            const muscleSoreness = state.feedbackState.soreness[completedEx.muscle.toLowerCase()];
-            if ((muscleSoreness === 'moderate' || muscleSoreness === 'severe') && nextWeekEx.targetSets > 1) {
-                nextWeekEx.targetSets -= 1;
-                console.log(`Reduced sets for ${nextWeekEx.name} next week due to soreness.`);
-            }
-
             if (!completedEx.sets || completedEx.sets.length === 0) {
                 nextWeekEx.targetLoad = completedEx.targetLoad || null;
                 nextWeekEx.targetReps = completedEx.targetReps;
                 return;
             }
 
-            const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
-            
-            if (progressionModel === 'double') {
-                const repsAchievedInTopSet = topSet.reps || 0;
-                const targetRepsForNextWeek = nextWeekEx.targetReps;
-
-                if (repsAchievedInTopSet >= (targetRepsForNextWeek + 2)) {
-                    nextWeekEx.targetLoad = (topSet.weight || 0) + weightIncrement;
-                    nextWeekEx.targetReps = 8;
-                } else if (repsAchievedInTopSet >= targetRepsForNextWeek) {
-                    nextWeekEx.targetLoad = topSet.weight;
-                    nextWeekEx.targetReps = (nextWeekEx.targetReps || 8) + 1;
-                } else {
-                    nextWeekEx.targetLoad = topSet.weight;
-                    nextWeekEx.targetReps = nextWeekEx.targetReps;
-                }
-            } else { 
+            // Calculate average RIR for the completed exercise
+            const setsWithRIR = completedEx.sets.filter(s => s.rir !== null && s.rir !== '' && s.weight > 0);
+            if (setsWithRIR.length === 0) {
+                const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
                 const allSetsSuccessful = completedEx.sets.every(set => (set.reps || 0) >= completedEx.targetReps);
                 nextWeekEx.targetLoad = allSetsSuccessful ? (topSet.weight || 0) + weightIncrement : topSet.weight;
                 nextWeekEx.targetReps = completedEx.targetReps;
+                return;
+            }
+
+            const averageRIR = setsWithRIR.reduce((sum, s) => sum + s.rir, 0) / setsWithRIR.length;
+            const targetRIR = completedEx.targetRIR || 3;
+
+            const topSet = completedEx.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
+
+            // RIR-based progression logic
+            if (averageRIR > targetRIR + 1) {
+                // Too easy, increase weight
+                nextWeekEx.targetLoad = topSet.weight + weightIncrement;
+                nextWeekEx.stallCount = 0;
+                console.log(`Progression: Increasing weight for ${nextWeekEx.name} due to low RIR.`);
+            } else if (averageRIR < targetRIR - 1) {
+                // Too hard, keep weight the same and check for stall
+                nextWeekEx.targetLoad = topSet.weight;
+                nextWeekEx.stallCount = (nextWeekEx.stallCount || 0) + 1;
+                if (nextWeekEx.stallCount >= 2) {
+                    console.log(`Stall detected for ${nextWeekEx.name}. Suggesting deload or alternative.`);
+                }
+                console.log(`Progression: Maintaining weight for ${nextWeekEx.name} due to high RIR.`);
+            } else {
+                // Just right, increase reps or weight slightly
+                if (nextWeekEx.targetReps < 12) { // Cap reps to avoid endless progression
+                    nextWeekEx.targetReps = (nextWeekEx.targetReps || 8) + 1;
+                    nextWeekEx.targetLoad = topSet.weight;
+                    console.log(`Progression: Increasing reps for ${nextWeekEx.name} due to optimal RIR.`);
+                } else {
+                    nextWeekEx.targetLoad = topSet.weight + weightIncrement;
+                    nextWeekEx.targetReps = 8;
+                    console.log(`Progression: Resetting reps and increasing weight for ${nextWeekEx.name}.`);
+                }
+                nextWeekEx.stallCount = 0;
             }
         });
     },
@@ -284,10 +274,11 @@ export const workoutEngine = {
 
     _getRirForWeek(week, totalWeeks) {
         if (week === totalWeeks) return 4;
-        const progress = (week - 1) / (totalWeeks - 2);
-        if (progress < 0.33) return 3;
-        if (progress < 0.66) return 2;
-        return 1;
+        const progress = (week - 1) / (totalWeeks - 1);
+        if (progress < 0.25) return 3;
+        if (progress < 0.5) return 2;
+        if (progress < 0.75) return 1;
+        return 0; // Final week before deload, push hard
     },
 
     _getEquipmentFilter(style) {
