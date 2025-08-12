@@ -485,3 +485,20 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
   background-color: var(--color-accent-primary);
   color: #fff;
 }
+
+/* ===========================
+  NEW SUMMARY COMPARISON STYLES
+=========================== */
+.comparison {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.comparison.positive {
+  color: var(--color-state-success);
+}
+.comparison.negative {
+  color: var(--color-state-error);
+}
+.comparison.neutral {
+  color: var(--color-text-secondary);
+}
