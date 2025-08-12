@@ -182,7 +182,7 @@ p, .placeholder-text { margin-bottom: 1.5rem; color: var(--color-text-secondary)
 .modal.active .modal-content { transform: scale(1); }
 .modal-content .close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--color-text-secondary); cursor: pointer; transition: color 0.2s ease; }
 .modal-content .close-btn:hover { color: var(--color-text-primary); }
-.modal .card-group { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+.modal .card-group { grid-template-columns: repeat(auto-fit, min (100px, 1fr)); }
 .modal-body h2 { margin-top: 0.5rem; }
 .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; }
 .modal-actions.vertical { flex-direction: column; }
@@ -406,4 +406,52 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
   .settings-label {
     margin-top: 1rem;
   }
+}
+
+.save-indicator {
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-surface-tertiary);
+    color: var(--color-text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.save-indicator.active {
+    opacity: 1;
+}
+
+.save-indicator.success {
+    color: var(--color-state-success);
+}
+
+.save-indicator.error {
+    color: var(--color-state-error);
+}
+
+.offline-toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-surface-tertiary);
+  color: var(--color-text-secondary);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-align: center;
+  z-index: 900;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  animation: fadeInOut 5s ease-in-out forwards;
+}
+
+.offline-toast.hidden {
+    display: none;
 }
