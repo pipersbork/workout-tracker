@@ -69,6 +69,7 @@ async function selectCard(element, field, value, shouldSave = false) {
 
     if (shouldSave) {
         await firebase.updateState('userSelections', state.userSelections);
+        ui.showToast('Settings saved!', '✅');
     }
 }
 
@@ -137,6 +138,7 @@ async function deletePlan(planId) {
     await firebase.saveFullState(); // Use full save because multiple fields are changing
     ui.closeModal();
     ui.renderSettings();
+    ui.showToast('Plan deleted successfully!', '🗑️');
 }
 
 async function setActivePlan(planId) {
@@ -144,6 +146,7 @@ async function setActivePlan(planId) {
     state.activePlanId = planId;
     await firebase.updateState('activePlanId', state.activePlanId);
     ui.renderSettings();
+    ui.showToast('Active plan set!', '✅');
 }
 
 function confirmCompleteWorkout() {
@@ -301,7 +304,7 @@ async function completeWorkout() {
         state.workoutSummary.suggestions = [];
     }
     
-    ui.showView('workoutSummary');
+    ui.renderWorkoutCelebration(newPRsCount);
     findAndSetNextWorkout();
     await firebase.saveFullState(); // Use full save after a workout as many things change
 }
@@ -383,6 +386,7 @@ function openExerciseNotes(exerciseIndex) {
                     ui.renderDailyWorkout();
                     ui.closeModal();
                     triggerHapticFeedback('success');
+                    ui.showToast('Note saved!', '📝');
                 }
             }
         ]
@@ -793,6 +797,7 @@ export function initEventListeners() {
                     await firebase.saveFullState(); // Use full save for new plan creation
                     ui.closeModal();
                     ui.showView('settings');
+                    ui.showToast('Plan created successfully!', '🎯');
                 }}
             ]);
         }
@@ -806,9 +811,46 @@ export function initEventListeners() {
     document.body.addEventListener('input', e => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                firebase.saveFullState();
+            ui.showSaveIndicator();
+            saveTimeout = setTimeout(async () => {
+                const success = await firebase.saveFullState();
+                ui.hideSaveIndicator(success);
             }, saveDelay);
+        }
+    });
+
+    // Handle Enter keypress on input fields
+    document.body.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.matches('.weight-input, .rep-rir-input')) {
+                const parentRow = activeElement.closest('.set-row');
+                const nextRow = parentRow.nextElementSibling;
+
+                if (nextRow && nextRow.querySelector('.weight-input')) {
+                    nextRow.querySelector('.weight-input').focus();
+                } else {
+                    const addSetButton = parentRow.closest('.sets-container').querySelector('.add-set-btn');
+                    if (addSetButton) {
+                        addSetButton.click();
+                    }
+                }
+            }
+        }
+    });
+
+    // Keyboard shortcuts for navigation and actions
+    document.addEventListener('keydown', (e) => {
+        if (ui.elements.modal.classList.contains('active')) return;
+
+        if (e.key === 'n' && state.currentViewName === 'home') {
+            document.querySelector('#home-screen [data-view-name="workout"]').click();
+        }
+        if (e.key === 'b' && state.currentViewName !== 'home') {
+            document.querySelector('.back-btn').click();
+        }
+        if (e.key === 'c' && state.currentViewName === 'workout') {
+            document.querySelector('#complete-workout-btn').click();
         }
     });
 
