@@ -73,6 +73,7 @@ async function selectCard(element, field, value, shouldSave = false) {
 }
 
 async function setTheme(theme) {
+    if (theme !== 'dark' && theme !== 'light') return;
     triggerHapticFeedback('light');
     state.settings.theme = theme;
     ui.applyTheme();
@@ -81,6 +82,7 @@ async function setTheme(theme) {
 }
 
 async function setUnits(unit) {
+    if (unit !== 'lbs' && unit !== 'kg') return;
     triggerHapticFeedback('light');
     state.settings.units = unit;
     await firebase.updateState('settings', state.settings);
@@ -91,6 +93,7 @@ async function setUnits(unit) {
 }
 
 async function setProgressionModel(progression) {
+    if (progression !== 'linear' && progression !== 'double') return;
     triggerHapticFeedback('light');
     state.settings.progressionModel = progression;
     await firebase.updateState('settings', state.settings);
@@ -98,6 +101,7 @@ async function setProgressionModel(progression) {
 }
 
 async function setWeightIncrement(increment) {
+    if (![2.5, 5, 10].includes(increment)) return;
     triggerHapticFeedback('light');
     state.settings.weightIncrement = increment;
     await firebase.updateState('settings', state.settings);
@@ -105,6 +109,7 @@ async function setWeightIncrement(increment) {
 }
 
 async function setRestDuration(duration) {
+    if (![60, 90, 120, 180].includes(duration)) return;
     triggerHapticFeedback('light');
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
