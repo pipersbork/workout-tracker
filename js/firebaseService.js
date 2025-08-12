@@ -199,8 +199,10 @@ async function loadInitialState() {
             }
         } catch (localError) {
              console.error("Fallback to local storage failed:", localError);
-             showModal('Fatal Error', 'Could not load any data, local or remote. Please check your connection and refresh.', [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]);
-             return; // Stop execution if no data can be loaded.
+             // FINAL FIX: If both cloud and local fail, create a default state to prevent a crash.
+             const defaultData = createDefaultUserData();
+             applyDataToState(defaultData);
+             showModal('Welcome!', 'Could not connect to the cloud. Starting with a fresh profile. Your data will sync when you are back online.', [{ text: 'OK', class: 'cta-button' }]);
         }
     }
 
