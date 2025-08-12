@@ -18,7 +18,7 @@ const URLS_TO_CACHE = [
   '/manifest.json',
   '/images/icons/icon-192x192.png',
   '/images/icons/icon-512x512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'
 ];
 
 // Install the service worker and cache all the app assets
