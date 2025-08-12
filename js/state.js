@@ -64,6 +64,7 @@ export const state = {
         elapsed: 0,
         isRunning: false,
         startTime: 0,
+        isWorkoutInProgress: false,
     },
 
     // Rest Timer State
