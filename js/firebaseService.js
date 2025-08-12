@@ -11,7 +11,7 @@ import { showModal } from './ui.js';
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
   projectId: "progression-700a3",
   storageBucket: "progression-700a3.firebasestorage.app",
