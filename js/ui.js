@@ -573,15 +573,27 @@ function updateToggleSwitch(switchId, activeValue) {
 }
 
 /**
+ * Formats a number for display as a comparison (e.g., +100, -50).
+ * @param {number} value - The number to format.
+ * @returns {string} The formatted string with a class for color.
+ */
+function formatComparison(value) {
+    if (value === null || value === undefined) return '';
+    const sign = value > 0 ? '+' : '';
+    const className = value > 0 ? 'positive' : (value < 0 ? 'negative' : 'neutral');
+    return `<span class="comparison ${className}">(${sign}${value.toLocaleString()})</span>`;
+}
+
+/**
  * Renders the workout summary view
  */
 export function renderWorkoutSummary() {
     const summary = state.workoutSummary;
     
-    // Update stats
-    updateElement('summary-time', formatTime(state.workoutTimer.elapsed));
-    updateElement('summary-volume', `${summary.totalVolume.toLocaleString()} ${state.settings.units}`);
-    updateElement('summary-sets', summary.totalSets);
+    // Update stats with comparisons
+    updateElementHTML('summary-time', `${formatTime(state.workoutTimer.elapsed)} ${formatComparison(summary.durationChange)}`);
+    updateElementHTML('summary-volume', `${summary.totalVolume.toLocaleString()} ${state.settings.units} ${formatComparison(summary.volumeChange)}`);
+    updateElementHTML('summary-sets', `${summary.totalSets} ${formatComparison(summary.setsChange)}`);
     updateElement('summary-prs', summary.newPRs);
     
     // Update mesocycle stats
@@ -603,7 +615,7 @@ export function renderWorkoutSummary() {
         }
     }
 
-    // NEW: Trigger confetti and show PR badge if new PRs were achieved
+    // Trigger confetti and show PR badge if new PRs were achieved
     if (summary.newPRs > 0) {
         const prCard = document.querySelector('#summary-prs').closest('.stat-card');
         if (prCard && !prCard.querySelector('.pr-badge')) {
@@ -624,6 +636,15 @@ function updateElement(id, content) {
     const element = document.getElementById(id);
     if (element) element.textContent = content;
 }
+
+/**
+ * Helper function to update element inner HTML
+ */
+function updateElementHTML(id, content) {
+    const element = document.getElementById(id);
+    if (element) element.innerHTML = content;
+}
+
 
 /**
  * Formats time in seconds to MM:SS format
