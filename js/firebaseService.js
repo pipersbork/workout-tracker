@@ -13,7 +13,7 @@ import { showModal } from './ui.js';
 const firebaseConfig = {
   // NOTE: The API key is now loaded from the environment variable for security.
   // The Firebase security rules still protect the data from unauthorized access.
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
   projectId: "progression-700a3",
   storageBucket: "progression-700a3.firebasestorage.app",
