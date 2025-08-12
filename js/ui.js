@@ -32,11 +32,6 @@ export const elements = {
     stressLabel: document.getElementById('stress-label'),
     homeWorkoutTitle: document.getElementById('home-workout-title'),
     homeWorkoutIcon: document.getElementById('home-workout-icon'),
-    saveIndicator: document.getElementById('save-indicator'),
-    offlineToast: document.getElementById('offline-toast'),
-    toast: document.getElementById('toast'),
-    toastMessage: document.getElementById('toast-message'),
-    toastIcon: document.getElementById('toast-icon'),
 };
 
 let currentTooltip = null;
@@ -63,9 +58,6 @@ export function showView(viewName, skipAnimation = false) {
         settings: elements.settingsView,
         workoutSummary: elements.workoutSummaryView,
     };
-
-    // Update the document title
-    document.title = `Progression - ${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`;
 
     // Hide all views
     Object.values(views).forEach(view => {
@@ -259,14 +251,26 @@ function renderExerciseList(workout, week) {
                         ${exercise.stallCount >= 2 ? '<span class="stall-indicator" title="This exercise has stalled">⚠️</span>' : ''}
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exerciseIndex}" aria-label="Swap Exercise" data-tooltip="Swap Exercise">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exerciseIndex}" title="Swap Exercise">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                                <path d="M8 21v-5a2 2 0 012-2h4a2 2 0 012 2v5"/>
+                            </svg>
                         </button>
-                        <button class="history-btn" data-action="showHistory" data-exercise-id="${exercise.exerciseId}" aria-label="View History" data-tooltip="View History">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <button class="history-btn" data-action="showHistory" data-exercise-id="${exercise.exerciseId}" title="View History">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12,6 12,12 16,14"/>
+                            </svg>
                         </button>
-                        <button class="note-btn ${exercise.note ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exerciseIndex}" aria-label="Exercise Notes" data-tooltip="Exercise Notes">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <button class="note-btn ${exercise.note ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exerciseIndex}" title="Exercise Notes">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -291,7 +295,7 @@ function renderExerciseList(workout, week) {
         }
 
         html += `
-                    <button class="add-set-btn" data-action="addSet" data-exercise-index="${exerciseIndex}" aria-label="Add Set">+ Add Set</button>
+                    <button class="add-set-btn" data-action="addSet" data-exercise-index="${exerciseIndex}">+ Add Set</button>
                 </div>
             </div>
         `;
@@ -319,13 +323,7 @@ function renderTrophyCase() {
     if (!container) return;
 
     if (state.personalRecords.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🏆</div>
-                <h4 class="empty-state-title">No Personal Records yet!</h4>
-                <p class="empty-state-text">Complete workouts to start building your trophy case.</p>
-            </div>
-        `;
+        container.innerHTML = '<p class="placeholder-text">No personal records yet. Complete some workouts to start building your trophy case!</p>';
         return;
     }
 
@@ -379,24 +377,7 @@ function renderConsistencyCalendar() {
  */
 function renderVolumeChart() {
     // This would integrate with Chart.js - simplified for now
-    const container = document.getElementById('volume-chart-container');
-    if (!container) return;
-
-    if (state.workoutHistory.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📊</div>
-                <p class="empty-state-text">Charts will be available in a future update.</p>
-            </div>
-        `;
-    } else {
-         container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📊</div>
-                <p class="empty-state-text">Charts will be available in a future update.</p>
-            </div>
-        `;
-    }
+    console.log('Volume chart rendering would happen here');
 }
 
 /**
@@ -421,21 +402,6 @@ export function renderExerciseTracker() {
         <option value="">Select an exercise...</option>
         ${exerciseArray.map(name => `<option value="${name}">${name}</option>`).join('')}
     `;
-    
-    if (exerciseArray.length === 0) {
-        if (elements.weightChartContainer) elements.weightChartContainer.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📈</div>
-                <p class="empty-state-text">Track your progress here after you complete a workout!</p>
-            </div>
-        `;
-        if (elements.e1rmChartContainer) elements.e1rmChartContainer.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📈</div>
-                <p class="empty-state-text">Track your E1RM here after you complete a workout!</p>
-            </div>
-        `;
-    }
 }
 
 /**
@@ -462,13 +428,7 @@ function renderWorkoutHistory() {
     if (!container) return;
 
     if (state.workoutHistory.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📖</div>
-                <h4 class="empty-state-title">No Workout History yet.</h4>
-                <p class="empty-state-text">Complete a workout to see your history here!</p>
-            </div>
-        `;
+        container.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
         return;
     }
 
@@ -504,25 +464,19 @@ function renderPlanManagement() {
     if (!container) return;
 
     if (state.allPlans.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🎯</div>
-                <h4 class="empty-state-title">No Plans yet.</h4>
-                <p class="empty-state-text">Create your first plan to get started.</p>
-            </div>
-        `;
+        container.innerHTML = '<p class="placeholder-text">No plans created yet.</p>';
         return;
     }
 
     container.innerHTML = state.allPlans.map(plan => `
         <div class="plan-item ${plan.id === state.activePlanId ? 'active' : ''}">
-            <div class="plan-name-text" data-action="setActivePlan" data-plan-id="${plan.id}" role="button" tabindex="0" aria-label="Set ${plan.name} as active plan">
+            <div class="plan-name-text" data-action="setActivePlan" data-plan-id="${plan.id}">
                 ${plan.name}
             </div>
             <div class="plan-actions">
-                <button class="plan-btn secondary-button" data-action="startPlanWorkout" data-plan-id="${plan.id}" aria-label="Start ${plan.name}">Start</button>
-                <button class="plan-btn secondary-button" data-action="editPlan" data-plan-id="${plan.id}" aria-label="Edit ${plan.name}">Edit</button>
-                <button class="plan-btn secondary-button" data-action="confirmDeletePlan" data-plan-id="${plan.id}" aria-label="Delete ${plan.name}">Delete</button>
+                <button class="plan-btn secondary-button" data-action="startPlanWorkout" data-plan-id="${plan.id}">Start</button>
+                <button class="plan-btn secondary-button" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
+                <button class="plan-btn secondary-button" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
             </div>
         </div>
     `).join('');
@@ -627,7 +581,7 @@ function formatTime(seconds) {
 }
 
 /**
- * Updates the stopwatch display and document title
+ * Updates the stopwatch display
  */
 export function updateStopwatchDisplay() {
     if (!elements.workoutStopwatchDisplay) return;
@@ -636,7 +590,6 @@ export function updateStopwatchDisplay() {
         const elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
         state.workoutTimer.elapsed = elapsed;
         elements.workoutStopwatchDisplay.textContent = formatTime(elapsed);
-        document.title = `Workout - ${formatTime(elapsed)}`;
     } else {
         elements.workoutStopwatchDisplay.textContent = formatTime(state.workoutTimer.elapsed);
     }
@@ -784,54 +737,5 @@ export function hideTooltip() {
     if (currentTooltip) {
         currentTooltip.remove();
         currentTooltip = null;
-    }
-}
-
-export function showToast(message, icon) {
-    elements.toastMessage.textContent = message;
-    elements.toastIcon.innerHTML = icon;
-    elements.toast.classList.remove('hidden');
-    elements.toast.classList.add('show');
-    setTimeout(() => {
-        elements.toast.classList.remove('show');
-        elements.toast.classList.add('hidden');
-    }, 3000);
-}
-
-export function renderWorkoutCelebration(newPRs) {
-    const title = newPRs > 0 ? "🎉 PRs Achieved!" : "Workout Complete!";
-    const content = newPRs > 0 ?
-        `Congratulations! You hit <strong>${newPRs} new Personal Record${newPRs > 1 ? 's' : ''}</strong> today! Keep up the great work.` :
-        "You crushed your workout! You can check out your progress in the Performance Summary.";
-    
-    // New celebratory modal
-    showModal(title, content, [{ text: 'View Summary', class: 'cta-button', action: () => showView('workoutSummary') }]);
-}
-
-export function toggleOfflineToast(isOffline) {
-    if (isOffline) {
-        elements.offlineToast.classList.add('visible');
-    } else {
-        elements.offlineToast.classList.remove('visible');
-    }
-}
-
-export function showSaveIndicator() {
-    if (elements.saveIndicator) {
-        elements.saveIndicator.classList.add('active');
-        elements.saveIndicator.textContent = 'Saving...';
-    }
-}
-
-export function hideSaveIndicator(success) {
-    if (elements.saveIndicator) {
-        elements.saveIndicator.textContent = success ? 'Saved!' : 'Save Error';
-        elements.saveIndicator.classList.remove('active');
-        elements.saveIndicator.classList.add(success ? 'success' : 'error');
-
-        setTimeout(() => {
-            elements.saveIndicator.classList.remove('success', 'error');
-            elements.saveIndicator.textContent = '';
-        }, 3000);
     }
 }
