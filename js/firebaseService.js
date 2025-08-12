@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { state } from './state.js';
 import { showModal } from './ui.js';
 
@@ -28,10 +28,10 @@ const db = getFirestore(firebaseApp);
 const LOCAL_STORAGE_KEY = 'progressionAppState';
 
 /**
- * Saves the essential parts of the application state to both localStorage and Firestore.
- * This enables offline functionality and cloud backup.
+ * Saves the entire application state. Used for initial setup and major syncs.
+ * For individual changes, use updateState for better performance.
  */
-export async function saveState() {
+export async function saveFullState() {
     if (!state.userId) return;
 
     const dataToSave = {
@@ -42,27 +42,57 @@ export async function saveState() {
         activePlanId: state.activePlanId,
         currentView: state.currentView,
         workoutHistory: state.workoutHistory,
-        personalRecords: state.personalRecords // Add personal records to the saved data
+        personalRecords: state.personalRecords
     };
 
-    // 1. Save to localStorage immediately for offline access
+    // Save to localStorage for offline access
     try {
         const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
         localData[state.userId] = dataToSave;
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
     } catch (error) {
-        console.error("Error saving state to localStorage:", error);
+        console.error("Error saving full state to localStorage:", error);
     }
 
-    // 2. Save to Firestore for cloud backup. This happens in the background.
+    // Save to Firestore for cloud backup
     try {
         const userDocRef = doc(db, "users", state.userId);
         await setDoc(userDocRef, dataToSave);
     } catch (error) {
-        console.error("Error saving state to Firestore:", error);
-        // You could optionally notify the user of a sync failure here
+        console.error("Error saving full state to Firestore:", error);
     }
 }
+
+/**
+ * Updates a specific field in the Firestore document and localStorage.
+ * This is much more efficient than saving the entire state for small changes.
+ * @param {string} key - The top-level key in the state object to update (e.g., 'settings').
+ * @param {*} value - The new value for the key.
+ */
+export async function updateState(key, value) {
+    if (!state.userId) return;
+
+    // 1. Update localStorage immediately
+    try {
+        const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+        if (localData[state.userId]) {
+            localData[state.userId][key] = value;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
+        }
+    } catch (error) {
+        console.error(`Error updating '${key}' in localStorage:`, error);
+    }
+
+    // 2. Update Firestore in the background
+    try {
+        const userDocRef = doc(db, "users", state.userId);
+        await updateDoc(userDocRef, { [key]: value });
+    } catch (error) {
+        console.error(`Error updating '${key}' in Firestore:`, error);
+        // Optionally, notify the user of a sync failure
+    }
+}
+
 
 /**
  * Loads the application state, prioritizing local data for offline-first speed.
@@ -112,10 +142,10 @@ async function loadInitialState() {
                 state.workoutHistory = data.workoutHistory || [];
                 state.personalRecords = data.personalRecords || []; // Load personal records
                 // Save the fetched data back to local storage for next time
-                await saveState();
+                await saveFullState();
             } else {
                 // This is a new user. Save the default state.
-                await saveState();
+                await saveFullState();
             }
         } catch (error) {
             console.error("Error loading state from Firestore:", error);
@@ -164,3 +194,4 @@ export async function loadExercises() {
         );
     }
 }
+
