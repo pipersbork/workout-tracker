@@ -47,6 +47,9 @@ export function initUI() {
         toast: document.getElementById('toast'),
         toastMessage: document.getElementById('toast-message'),
         toastIcon: document.getElementById('toast-icon'),
+        weightProgressChart: document.getElementById('weight-progress-chart'),
+        e1rmProgressChart: document.getElementById('e1rm-progress-chart'),
+        volumeChart: document.getElementById('volume-chart'),
     };
 }
 
@@ -428,16 +431,34 @@ export function renderExerciseTracker() {
  * Renders progress chart for a specific exercise
  */
 export function renderProgressChart(exerciseName) {
-    // Chart.js integration would happen here
-    console.log(`Rendering progress chart for ${exerciseName}`);
+    if (state.progressChart) {
+        state.progressChart.destroy();
+    }
+    const chartData = getChartDataForExercise(exerciseName, 'weight');
+    if (chartData.labels.length > 0) {
+        state.progressChart = new Chart(elements.weightProgressChart, {
+            type: 'line',
+            data: chartData,
+            options: getChartOptions(`Top Set Weight (${state.settings.units})`)
+        });
+    }
 }
 
 /**
  * Renders E1RM chart for a specific exercise
  */
 export function renderE1RMChart(exerciseName) {
-    // Chart.js integration would happen here
-    console.log(`Rendering E1RM chart for ${exerciseName}`);
+    if (state.e1rmChart) {
+        state.e1rmChart.destroy();
+    }
+    const chartData = getChartDataForExercise(exerciseName, 'e1rm');
+    if (chartData.labels.length > 0) {
+        state.e1rmChart = new Chart(elements.e1rmProgressChart, {
+            type: 'line',
+            data: chartData,
+            options: getChartOptions(`Estimated 1-Rep Max (${state.settings.units})`)
+        });
+    }
 }
 
 /**
@@ -869,4 +890,90 @@ export function showToast(message, type = 'info') {
     toastTimeout = setTimeout(() => {
         elements.toast.className = elements.toast.className.replace('show', '');
     }, 4000);
+}
+
+// --- NEW CHARTING LOGIC ---
+
+/**
+ * Gets the common chart options for the app's theme.
+ * @param {string} title - The title of the chart.
+ * @returns {object} A Chart.js options object.
+ */
+function getChartOptions(title) {
+    const isDarkMode = state.settings.theme === 'dark';
+    const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: title,
+                color: textColor,
+                font: { size: 16, family: 'Poppins' }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+            },
+            x: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+            }
+        }
+    };
+}
+
+/**
+ * Extracts and prepares data for a specific exercise chart.
+ * @param {string} exerciseName - The name of the exercise.
+ * @param {string} metric - The metric to plot ('weight' or 'e1rm').
+ * @returns {object} A Chart.js data object.
+ */
+function getChartDataForExercise(exerciseName, metric = 'weight') {
+    const labels = [];
+    const data = [];
+
+    state.workoutHistory
+        .filter(entry => entry.exercises.some(ex => ex.name === exerciseName))
+        .sort((a, b) => new Date(a.completedDate) - new Date(b.completedDate))
+        .forEach(entry => {
+            const exercise = entry.exercises.find(ex => ex.name === exerciseName);
+            if (!exercise || !exercise.sets || exercise.sets.length === 0) return;
+
+            let value;
+            if (metric === 'weight') {
+                const topSet = exercise.sets.reduce((max, set) => (set.weight > max.weight ? set : max), { weight: 0 });
+                value = topSet.weight;
+            } else { // e1rm
+                const topSet = exercise.sets.reduce((max, set) => {
+                    const currentE1RM = (set.weight || 0) * (1 + (set.reps || 0) / 30);
+                    const maxE1RM = (max.weight || 0) * (1 + (max.reps || 0) / 30);
+                    return currentE1RM > maxE1RM ? set : max;
+                }, { weight: 0, reps: 0 });
+                value = Math.round(topSet.weight * (1 + topSet.reps / 30));
+            }
+            
+            if (value > 0) {
+                labels.push(new Date(entry.completedDate).toLocaleDateString());
+                data.push(value);
+            }
+        });
+
+    return {
+        labels,
+        datasets: [{
+            label: exerciseName,
+            data,
+            fill: false,
+            borderColor: 'rgba(0, 191, 255, 1)',
+            tension: 0.1
+        }]
+    };
 }
