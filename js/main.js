@@ -1,6 +1,6 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-import { applyTheme, showView, showModal } from './ui.js';
+import { applyTheme, showView, showModal, toggleOfflineToast } from './ui.js';
 import { state } from './state.js';
 
 /**
@@ -38,6 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize event listeners for the entire application
     initEventListeners();
+
+    // Add online/offline event listeners
+    window.addEventListener('online', () => toggleOfflineToast(false));
+    window.addEventListener('offline', () => toggleOfflineToast(true));
+    toggleOfflineToast(!navigator.onLine);
+
 
     // Load static exercise data from JSON file
     await loadExercises();
