@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    </head>
+    <!-- Chart.js removed to avoid CORS issues - can be added back later when needed -->
+</head>
 <body>
 
     <main>
@@ -136,6 +137,7 @@
         <div id="daily-workout-view" class="view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
+                    <!-- New SVG Icon for Home -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2 id="workout-day-title">Workout Title</h2>
@@ -157,6 +159,7 @@
                 </div>
             </div>
 
+            <!-- NEW: Skeleton Loader -->
             <div id="exercise-list-loader" class="hidden">
                 <div class="skeleton-card">
                     <div class="skeleton-header">
@@ -189,21 +192,22 @@
                 <h2>Workout Complete!</h2>
             </div>
             <div id="summary-content">
+                 <!-- Fix #15: Added icons and flair to summary stats -->
                 <div class="summary-stats-grid">
                     <div class="stat-card">
-                        <h4>Time</h4>
+                        <h4><span class="stat-icon">⏱️</span> Time</h4>
                         <p id="summary-time">--:--</p>
                     </div>
                     <div class="stat-card">
-                        <h4>Volume</h4>
+                        <h4><span class="stat-icon">🏋️</span> Volume</h4>
                         <p id="summary-volume">0 lbs</p>
                     </div>
                     <div class="stat-card">
-                        <h4>Sets</h4>
+                        <h4><span class="stat-icon">💪</span> Sets</h4>
                         <p id="summary-sets">0</p>
                     </div>
                     <div class="stat-card">
-                        <h4>PRs</h4>
+                        <h4><span class="stat-icon">🏆</span> PRs</h4>
                         <p id="summary-prs">0</p>
                     </div>
                 </div>
@@ -243,7 +247,13 @@
                 <section class="summary-section">
                     <h3>🏆 Trophy Case: Personal Records</h3>
                     <div id="trophy-case-list">
+                        <!-- Fix #13: Empty state message here -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏆</div>
+                            <h4 class="empty-state-title">No Personal Records yet!</h4>
+                            <p class="empty-state-text">Complete workouts to start building your trophy case.</p>
                         </div>
+                    </div>
                 </section>
                 <section class="summary-section">
                     <h3>Workout Consistency</h3>
@@ -252,8 +262,10 @@
                 <section class="summary-section">
                     <h3>Volume by Muscle Group</h3>
                     <div class="chart-container">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            Charts will be available in a future update
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <p class="empty-state-text">Charts will be available in a future update.</p>
                         </div>
                     </div>
                 </section>
@@ -265,19 +277,30 @@
                         <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
                     </div>
                     <div id="weight-chart-container" class="chart-container">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            Progress charts will be available in a future update
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                         <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <p class="empty-state-text">Progress charts will be available in a future update.</p>
                         </div>
                     </div>
                     <div id="e1rm-chart-container" class="chart-container hidden">
-                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
-                            E1RM charts will be available in a future update
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                         <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <p class="empty-state-text">E1RM charts will be available in a future update.</p>
                         </div>
                     </div>
                 </section>
                 <section class="summary-section">
                     <h3>Workout History</h3>
-                    <div id="workout-history-list"></div>
+                    <div id="workout-history-list">
+                        <!-- Fix #13: Empty state message here -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📖</div>
+                            <h4 class="empty-state-title">No Workout History yet.</h4>
+                            <p class="empty-state-text">Complete a workout to see your history here!</p>
+                        </div>
+                    </div>
                 </section>
             </div>
         </section>
@@ -292,7 +315,14 @@
             <div id="settings-content">
                 <section class="settings-section">
     <h3>My Plans</h3>
-    <div id="plan-management-list"></div>
+    <div id="plan-management-list">
+        <!-- Fix #13: Empty state for plans -->
+        <div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <h4 class="empty-state-title">No Plans yet.</h4>
+            <p class="empty-state-text">Create your first plan to get started.</p>
+        </div>
+    </div>
     <button class="cta-button secondary-button" data-action="showView" data-view-name="templatePortal">+ Create New Plan</button>
 </section>
 <section class="settings-section">
@@ -390,7 +420,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="toast" class="toast hidden">
       <div id="toast-message"></div>
       <div id="toast-icon"></div>
