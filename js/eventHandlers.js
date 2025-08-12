@@ -124,7 +124,9 @@ function confirmDeletePlan(planId) {
     triggerHapticFeedback('medium');
     ui.showModal('Delete Plan?', 'Are you sure you want to permanently delete this plan? This cannot be undone.', [
         { text: 'Cancel', class: 'secondary-button' },
-        { text: 'Yes, Delete', class: 'cta-button', action: () => deletePlan(planId) }
+        { text: 'Yes, Delete', class: 'cta-button', action: () => {
+            deletePlan(planId);
+        }}
     ]);
 }
 
