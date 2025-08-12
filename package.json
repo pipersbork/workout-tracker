@@ -5,6 +5,7 @@
   "main": "js/main.js",
   "scripts": {
     "dev": "vite",
+    "build": "vite build",
     "test": "echo \"No tests specified\" && exit 0",
     "lint": "eslint . --ext js --fix",
     "format": "prettier --write .",
