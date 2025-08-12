@@ -672,3 +672,63 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
   visibility: visible;
   transform: translateY(0);
 }
+
+/* ===========================
+  SKELETON LOADER STYLES
+=========================== */
+.skeleton {
+  background-color: var(--color-surface-tertiary);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  height: 100%;
+  width: 150%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-text-short {
+  width: 40%;
+}
+
+.skeleton-text-long {
+  width: 90%;
+}
+
+.skeleton-card {
+  background-color: var(--color-surface-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-title {
+  height: 28px;
+  width: 60%;
+}
+
+.skeleton-icon {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+}
+
