@@ -362,6 +362,7 @@ function stopRestTimer() {
     state.restTimer.isRunning = false;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
+    triggerHapticFeedback('medium');
 }
 
 // --- NOTE AND HISTORY FUNCTIONS ---
