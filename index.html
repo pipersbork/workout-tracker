@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progression - Workout Tracker</title>
+    <meta name="description" content="A modern, offline-first workout tracker to help you build muscle and strength.">
 
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Chart.js removed to avoid CORS issues - can be added back later when needed -->
-</head>
+    </head>
 <body>
 
     <main>
@@ -156,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- NEW: Skeleton Loader -->
             <div id="exercise-list-loader" class="hidden">
                 <div class="skeleton-card">
                     <div class="skeleton-header">
@@ -252,7 +251,6 @@
                 <section class="summary-section">
                     <h3>Volume by Muscle Group</h3>
                     <div class="chart-container">
-                        <!-- Chart placeholder - Chart.js removed for now -->
                         <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
                             Charts will be available in a future update
                         </div>
@@ -266,13 +264,11 @@
                         <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
                     </div>
                     <div id="weight-chart-container" class="chart-container">
-                        <!-- Chart placeholder - Chart.js removed for now -->
                         <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
                             Progress charts will be available in a future update
                         </div>
                     </div>
                     <div id="e1rm-chart-container" class="chart-container hidden">
-                        <!-- Chart placeholder - Chart.js removed for now -->
                         <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
                             E1RM charts will be available in a future update
                         </div>
@@ -392,6 +388,11 @@
                 <button class="cta-button" data-action="submitCheckin">Start Workout</button>
             </div>
         </div>
+    </div>
+    
+    <div id="toast" class="toast hidden">
+      <div id="toast-message"></div>
+      <div id="toast-icon"></div>
     </div>
 
     <script type="module" src="js/main.js"></script>
