@@ -2,6 +2,7 @@ import { state } from './state.js';
 import * as ui from './ui.js';
 import * as firebase from './firebaseService.js';
 import { workoutEngine } from './planGenerator.js';
+import { sanitizeInput } from './utils.js'; // 1. IMPORT our new sanitizer
 
 /**
  * @file eventHandlers.js centralizes all application event listeners and their corresponding actions.
@@ -371,7 +372,8 @@ function openExerciseNotes(exerciseIndex) {
                 class: 'cta-button',
                 action: () => {
                     const newNote = document.getElementById('exercise-note-input').value;
-                    exercise.note = newNote;
+                    // 2. SANITIZE the input before saving it to the state
+                    exercise.note = sanitizeInput(newNote); 
                     ui.renderDailyWorkout(); // Re-render to show note icon state change
                     ui.closeModal();
                     triggerHapticFeedback('success');
@@ -391,6 +393,7 @@ function showHistory(exerciseId) {
             historyHTML += `<div class="history-item">`;
             historyHTML += `<div class="history-date">${new Date(historyItem.completedDate).toLocaleDateString()} - ${historyItem.workoutName}</div>`;
             if (exerciseInstance.note) {
+                // We can safely display the note here because it was sanitized before being saved
                 historyHTML += `<div class="history-note">"${exerciseInstance.note}"</div>`;
             }
             (exerciseInstance.sets || []).forEach((set, index) => {
@@ -555,7 +558,7 @@ function swapExercise(exerciseIndex) {
             </div>`;
     }).join('');
 
-    ui.showModal(`Swap ${currentExercise.name}`, `<div class="card-group vertical">${alternativesHTML}</div>`, []);
+    ui.showModal(`Swap ${currentExercise.name}`, alternativesHTML, []);
 }
 
 function selectAlternative(newExerciseName, exerciseIndex) {
