@@ -8,10 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Fixed: Use cloudflare CDN which is allowed -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.js" 
-        integrity="sha512-FekXHWU8EIdBBeLTsEaAPMbHkFa/ULO7c57L8sxnHjmG8NJINh5ZQPF6+aIDOXJcOl+8lxTrEo9dXszeAmNUXQ==" 
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Chart.js removed to avoid CORS issues - can be added back later when needed -->
 </head>
 <body>
 
@@ -255,7 +252,10 @@
                 <section class="summary-section">
                     <h3>Volume by Muscle Group</h3>
                     <div class="chart-container">
-                        <canvas id="volume-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
+                            Charts will be available in a future update
+                        </div>
                     </div>
                 </section>
                 <section class="summary-section">
@@ -266,10 +266,16 @@
                         <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
                     </div>
                     <div id="weight-chart-container" class="chart-container">
-                        <canvas id="progress-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
+                            Progress charts will be available in a future update
+                        </div>
                     </div>
                     <div id="e1rm-chart-container" class="chart-container hidden">
-                        <canvas id="e1rm-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-surface-tertiary); border-radius: 8px; color: var(--color-text-secondary);">
+                            E1RM charts will be available in a future update
+                        </div>
                     </div>
                 </section>
                 <section class="summary-section">
