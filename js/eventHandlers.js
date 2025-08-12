@@ -759,7 +759,7 @@ export function initEventListeners() {
         }
     });
 
-    ui.elements.templatePortalView.addEventListener('click', e => {
+    ui.elements.templatePortalView?.addEventListener('click', e => {
         const hubOption = e.target.closest('.hub-option');
         if (!hubOption) return;
         const hubAction = hubOption.dataset.hubAction;
@@ -793,20 +793,18 @@ export function initEventListeners() {
     });
 
     // Debounced input event listener for real-time saving of workout progress.
-    // This is more efficient than saving the entire state.
     let saveTimeout;
     const saveDelay = 1000; // 1 second debounce
     document.body.addEventListener('input', e => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                // Only save the 'allPlans' object, as that's what's being modified.
                 firebase.updateState('allPlans', state.allPlans);
             }, saveDelay);
         }
     });
 
-    ui.elements.modal.addEventListener('click', (e) => {
+    ui.elements.modal?.addEventListener('click', (e) => {
         if (e.target.id === 'modal' || e.target.id === 'feedback-modal' || e.target.id === 'daily-checkin-modal') {
             ui.closeModal();
             ui.closeFeedbackModal();
@@ -814,7 +812,7 @@ export function initEventListeners() {
         }
     });
 
-    ui.elements.workoutView.addEventListener('input', (e) => {
+    ui.elements.workoutView?.addEventListener('input', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             e.target.classList.remove('valid', 'invalid');
             if (e.target.value.trim() !== '') {
@@ -857,18 +855,19 @@ export function initEventListeners() {
         }
     });
 
-    ui.elements.workoutView.addEventListener('focusin', (e) => {
+    ui.elements.workoutView?.addEventListener('focusin', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             e.target.closest('.set-row').classList.add('active-set');
         }
     });
 
-    ui.elements.workoutView.addEventListener('focusout', (e) => {
+    ui.elements.workoutView?.addEventListener('focusout', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             e.target.closest('.set-row').classList.remove('active-set');
         }
     });
 
+    // NEW: Event listener for the exercise tracker dropdown
     ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
         const exerciseName = e.target.value;
         if (exerciseName) {
