@@ -81,6 +81,10 @@ export const state = {
         totalVolume: 0,
         totalSets: 0,
         mesocycleStats: {},
+        // NEW: Properties for workout comparison
+        volumeChange: null,
+        setsChange: null,
+        durationChange: null,
     },
 
     // Holds the chronological history of all completed workouts
