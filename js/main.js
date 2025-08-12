@@ -48,11 +48,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Apply the user's saved theme (or default)
         applyTheme();
         
-        // Determine the initial view based on onboarding status and whether a workout is in progress.
-        let initialView = 'onboarding';
-        if (state.userSelections.onboardingCompleted) {
-            initialView = state.workoutTimer.isWorkoutInProgress ? 'workout' : 'home';
+        // This block is now more defensive, ensuring state is fully initialized before rendering.
+        if (state && state.userSelections && state.workoutTimer) {
+            let initialView = 'onboarding';
+            if (state.userSelections.onboardingCompleted) {
+                initialView = state.workoutTimer.isWorkoutInProgress ? 'workout' : 'home';
+            }
+            showView(initialView, true);
+        } else {
+            // This is a fallback for a critical error where the state isn't ready.
+            console.error("CRITICAL: State was not ready before attempting to render the initial view.");
+            showModal(
+                'Initialization Error',
+                'There was a problem loading your profile. Please refresh the page.',
+                [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]
+            );
         }
-        showView(initialView, true);
     });
 });
