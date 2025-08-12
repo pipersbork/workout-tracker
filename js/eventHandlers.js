@@ -539,9 +539,16 @@ async function nextOnboardingStep() {
             
             await firebase.saveFullState();
             
-            setTimeout(() => {
-                triggerHapticFeedback('success');
-                ui.showModal(
+            // Wait for data to load before showing the home screen
+            let maxAttempts = 20;
+            while (!state.isDataLoaded && maxAttempts > 0) {
+                await new Promise(resolve => setTimeout(resolve, 250));
+                maxAttempts--;
+            }
+
+            if (state.isDataLoaded) {
+                 triggerHapticFeedback('success');
+                 ui.showModal(
                     'Plan Generated!',
                     'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
                     [{ 
@@ -553,7 +560,13 @@ async function nextOnboardingStep() {
                         } 
                     }]
                 );
-            }, 1200);
+            } else {
+                ui.showModal(
+                    'Error', 
+                    'There was an error loading your data. Please refresh the page.',
+                    [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]
+                );
+            }
         }
     });
 }
