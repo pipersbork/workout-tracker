@@ -363,7 +363,7 @@ function renderVolumeChart() {
 /**
  * Renders the exercise tracker dropdown and charts
  */
-function renderExerciseTracker() {
+export function renderExerciseTracker() {
     if (!elements.exerciseTrackerSelect) return;
 
     // Get unique exercises from workout history
