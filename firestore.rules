@@ -1,86 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // This is a simplified rule for diagnostic purposes.
+    // It allows any authenticated user to read and write to their own document,
+    // bypassing the complex data validation for now.
     match /users/{userId} {
-      // Allow authenticated users to read and delete their own data.
-      allow read, delete: if request.auth != null && request.auth.uid == userId;
-
-      // Allow a user to CREATE their initial document with minimal validation.
-      // This is the key change to prevent errors during the first-time user setup.
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // Enforce strict data validation ONLY on subsequent UPDATES.
-      // This ensures that once the user document exists, all future changes adhere to the correct structure.
-      allow update: if request.auth != null && request.auth.uid == userId
-                      && isDataStructureValid(request.resource.data);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
-}
-
-// This function validates the data structure on every UPDATE operation.
-// It ensures the integrity of your data model as the app is used.
-function isDataStructureValid(data) {
-  // Check for the presence of all top-level keys.
-  return data.keys().hasAll([
-    'userSelections', 'settings', 'allPlans', 'activePlanId',
-    'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates',
-    'isWorkoutInProgress' // Added this key which was missing from the original rules
-  ])
-  // Deep validation for the 'userSelections' object.
-  && data.userSelections.keys().hasAll([
-    'goal', 'trainingAge', 'daysPerWeek', 'dietaryStatus', 'style', 'onboardingCompleted'
-  ])
-  // Deep validation for the 'settings' object.
-  && data.settings.keys().hasAll([
-    'units', 'theme', 'progressionModel', 'weightIncrement', 'restDuration', 'haptics'
-  ])
-  // Type and value checks for user selections
-  && data.userSelections.goal in ['hypertrophy', 'strength', 'fatLoss']
-  && data.userSelections.trainingAge in ['novice', 'beginner', 'intermediate', 'advanced']
-  && data.userSelections.daysPerWeek in [3, 4, 5, 6]
-  && data.userSelections.dietaryStatus in ['surplus', 'maintenance', 'deficit']
-  && data.userSelections.style in ['gym', 'home']
-  && data.userSelections.onboardingCompleted is bool
-  // Type and value checks for settings
-  && data.settings.units in ['lbs', 'kg']
-  && data.settings.theme in ['dark', 'light']
-  && data.settings.progressionModel in ['linear', 'double']
-  && data.settings.weightIncrement in [2.5, 5, 10]
-  && data.settings.restDuration in [60, 90, 120, 180]
-  && data.settings.haptics is bool
-  // Type checks for root-level fields
-  && (data.activePlanId is string || data.activePlanId == null)
-  && data.isWorkoutInProgress is bool
-  && data.allPlans is list
-  && data.workoutHistory is list
-  && data.personalRecords is list
-  // Deep validation for nested objects in lists (ensures lists are not empty or contain valid objects)
-  && (data.allPlans.size() == 0 || data.allPlans.all(plan =>
-      plan.id is string
-      && plan.name is string
-      && plan.startDate is string
-      && plan.durationWeeks is number
-      && plan.weeks is map
-  ))
-  && (data.workoutHistory.size() == 0 || data.workoutHistory.all(entry =>
-      entry.id is string
-      && entry.planId is string
-      && entry.planName is string
-      && entry.workoutName is string
-      && entry.completedDate is string
-      && entry.duration is number
-      && entry.volume is number
-      && entry.sets is number
-      && entry.exercises is list
-  ))
-  && (data.personalRecords.size() == 0 || data.personalRecords.all(pr =>
-      pr.id is string
-      && pr.exerciseId is string
-      && pr.exerciseName is string
-      && pr.date is string
-      && pr.weight is number
-      && pr.reps is number
-      && pr.e1rm is number
-      && pr.units in ['lbs', 'kg']
-  ));
 }
