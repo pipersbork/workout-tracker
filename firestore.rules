@@ -1,11 +1,49 @@
-echo "
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own documents.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow the user to read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow write only if the data conforms to the expected structure.
+      allow write: if request.auth != null && request.auth.uid == userId && request.resource.data.keys().hasAll([
+        'userSelections', 'settings', 'allPlans', 'activePlanId',
+        'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates',
+        'dailyCheckinHistory', 'isWorkoutInProgress'
+      ])
+
+      // User Selections Validation
+      && request.resource.data.userSelections.keys().hasAll([
+        'goal', 'trainingAge', 'daysPerWeek', 'dietaryStatus', 'style', 'onboardingCompleted'
+      ])
+      && request.resource.data.userSelections.goal in ['hypertrophy', 'strength', 'fatLoss']
+      && request.resource.data.userSelections.trainingAge in ['novice', 'beginner', 'intermediate', 'advanced']
+      && request.resource.data.userSelections.daysPerWeek in [3, 4, 5, 6]
+      && request.resource.data.userSelections.dietaryStatus in ['surplus', 'maintenance', 'deficit']
+      && request.resource.data.userSelections.style in ['gym', 'home']
+      && request.resource.data.userSelections.onboardingCompleted is bool
+
+      // Settings Validation
+      && request.resource.data.settings.keys().hasAll([
+        'units', 'theme', 'progressionModel', 'weightIncrement', 'restDuration', 'haptics'
+      ])
+      && request.resource.data.settings.units in ['lbs', 'kg']
+      && request.resource.data.settings.theme in ['dark', 'light']
+      && request.resource.data.settings.progressionModel in ['linear', 'double']
+      && request.resource.data.settings.weightIncrement in [2.5, 5, 10]
+      && request.resource.data.settings.restDuration in [60, 90, 120, 180]
+      && request.resource.data.settings.haptics is bool
+
+      // Root-level fields validation
+      && (request.resource.data.activePlanId is string || request.resource.data.activePlanId == null)
+      && request.resource.data.isWorkoutInProgress is bool
+      && request.resource.data.currentView.keys().hasAll(['week', 'day'])
+      && request.resource.data.currentView.week is number
+      && request.resource.data.currentView.day is number;
+      
+      // Note: Full nested validation for lists and maps is not fully supported
+      // by the GUI editor. The above rules provide top-level validation
+      // and will prevent entirely malformed documents, which is the key goal.
     }
   }
 }
-" > firestore.rules

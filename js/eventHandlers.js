@@ -2,6 +2,7 @@ import { state } from './state.js';
 import * as ui from './ui.js';
 import * as firebase from './firebaseService.js';
 import { workoutEngine } from './planGenerator.js';
+import { sanitizeInput } from './utils.js';
 
 /**
  * @file eventHandlers.js centralizes all application event listeners and their corresponding actions.
@@ -67,22 +68,25 @@ async function selectCard(element, field, value, shouldSave = false) {
     element.classList.add('active');
 
     if (shouldSave) {
-        await firebase.saveState();
+        await firebase.updateState('userSelections', state.userSelections);
+        ui.showToast('Settings saved!', '✅');
     }
 }
 
 async function setTheme(theme) {
+    if (theme !== 'dark' && theme !== 'light') return;
     triggerHapticFeedback('light');
     state.settings.theme = theme;
     ui.applyTheme();
-    await firebase.saveState();
+    await firebase.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
 async function setUnits(unit) {
+    if (unit !== 'lbs' && unit !== 'kg') return;
     triggerHapticFeedback('light');
     state.settings.units = unit;
-    await firebase.saveState();
+    await firebase.updateState('settings', state.settings);
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.renderDailyWorkout();
@@ -90,24 +94,27 @@ async function setUnits(unit) {
 }
 
 async function setProgressionModel(progression) {
+    if (progression !== 'linear' && progression !== 'double') return;
     triggerHapticFeedback('light');
     state.settings.progressionModel = progression;
-    await firebase.saveState();
+    await firebase.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
 async function setWeightIncrement(increment) {
+    if (![2.5, 5, 10].includes(increment)) return;
     triggerHapticFeedback('light');
     state.settings.weightIncrement = increment;
-    await firebase.saveState();
+    await firebase.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
 async function setRestDuration(duration) {
+    if (![60, 90, 120, 180].includes(duration)) return;
     triggerHapticFeedback('light');
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
-    await firebase.saveState();
+    await firebase.updateState('settings', state.settings);
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.updateRestTimerDisplay();
@@ -128,16 +135,18 @@ async function deletePlan(planId) {
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
     }
-    await firebase.saveState();
+    await firebase.saveFullState(); // Use full save because multiple fields are changing
     ui.closeModal();
     ui.renderSettings();
+    ui.showToast('Plan deleted successfully!', '🗑️');
 }
 
 async function setActivePlan(planId) {
     triggerHapticFeedback('success');
     state.activePlanId = planId;
-    await firebase.saveState();
+    await firebase.updateState('activePlanId', state.activePlanId);
     ui.renderSettings();
+    ui.showToast('Active plan set!', '✅');
 }
 
 function confirmCompleteWorkout() {
@@ -216,7 +225,7 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
         }
         
         suggestions.push({
-            exerciseName: nextWeekEx.name,
+            exerciseName: completedEx.name,
             suggestion: suggestionText
         });
     });
@@ -261,6 +270,8 @@ async function completeWorkout() {
     workout.completed = true;
     workout.completedDate = new Date().toISOString();
     
+    state.workoutTimer.isWorkoutInProgress = false;
+    
     const newPRsCount = checkForPRs(workout);
     state.workoutSummary.newPRs = newPRsCount;
 
@@ -293,9 +304,9 @@ async function completeWorkout() {
         state.workoutSummary.suggestions = [];
     }
     
-    ui.showView('workoutSummary');
+    ui.renderWorkoutCelebration(newPRsCount);
     findAndSetNextWorkout();
-    await firebase.saveState();
+    await firebase.saveFullState(); // Use full save after a workout as many things change
 }
 
 function setChartType(chartType) {
@@ -351,6 +362,7 @@ function stopRestTimer() {
     state.restTimer.isRunning = false;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
+    triggerHapticFeedback('medium');
 }
 
 // --- NOTE AND HISTORY FUNCTIONS ---
@@ -371,10 +383,11 @@ function openExerciseNotes(exerciseIndex) {
                 class: 'cta-button',
                 action: () => {
                     const newNote = document.getElementById('exercise-note-input').value;
-                    exercise.note = newNote;
-                    ui.renderDailyWorkout(); // Re-render to show note icon state change
+                    exercise.note = sanitizeInput(newNote); 
+                    ui.renderDailyWorkout();
                     ui.closeModal();
                     triggerHapticFeedback('success');
+                    ui.showToast('Note saved!', '📝');
                 }
             }
         ]
@@ -409,6 +422,77 @@ function showHistory(exerciseId) {
     ui.showModal(`${exerciseName} History`, historyHTML, [{ text: 'Close', class: 'cta-button' }]);
 }
 
+/**
+ * Creates and downloads a JSON file containing the user's data.
+ */
+function exportData() {
+    // Create a data object with only the essential user data
+    const userData = {
+        userSelections: state.userSelections,
+        settings: state.settings,
+        allPlans: state.allPlans,
+        workoutHistory: state.workoutHistory,
+        personalRecords: state.personalRecords,
+        savedTemplates: state.savedTemplates,
+        dailyCheckinHistory: state.dailyCheckinHistory
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "progression_backup_" + new Date().toISOString().slice(0,10) + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    ui.showModal("Backup Complete!", "Your workout data has been successfully downloaded. Keep this file safe!", [{ text: 'OK', class: 'cta-button' }]);
+}
+
+function confirmResetApp() {
+    ui.showModal('Reset All Data?', 'Are you sure you want to permanently delete all your data and start over? This cannot be undone.', [
+        { text: 'Cancel', class: 'secondary-button' },
+        { text: 'Yes, Reset', class: 'cta-button', action: () => resetAppData() }
+    ]);
+}
+
+async function resetAppData() {
+    triggerHapticFeedback('error');
+    state.userSelections = {
+        goal: 'hypertrophy',
+        trainingAge: 'beginner',
+        daysPerWeek: 4,
+        dietaryStatus: 'maintenance',
+        style: 'gym',
+        onboardingCompleted: false,
+    };
+    state.settings = {
+        units: 'lbs',
+        theme: 'dark',
+        progressionModel: 'double',
+        weightIncrement: 5,
+        restDuration: 90,
+        haptics: true,
+    };
+    state.allPlans = [];
+    state.activePlanId = null;
+    state.editingPlanId = null;
+    state.workoutHistory = [];
+    state.personalRecords = [];
+    state.dailyCheckinHistory = [];
+    state.currentView = { week: 1, day: 1 };
+    state.workoutTimer.isWorkoutInProgress = false;
+
+    await firebase.saveFullState();
+    ui.closeModal();
+    // Wait for data to be loaded before showing onboarding
+    let maxAttempts = 20;
+    while (!state.isDataLoaded && maxAttempts > 0) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+        maxAttempts--;
+    }
+    ui.showView('onboarding');
+}
+
+
 export function findLastPerformance(exerciseId) {
     for (const historyItem of state.workoutHistory) {
         const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
@@ -425,21 +509,15 @@ export function findLastPerformance(exerciseId) {
 
 // --- ONBOARDING FUNCTIONS ---
 
-/**
- * Handles the visual transition between onboarding steps.
- * @param {Function} stepChangeLogic - The logic to run after the fade-out animation.
- */
 function handleStepTransition(stepChangeLogic) {
     const currentStepEl = document.querySelector('.step.active');
     if (currentStepEl) {
         currentStepEl.classList.add('fade-out');
-        // Wait for the animation to finish before changing the content
         setTimeout(() => {
             stepChangeLogic();
             ui.renderOnboardingStep();
-        }, 500); // This duration must match the CSS animation duration
+        }, 500); 
     } else {
-        // If there's no active step, just run the logic immediately
         stepChangeLogic();
         ui.renderOnboardingStep();
     }
@@ -447,7 +525,6 @@ function handleStepTransition(stepChangeLogic) {
 
 function selectOnboardingCard(element, field, value) {
     selectCard(element, field, value);
-    // Add a slight delay to let the user see their selection before transitioning
     setTimeout(nextOnboardingStep, 250);
 }
 
@@ -458,7 +535,6 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // This is the final "Building your plan..." step
             const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
             const newPlan = {
                 id: `meso_${Date.now()}`,
@@ -467,20 +543,41 @@ async function nextOnboardingStep() {
                 durationWeeks: 4,
                 ...newMeso
             };
+            
             state.allPlans.push(newPlan);
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
-            await firebase.saveState();
             
-            // Wait for the shimmer animation on the progress bar before showing the final modal
-            setTimeout(() => {
-                triggerHapticFeedback('success');
-                ui.showModal(
+            await firebase.saveFullState();
+            
+            // Wait for data to load before showing the home screen
+            let maxAttempts = 20;
+            while (!state.isDataLoaded && maxAttempts > 0) {
+                await new Promise(resolve => setTimeout(resolve, 250));
+                maxAttempts--;
+            }
+
+            if (state.isDataLoaded) {
+                 triggerHapticFeedback('success');
+                 ui.showModal(
                     'Plan Generated!',
                     'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
+                    [{ 
+                        text: 'Let\'s Go!', 
+                        class: 'cta-button', 
+                        action: () => {
+                            ui.closeModal();
+                            ui.showView('home');
+                        } 
+                    }]
                 );
-            }, 1200);
+            } else {
+                ui.showModal(
+                    'Error', 
+                    'There was an error loading your data. Please refresh the page.',
+                    [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]
+                );
+            }
         }
     });
 }
@@ -510,9 +607,10 @@ async function submitCheckin() {
         ...state.dailyCheckin
     });
 
-    await firebase.saveState();
+    await firebase.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
     ui.closeDailyCheckinModal();
 
+    state.workoutTimer.isWorkoutInProgress = true;
     if (!state.workoutTimer.isRunning) startStopwatch();
     ui.showView('workout');
 }
@@ -520,10 +618,16 @@ async function submitCheckin() {
 async function startPlanWorkout(planId) {
     triggerHapticFeedback('medium');
     state.activePlanId = planId;
-    await firebase.saveState();
+    await firebase.updateState('activePlanId', state.activePlanId);
     const workoutFound = findAndSetNextWorkout(planId);
     if (workoutFound) {
-        ui.showDailyCheckinModal();
+        if (state.workoutTimer.isWorkoutInProgress) {
+            // If a workout is already in progress, go straight to it.
+            ui.showView('workout');
+        } else {
+            // Otherwise, show the daily check-in modal.
+            ui.showDailyCheckinModal();
+        }
     }
 }
 
@@ -541,21 +645,36 @@ function swapExercise(exerciseIndex) {
         ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
         return;
     }
-    
-    const alternativesHTML = exerciseData.alternatives.map(altName => {
-        const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
-        let performanceText = 'No recent history.';
-        if (lastPerformance) {
-            performanceText = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
-        }
-        return `
-            <div class="goal-card alternative-card" data-action="selectAlternative" data-new-exercise-name="${altName}" data-exercise-index="${exerciseIndex}" role="button" tabindex="0">
-                <h3>${altName}</h3>
-                <p>${performanceText}</p>
-            </div>`;
-    }).join('');
 
-    ui.showModal(`Swap ${currentExercise.name}`, `<div class="card-group vertical">${alternativesHTML}</div>`, []);
+    const cardContainer = document.createElement('div');
+    cardContainer.className = 'card-group vertical';
+
+    exerciseData.alternatives.forEach(altName => {
+        const card = document.createElement('div');
+        card.className = 'goal-card alternative-card';
+        card.dataset.action = 'selectAlternative';
+        card.dataset.newExerciseName = altName;
+        card.dataset.exerciseIndex = exerciseIndex;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+
+        const title = document.createElement('h3');
+        title.textContent = altName;
+
+        const performanceText = document.createElement('p');
+        const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
+        if (lastPerformance) {
+            performanceText.textContent = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
+        } else {
+            performanceText.textContent = 'No recent history.';
+        }
+
+        card.appendChild(title);
+        card.appendChild(performanceText);
+        cardContainer.appendChild(card);
+    });
+
+    ui.showModal(`Swap ${currentExercise.name}`, cardContainer, []);
 }
 
 function selectAlternative(newExerciseName, exerciseIndex) {
@@ -572,7 +691,7 @@ function selectAlternative(newExerciseName, exerciseIndex) {
             muscle: newExerciseData.muscle, 
             exerciseId: `ex_${newExerciseData.name.replace(/\s+/g, '_')}`, 
             sets: [],
-            stallCount: 0, // Reset stall count
+            stallCount: 0,
             note: `Swapped from ${currentExercise.name}.`
         };
         ui.renderDailyWorkout();
@@ -597,7 +716,17 @@ export function initEventListeners() {
             previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
-                if (dataset.viewName === 'workout') {
+                // --- TIMER MEMORY LEAK FIX ---
+                // If we are leaving the workout view, make sure all timers are stopped.
+                if (state.currentViewName === 'workout' && dataset.viewName !== 'workout') {
+                    stopStopwatch();
+                    stopRestTimer();
+                }
+
+                // If a workout is in progress, clicking the "workout" button should go straight to the workout.
+                if (dataset.viewName === 'workout' && state.workoutTimer.isWorkoutInProgress) {
+                    ui.showView('workout');
+                } else if (dataset.viewName === 'workout') {
                     const workoutFound = findAndSetNextWorkout();
                     if (workoutFound) ui.showDailyCheckinModal();
                 } else {
@@ -666,14 +795,64 @@ export function initEventListeners() {
                     };
                     state.allPlans.push(newPlan);
                     state.activePlanId = newPlan.id;
-                    await firebase.saveState();
+                    await firebase.saveFullState(); // Use full save for new plan creation
                     ui.closeModal();
                     ui.showView('settings');
+                    ui.showToast('Plan created successfully!', '🎯');
                 }}
             ]);
         }
         if (hubAction === 'manage') ui.showView('settings');
         if (hubAction === 'premade' || hubAction === 'custom') ui.showModal('Coming Soon!', 'This feature is currently under development.');
+    });
+
+    // Debounced input event listener for real-time saving
+    let saveTimeout;
+    const saveDelay = 1000; // 1 second debounce
+    document.body.addEventListener('input', e => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            clearTimeout(saveTimeout);
+            ui.showSaveIndicator();
+            saveTimeout = setTimeout(async () => {
+                const success = await firebase.saveFullState();
+                ui.hideSaveIndicator(success);
+            }, saveDelay);
+        }
+    });
+
+    // Handle Enter keypress on input fields
+    document.body.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.matches('.weight-input, .rep-rir-input')) {
+                const parentRow = activeElement.closest('.set-row');
+                const nextRow = parentRow.nextElementSibling;
+
+                if (nextRow && nextRow.querySelector('.weight-input')) {
+                    nextRow.querySelector('.weight-input').focus();
+                } else {
+                    const addSetButton = parentRow.closest('.sets-container').querySelector('.add-set-btn');
+                    if (addSetButton) {
+                        addSetButton.click();
+                    }
+                }
+            }
+        }
+    });
+
+    // Keyboard shortcuts for navigation and actions
+    document.addEventListener('keydown', (e) => {
+        if (ui.elements.modal.classList.contains('active')) return;
+
+        if (e.key === 'n' && state.currentViewName === 'home') {
+            document.querySelector('#home-screen [data-view-name="workout"]').click();
+        }
+        if (e.key === 'b' && state.currentViewName !== 'home') {
+            document.querySelector('.back-btn').click();
+        }
+        if (e.key === 'c' && state.currentViewName === 'workout') {
+            document.querySelector('#complete-workout-btn').click();
+        }
     });
 
     ui.elements.modal.addEventListener('click', (e) => {
@@ -686,7 +865,6 @@ export function initEventListeners() {
 
     ui.elements.workoutView.addEventListener('input', (e) => {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
-            // FIX: Restore validation logic
             e.target.classList.remove('valid', 'invalid');
             if (e.target.value.trim() !== '') {
                 const isValid = e.target.checkValidity();
@@ -764,5 +942,15 @@ export function initEventListeners() {
     document.body.addEventListener('mouseout', e => {
         const target = e.target.closest('[data-tooltip]');
         if (target) ui.hideTooltip();
+    });
+
+    document.getElementById('export-data-btn')?.addEventListener('click', () => {
+        triggerHapticFeedback('light');
+        exportData();
+    });
+
+    document.getElementById('reset-app-btn')?.addEventListener('click', () => {
+        triggerHapticFeedback('heavy');
+        confirmResetApp();
     });
 }

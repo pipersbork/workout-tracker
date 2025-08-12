@@ -1,760 +1,846 @@
 import { state } from './state.js';
-import { createSetRowHTML, capitalize } from './utils.js';
-import { workoutEngine } from './planGenerator.js';
 import { findLastPerformance } from './eventHandlers.js';
+import { createSetRowHTML } from './utils.js';
 
 /**
- * @file ui.js handles all DOM manipulation and UI rendering for the application.
- * It is responsible for keeping the user interface in sync with the application's state.
+ * @file ui.js handles all user interface updates and DOM manipulation.
+ * This file contains functions for rendering different views, updating displays, and managing UI state.
  */
 
-// --- DOM ELEMENT CACHE ---
+// DOM element references for performance
 export const elements = {
-    // Views
-    onboardingView: document.getElementById('onboarding-container'),
-    homeScreenView: document.getElementById('home-screen'),
+    onboardingContainer: document.getElementById('onboarding-container'),
+    homeScreen: document.getElementById('home-screen'),
     templatePortalView: document.getElementById('template-portal-view'),
     workoutView: document.getElementById('daily-workout-view'),
-    workoutSummaryView: document.getElementById('workout-summary-view'),
     performanceSummaryView: document.getElementById('performance-summary-view'),
     settingsView: document.getElementById('settings-view'),
-
-    // Onboarding
-    onboardingProgressBar: document.getElementById('onboarding-progress'),
-    onboardingProgressBarContainer: document.getElementById('onboarding-progress-bar'),
-
-    // Home Screen
-    activePlanDisplay: document.getElementById('active-plan-display'),
-    homeNav: document.querySelector('#home-screen .home-nav-buttons'),
-
-
-    // Daily Workout
-    workoutDayTitle: document.getElementById('workout-day-title'),
-    workoutDate: document.getElementById('workout-date'),
+    workoutSummaryView: document.getElementById('workout-summary-view'),
+    modal: document.getElementById('modal'),
+    feedbackModal: document.getElementById('feedback-modal'),
+    dailyCheckinModal: document.getElementById('daily-checkin-modal'),
     exerciseListContainer: document.getElementById('exercise-list-container'),
-    workoutStopwatch: document.getElementById('workout-stopwatch-display'),
-    restTimer: document.getElementById('rest-timer-display'),
-
-    // Template Portal
-    templatePortalOptions: document.getElementById('template-portal-options'),
-
-    // Settings
-    settingsContent: document.getElementById('settings-content'),
-    planManagementList: document.getElementById('plan-management-list'),
-
-    // Performance Summary
-    consistencyCalendar: document.getElementById('consistency-calendar'),
-    volumeChartCanvas: document.getElementById('volume-chart'),
-    progressChartCanvas: document.getElementById('progress-chart'),
-    e1rmChartCanvas: document.getElementById('e1rm-chart'),
+    exerciseListLoader: document.getElementById('exercise-list-loader'),
+    workoutStopwatchDisplay: document.getElementById('workout-stopwatch-display'),
+    restTimerDisplay: document.getElementById('rest-timer-display'),
     exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
-    workoutHistoryList: document.getElementById('workout-history-list'),
-    trophyCaseList: document.getElementById('trophy-case-list'),
     weightChartContainer: document.getElementById('weight-chart-container'),
     e1rmChartContainer: document.getElementById('e1rm-chart-container'),
-
-    // Workout Summary
-    summaryTime: document.getElementById('summary-time'),
-    summaryVolume: document.getElementById('summary-volume'),
-    summarySets: document.getElementById('summary-sets'),
-    summaryPRs: document.getElementById('summary-prs'),
-    summaryProgressionList: document.getElementById('summary-progression-list'),
-    summaryMesoCompleted: document.getElementById('summary-meso-completed'),
-    summaryMesoIncomplete: document.getElementById('summary-meso-incomplete'),
-
-    // Modals
-    modal: document.getElementById('modal'),
-    modalContent: document.querySelector('#modal .modal-content'), // More specific selector
-    modalBody: document.getElementById('modal-body'),
-    modalActions: document.getElementById('modal-actions'),
-    feedbackModal: document.getElementById('feedback-modal'),
-    feedbackModalTitle: document.getElementById('feedback-modal-title'),
-    feedbackModalQuestion: document.getElementById('feedback-modal-question'),
-    feedbackModalOptions: document.getElementById('feedback-modal-options'),
-    dailyCheckinModal: document.getElementById('daily-checkin-modal'),
     sleepSlider: document.getElementById('sleep-slider'),
     stressSlider: document.getElementById('stress-slider'),
     sleepLabel: document.getElementById('sleep-label'),
     stressLabel: document.getElementById('stress-label'),
-
-    // Tooltip
-    tooltip: document.createElement('div'),
+    homeWorkoutTitle: document.getElementById('home-workout-title'),
+    homeWorkoutIcon: document.getElementById('home-workout-icon'),
+    saveIndicator: document.getElementById('save-indicator'),
+    offlineToast: document.getElementById('offline-toast'),
 };
 
-// Initialize Tooltip
-elements.tooltip.className = 'tooltip';
-document.body.appendChild(elements.tooltip);
+let currentTooltip = null;
 
-
-// --- VIEW MANAGEMENT ---
-
-export function showView(viewName, skipAnimation = false) {
-    _performViewChange(viewName, skipAnimation);
+/**
+ * Applies the current theme to the document body
+ */
+export function applyTheme() {
+    document.body.setAttribute('data-theme', state.settings.theme);
 }
 
-function _performViewChange(viewName, skipAnimation) {
-    if (!state.userSelections.onboardingCompleted && viewName !== 'onboarding') {
-        viewName = 'onboarding';
-    }
-
-    const currentViewEl = document.querySelector('.view:not(.hidden)');
-    if (currentViewEl) {
-        currentViewEl.classList.add('fade-out');
-        setTimeout(() => {
-            currentViewEl.classList.add('hidden');
-            currentViewEl.classList.remove('fade-out');
-        }, 500); // Match fade-out duration
-    }
-
-    const viewMap = {
-        onboarding: elements.onboardingView,
-        home: elements.homeScreenView,
+/**
+ * Shows a specific view and hides all others
+ * @param {string} viewName - The name of the view to show
+ * @param {boolean} skipAnimation - Whether to skip the fade animation
+ */
+export function showView(viewName, skipAnimation = false) {
+    const views = {
+        onboarding: elements.onboardingContainer,
+        home: elements.homeScreen,
         templatePortal: elements.templatePortalView,
         workout: elements.workoutView,
-        workoutSummary: elements.workoutSummaryView,
         performanceSummary: elements.performanceSummaryView,
         settings: elements.settingsView,
+        workoutSummary: elements.workoutSummaryView,
     };
 
-    const targetViewEl = viewMap[viewName];
+    // Update the document title
+    document.title = `Progression - ${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`;
 
-    if (targetViewEl) {
-        setTimeout(() => {
-            targetViewEl.classList.remove('hidden');
-            if (skipAnimation) {
-                targetViewEl.style.animation = 'none';
-            } else {
-                targetViewEl.style.animation = ''; // Re-enable animation
-            }
-            state.currentViewName = viewName;
-            
-            switch (viewName) {
-                case 'onboarding': renderOnboardingStep(); break;
-                case 'home': renderHomeScreen(); break;
-                case 'templatePortal': renderTemplatePortal(); break;
-                case 'workout': renderDailyWorkout(); break;
-                case 'workoutSummary': renderWorkoutSummary(); break;
-                case 'performanceSummary': renderPerformanceSummary(); break;
-                case 'settings': renderSettings(); break;
-            }
-        }, currentViewEl ? 400 : 0);
+    // Hide all views
+    Object.values(views).forEach(view => {
+        if (view) {
+            view.classList.add('hidden');
+            view.classList.remove('view');
+        }
+    });
+
+    // Show the requested view
+    const targetView = views[viewName];
+    if (targetView) {
+        targetView.classList.remove('hidden');
+        targetView.classList.add('view');
+        state.currentViewName = viewName;
+
+        // Render specific view content
+        switch (viewName) {
+            case 'onboarding':
+                renderOnboardingStep();
+                break;
+            case 'home':
+                renderHomeView();
+                break;
+            case 'templatePortal':
+                renderTemplatePortal();
+                break;
+            case 'workout':
+                renderDailyWorkout();
+                break;
+            case 'performanceSummary':
+                renderPerformanceSummary();
+                break;
+            case 'settings':
+                renderSettings();
+                break;
+            case 'workoutSummary':
+                renderWorkoutSummary();
+                break;
+        }
+    }
+}
+
+/**
+ * Renders the home view, updating the button based on workout status.
+ */
+export function renderHomeView() {
+    if (!elements.homeWorkoutTitle || !elements.homeWorkoutIcon) return;
+    if (state.workoutTimer.isWorkoutInProgress) {
+        elements.homeWorkoutTitle.textContent = "Continue Workout";
+        elements.homeWorkoutIcon.textContent = "▶️";
+    } else {
+        elements.homeWorkoutTitle.textContent = "Start Next Workout";
+        elements.homeWorkoutIcon.textContent = "▶️";
     }
 }
 
 
-// --- RENDER FUNCTIONS ---
-
+/**
+ * Renders the current onboarding step
+ */
 export function renderOnboardingStep() {
-    const { currentStep, totalSteps } = state.onboarding;
-    const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-    elements.onboardingProgressBar.style.width = `${progressPercentage}%`;
-
-    const shimmer = elements.onboardingProgressBarContainer.querySelector('.shimmer-wrapper');
-    if (currentStep === totalSteps) {
-        if (!shimmer) {
-            const newShimmer = document.createElement('div');
-            newShimmer.className = 'shimmer-wrapper';
-            elements.onboardingProgressBarContainer.appendChild(newShimmer);
-        }
-    } else {
-        if (shimmer) {
-            shimmer.remove();
-        }
+    const currentStep = state.onboarding.currentStep;
+    const totalSteps = state.onboarding.totalSteps;
+    
+    // Update progress bar
+    const progressBar = document.getElementById('onboarding-progress');
+    if (progressBar) {
+        const progressPercent = (currentStep / totalSteps) * 100;
+        progressBar.style.width = `${progressPercent}%`;
     }
 
-    document.querySelectorAll('.step').forEach(step => {
-        // This is the crucial fix: remove old classes before adding the new one.
+    // Show current step
+    const steps = document.querySelectorAll('.step');
+    steps.forEach((step, index) => {
         step.classList.remove('active', 'fade-out');
-        if (parseInt(step.dataset.step) === currentStep) {
+        if (index + 1 === currentStep) {
             step.classList.add('active');
         }
     });
+
+    // Update selected values in cards
+    updateOnboardingSelections();
 }
 
-export function renderHomeScreen() {
-    const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-    if (activePlan) {
-        elements.activePlanDisplay.textContent = activePlan.name;
-    } else {
-        elements.activePlanDisplay.textContent = 'No active plan. Create one to get started!';
-    }
-}
-
-function applyStaggeredAnimation(containerSelector, itemSelector) {
-    const container = document.querySelector(containerSelector);
-    if (!container) return;
-
-    const items = container.querySelectorAll(itemSelector);
-    items.forEach((item, index) => {
-        item.style.animationDelay = `${index * 0.08}s`;
+/**
+ * Updates the UI to reflect current user selections in onboarding
+ */
+function updateOnboardingSelections() {
+    Object.keys(state.userSelections).forEach(field => {
+        const value = state.userSelections[field];
+        const cards = document.querySelectorAll(`[data-field="${field}"] .goal-card`);
+        cards.forEach(card => {
+            card.classList.remove('active');
+            if (card.dataset.value == value) {
+                card.classList.add('active');
+            }
+        });
     });
 }
 
+/**
+ * Renders the template portal view
+ */
+export function renderTemplatePortal() {
+    const container = document.getElementById('template-portal-options');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="hub-option" data-hub-action="new" role="button" tabindex="0">
+            <div class="hub-option-icon">🎯</div>
+            <div class="hub-option-text">
+                <h3>Generate New Plan</h3>
+                <p>AI-powered plan based on your current settings</p>
+            </div>
+        </div>
+        <div class="hub-option" data-hub-action="manage" role="button" tabindex="0">
+            <div class="hub-option-icon">⚙️</div>
+            <div class="hub-option-text">
+                <h3>Manage My Plans</h3>
+                <p>View, edit, and organize your workout plans</p>
+            </div>
+        </div>
+        <div class="hub-option" data-hub-action="premade" role="button" tabindex="0">
+            <div class="hub-option-icon">📋</div>
+            <div class="hub-option-text">
+                <h3>Browse Templates</h3>
+                <p>Choose from proven, ready-made programs</p>
+            </div>
+        </div>
+        <div class="hub-option" data-hub-action="custom" role="button" tabindex="0">
+            <div class="hub-option-icon">🛠️</div>
+            <div class="hub-option-text">
+                <h3>Custom Builder</h3>
+                <p>Build your own plan from scratch</p>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders the daily workout view
+ */
 export function renderDailyWorkout() {
+    if (!state.activePlanId || !state.currentView) return;
+
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
-    if (!activePlan) {
-        elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No active plan selected.</p>';
-        return;
-    }
+    if (!activePlan) return;
 
     const { week, day } = state.currentView;
     const workout = activePlan.weeks[week]?.[day];
-    
-    if (!workout || !workout.exercises || workout.exercises.length === 0) {
-        elements.workoutDayTitle.textContent = workout?.name || "Rest Day";
-        elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No exercises scheduled for today. Enjoy your rest!</p>';
-        document.querySelector('.workout-actions').style.display = 'none';
-        return;
-    }
+    if (!workout) return;
 
-    document.querySelector('.workout-actions').style.display = 'block';
-    elements.workoutDayTitle.textContent = workout.name;
-    elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    updateStopwatchDisplay();
-    updateRestTimerDisplay();
+    // Update header
+    const titleElement = document.getElementById('workout-day-title');
+    const dateElement = document.getElementById('workout-date');
+    if (titleElement) titleElement.textContent = workout.name || `Week ${week}, Day ${day}`;
+    if (dateElement) dateElement.textContent = new Date().toLocaleDateString();
+
+    // Show loader
+    if (elements.exerciseListLoader) elements.exerciseListLoader.classList.remove('hidden');
+    if (elements.exerciseListContainer) elements.exerciseListContainer.style.display = 'none';
+
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+        renderExerciseList(workout, week);
+        
+        // Hide loader and show content
+        if (elements.exerciseListLoader) elements.exerciseListLoader.classList.add('hidden');
+        if (elements.exerciseListContainer) elements.exerciseListContainer.style.display = 'block';
+    }, 500);
+}
+
+/**
+ * Renders the exercise list for the current workout
+ */
+function renderExerciseList(workout, week) {
+    if (!elements.exerciseListContainer) return;
 
     let html = '';
-    workout.exercises.forEach((ex, exIndex) => {
-        const hasNote = ex.note && ex.note.trim() !== '';
-        const isStalled = ex.stallCount >= 2;
-        
-        const lastPerformance = findLastPerformance(ex.exerciseId);
-        let lastPerformanceHTML = '';
-        if (lastPerformance) {
-            lastPerformanceHTML = `<div class="last-performance-display">Last Time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}</div>`;
-        }
+    
+    workout.exercises.forEach((exercise, exerciseIndex) => {
+        const previousWeekWorkout = state.allPlans.find(p => p.id === state.activePlanId)?.weeks[week - 1]?.[state.currentView.day];
+        const previousWeekExercise = previousWeekWorkout?.exercises.find(ex => ex.exerciseId === exercise.exerciseId);
 
         html += `
-            <div class="exercise-card ${isStalled ? 'stalled' : ''}" data-exercise-index="${exIndex}">
+            <div class="exercise-card ${exercise.stallCount >= 2 ? 'stalled' : ''}">
                 <div class="exercise-card-header">
                     <div class="exercise-title-group">
-                        <h3 data-tooltip="${ex.type} exercise for ${ex.muscle}. Focus on good form and progressive overload.">${ex.name} ${isStalled ? `<span class="stall-indicator" data-tooltip="You've stalled on this exercise. Consider swapping it.">⚠️</span>` : ''}</h3>
-                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exIndex}" aria-label="Swap Exercise" data-tooltip="Swap for an alternative exercise">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.6v-2.6c0-2.2 1.8-4 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.4v2.6c0 2.2-1.8 4-4 4H3"/></svg>
+                        <h3>${exercise.name}</h3>
+                        ${exercise.stallCount >= 2 ? '<span class="stall-indicator" title="This exercise has stalled">⚠️</span>' : ''}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exerciseIndex}" title="Swap Exercise">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                                <path d="M8 21v-5a2 2 0 012-2h4a2 2 0 012 2v5"/>
+                            </svg>
                         </button>
-                        <button class="history-btn" data-action="showHistory" data-exercise-id="${ex.exerciseId}" aria-label="View History" data-tooltip="View past performance for this exercise">
-                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.19-9.35L1 10"/></svg>
+                        <button class="history-btn" data-action="showHistory" data-exercise-id="${exercise.exerciseId}" title="View History">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12,6 12,12 16,14"/>
+                            </svg>
                         </button>
-                        <button class="note-btn ${hasNote ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exIndex}" aria-label="Add or view exercise notes" data-tooltip="Add or view exercise notes">
-                            <svg xmlns="http="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                        <button class="note-btn ${exercise.note ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exerciseIndex}" title="Exercise Notes">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
+                            </svg>
                         </button>
                     </div>
-                    ${lastPerformanceHTML}
                 </div>
                 <div class="sets-container">
                     <div class="set-row header">
-                        <div class="set-number">SET</div>
+                        <div class="set-number">Set</div>
                         <div class="set-inputs-wrapper">
                             <div class="set-inputs">
-                                <span>${state.settings.units.toUpperCase()}</span>
-                                <span>REPS / RIR</span>
+                                <span>Weight (${state.settings.units})</span>
+                                <span>Reps & RIR</span>
                             </div>
                         </div>
-                        <div class="set-actions"></div>
                     </div>
-                    ${[...Array(ex.targetSets)].map((_, setIndex) => {
-                        const currentSet = ex.sets?.[setIndex] || {};
-                        const lastWeekSet = null;
-                        return createSetRowHTML(exIndex, setIndex, currentSet, lastWeekSet, ex.targetReps, ex.targetRIR, week);
-                    }).join('')}
+        `;
+
+        // Render existing sets
+        for (let setIndex = 0; setIndex < exercise.targetSets; setIndex++) {
+            const set = exercise.sets[setIndex] || { weight: '', reps: '', rir: '', rawInput: '' };
+            const previousWeekSet = previousWeekExercise?.sets[setIndex];
+            
+            html += createSetRowHTML(exerciseIndex, setIndex, set, previousWeekSet, exercise.targetReps, exercise.targetRIR, week);
+        }
+
+        html += `
+                    <button class="add-set-btn" data-action="addSet" data-exercise-index="${exerciseIndex}">+ Add Set</button>
                 </div>
-                <button class="add-set-btn" data-action="addSet" data-exercise-index="${exIndex}">+ Add Set</button>
             </div>
         `;
     });
+
     elements.exerciseListContainer.innerHTML = html;
-    applyStaggeredAnimation('#exercise-list-container', '.exercise-card');
 }
 
-export function renderSettings() {
-    const { settings, userSelections, allPlans, activePlanId } = state;
-
-    const updateToggleSwitch = (switchId, stateValue, dataAttribute) => {
-        const switchElement = document.getElementById(switchId);
-        if (switchElement) {
-            switchElement.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.classList.toggle('active', String(btn.dataset[dataAttribute]) === String(stateValue));
-            });
-        }
-    };
-
-    updateToggleSwitch('progression-model-switch', settings.progressionModel, 'progression');
-    updateToggleSwitch('weight-increment-switch', settings.weightIncrement, 'increment');
-    updateToggleSwitch('rest-duration-switch', settings.restDuration, 'duration');
-    updateToggleSwitch('units-switch', settings.units, 'unit');
-    updateToggleSwitch('theme-switch', settings.theme, 'theme');
-
-    document.querySelectorAll('.settings-card-group').forEach(group => {
-        const field = group.dataset.field;
-        const activeValue = userSelections[field];
-        group.querySelectorAll('.goal-card').forEach(card => {
-            card.classList.toggle('active', card.dataset.value == activeValue);
-        });
-    });
-
-    if (allPlans.length > 0) {
-        elements.planManagementList.innerHTML = allPlans.map(plan => `
-            <div class="plan-item ${plan.id === activePlanId ? 'active' : ''}">
-                <span class="plan-name-text" data-action="startPlanWorkout" data-plan-id="${plan.id}">${plan.name}</span>
-                <div class="plan-actions">
-                    ${plan.id !== activePlanId ? `<button class="cta-button plan-btn" data-action="setActivePlan" data-plan-id="${plan.id}">Set Active</button>` : ''}
-                    <button class="secondary-button plan-btn" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
-                    <button class="secondary-button plan-btn" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
-                </div>
-            </div>
-        `).join('');
-    } else {
-        elements.planManagementList.innerHTML = '<p class="placeholder-text">You haven\'t created any plans yet.</p>';
-    }
-}
-
+/**
+ * Renders the performance summary view
+ */
 export function renderPerformanceSummary() {
     renderTrophyCase();
     renderConsistencyCalendar();
     renderVolumeChart();
-    populateExerciseTrackerSelect();
-    const initialExercise = elements.exerciseTrackerSelect.value || state.exercises[0]?.name;
-    if (initialExercise) {
-        renderProgressChart(initialExercise);
-        renderE1RMChart(initialExercise);
-    }
+    renderExerciseTracker();
     renderWorkoutHistory();
-    applyStaggeredAnimation('#trophy-case-list', '.pr-item');
-    applyStaggeredAnimation('#workout-history-list', '.summary-item');
 }
 
-// --- CHART RENDERING WITH ENHANCED OPTIONS ---
-
-const getChartOptions = (titleText) => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            labels: {
-                color: 'var(--color-text-secondary)',
-                font: {
-                    family: 'var(--font-family)'
-                }
-            },
-            onHover: (event, legendItem, legend) => {
-                legend.chart.data.datasets.forEach((dataset, i) => {
-                    dataset.borderWidth = (i === legendItem.datasetIndex) ? 3 : 1;
-                });
-                legend.chart.update();
-            },
-            onLeave: (event, legendItem, legend) => {
-                legend.chart.data.datasets.forEach(dataset => {
-                    dataset.borderWidth = 1;
-                });
-                legend.chart.update();
-            }
-        },
-        tooltip: {
-            backgroundColor: 'var(--color-surface-primary)',
-            titleColor: 'var(--color-text-primary)',
-            bodyColor: 'var(--color-text-secondary)',
-            borderColor: 'var(--color-accent-primary)',
-            borderWidth: 1,
-            padding: 10,
-            cornerRadius: 8,
-            titleFont: { weight: 'bold', family: 'var(--font-family)' },
-            bodyFont: { family: 'var(--font-family)' },
-        }
-    },
-    scales: {
-        x: {
-            ticks: { color: 'var(--color-text-secondary)' },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-        },
-        y: {
-            ticks: { color: 'var(--color-text-secondary)' },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-        }
-    }
-});
-
-export function renderProgressChart(exerciseName) {
-    const { workoutHistory, progressChart, settings } = state;
-    const labels = [];
-    const data = [];
-
-    workoutHistory.forEach(hist => {
-        const ex = hist.exercises.find(e => e.name === exerciseName);
-        if (ex && ex.sets && ex.sets.length > 0) {
-            const topSet = ex.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
-            if (topSet.weight > 0) {
-                labels.push(new Date(hist.completedDate).toLocaleDateString());
-                data.push(topSet.weight);
-            }
-        }
-    });
-
-    if (progressChart) progressChart.destroy();
-    
-    state.progressChart = new Chart(elements.progressChartCanvas, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: `Top Set Weight (${settings.units})`,
-                data,
-                borderColor: 'var(--color-accent-primary)',
-                backgroundColor: 'rgba(0, 191, 255, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: 'var(--color-accent-primary)',
-                pointRadius: 4,
-                pointHoverRadius: 7
-            }]
-        },
-        options: getChartOptions(`Progress for ${exerciseName}`)
-    });
-}
-
-function renderE1RMChart(exerciseName) {
-    const { personalRecords, e1rmChart, settings } = state;
-    const exercisePRs = personalRecords
-        .filter(pr => pr.exerciseName === exerciseName)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    const labels = exercisePRs.map(pr => new Date(pr.date).toLocaleDateString());
-    const data = exercisePRs.map(pr => pr.e1rm);
-
-    if (e1rmChart) e1rmChart.destroy();
-
-    state.e1rmChart = new Chart(elements.e1rmChartCanvas, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: `Estimated 1-Rep Max (${settings.units})`,
-                data,
-                borderColor: 'var(--color-state-success)',
-                backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: 'var(--color-state-success)',
-                pointRadius: 4,
-                pointHoverRadius: 7
-            }]
-        },
-        options: getChartOptions(`e1RM for ${exerciseName}`)
-    });
-}
-
-export function renderVolumeChart() {
-    const { workoutHistory, volumeChart } = state;
-    const muscleVolume = {};
-
-    workoutHistory.forEach(hist => {
-        hist.exercises.forEach(ex => {
-            const volume = (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0);
-            muscleVolume[ex.muscle] = (muscleVolume[ex.muscle] || 0) + volume;
-        });
-    });
-    
-    const labels = Object.keys(muscleVolume);
-    const data = Object.values(muscleVolume);
-    const colors = ['#00bfff', '#1e90ff', '#33ccff', '#00ced1', '#20b2aa', '#4682b4', '#5f9ea0'];
-
-
-    if (volumeChart) volumeChart.destroy();
-
-    state.volumeChart = new Chart(elements.volumeChartCanvas, {
-        type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Total Volume by Muscle',
-                data,
-                backgroundColor: colors,
-                borderColor: 'var(--color-surface-secondary)',
-                borderWidth: 3,
-                hoverOffset: 20,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: getChartOptions().plugins.legend,
-                tooltip: getChartOptions().plugins.tooltip
-            }
-        }
-    });
-}
-
+/**
+ * Renders the trophy case (personal records)
+ */
 function renderTrophyCase() {
-    const { personalRecords } = state;
-    if (personalRecords.length === 0) {
-        elements.trophyCaseList.innerHTML = '<p class="placeholder-text">You haven\'t set any personal records yet. Keep lifting!</p>';
+    const container = document.getElementById('trophy-case-list');
+    if (!container) return;
+
+    if (state.personalRecords.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🏆</div>
+                <h4 class="empty-state-title">No Personal Records yet!</h4>
+                <p class="empty-state-text">Complete workouts to start building your trophy case.</p>
+            </div>
+        `;
         return;
     }
 
-    const sortedPRs = [...personalRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    elements.trophyCaseList.innerHTML = sortedPRs.map(pr => `
+    const sortedPRs = state.personalRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    container.innerHTML = sortedPRs.map(pr => `
         <div class="pr-item">
             <div class="pr-exercise-name">${pr.exerciseName}</div>
             <div class="pr-details">
-                <span class="pr-lift">${pr.weight} ${pr.units} x ${pr.reps}</span>
-                <span class="pr-e1rm">~${pr.e1rm} ${pr.units} e1RM</span>
+                <div class="pr-lift">${pr.weight}${pr.units} × ${pr.reps}</div>
+                <div class="pr-e1rm">Est. 1RM: ${pr.e1rm}${pr.units}</div>
             </div>
             <div class="pr-date">${new Date(pr.date).toLocaleDateString()}</div>
         </div>
     `).join('');
 }
 
-
+/**
+ * Renders the consistency calendar
+ */
 function renderConsistencyCalendar() {
-    const calendarEl = elements.consistencyCalendar;
-    calendarEl.innerHTML = '';
-    const completedDates = new Set(state.workoutHistory.map(h => new Date(h.completedDate).toDateString()));
+    const container = document.getElementById('consistency-calendar');
+    if (!container) return;
+
+    // Simple calendar showing last 30 days
     const today = new Date();
-    const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    calendarEl.innerHTML += `<div class="calendar-header">${today.toLocaleString('default', { month: 'long' })} ${today.getFullYear()}</div>`;
-    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(day => {
-        calendarEl.innerHTML += `<div class="calendar-day-name">${day}</div>`;
-    });
-
-    for (let i = 0; i < startDate.getDay(); i++) {
-        calendarEl.innerHTML += '<div></div>';
-    }
-
-    for (let i = 1; i <= endDate.getDate(); i++) {
-        const currentDate = new Date(today.getFullYear(), today.getMonth(), i);
-        const isCompleted = completedDates.has(currentDate.toDateString());
-        calendarEl.innerHTML += `<div class="calendar-day ${isCompleted ? 'completed' : ''}" data-tooltip="${isCompleted ? 'Workout Completed!' : 'Rest Day'}">${i}</div>`;
-    }
-}
-
-function populateExerciseTrackerSelect() {
-    const completedExercises = new Set();
-    state.workoutHistory.forEach(hist => {
-        hist.exercises.forEach(ex => completedExercises.add(ex.name));
-    });
-
-    const uniqueExercises = [...completedExercises].sort();
-    elements.exerciseTrackerSelect.innerHTML = uniqueExercises.map(name => `<option value="${name}">${name}</option>`).join('');
-}
-
-function renderWorkoutHistory() {
-    if (state.workoutHistory.length > 0) {
-        elements.workoutHistoryList.innerHTML = state.workoutHistory.slice(0, 15).map(h => `
-            <div class="summary-item">
-                <div>
-                    <h4>${h.workoutName}</h4>
-                    <p>${new Date(h.completedDate).toLocaleDateString()}</p>
-                </div>
-                <p>${Math.round(h.volume)} ${state.settings.units}</p>
-            </div>
-        `).join('');
-    } else {
-        elements.workoutHistoryList.innerHTML = '<p class="placeholder-text">No completed workouts yet.</p>';
-    }
-}
-
-export function renderTemplatePortal() {
-    elements.templatePortalOptions.innerHTML = `
-        <button class="hub-option" data-hub-action="new">
-            <div class="hub-option-icon">✨</div>
-            <div class="hub-option-text">
-                <h3>Create New Intelligent Plan</h3>
-                <p>Generate a new mesocycle based on your current profile.</p>
-            </div>
-        </button>
-        <button class="hub-option" data-hub-action="premade">
-            <div class="hub-option-icon">📚</div>
-            <div class="hub-option-text">
-                <h3>Premade Templates</h3>
-                <p>Choose from a list of expert-designed workout plans.</p>
-            </div>
-        </button>
-        <button class="hub-option" data-hub-action="custom">
-            <div class="hub-option-icon">✏️</div>
-            <div class="hub-option-text">
-                <h3>Custom Plans</h3>
-                <p>Build your own workout from scratch or edit a template.</p>
-            </div>
-        </button>
-         <button class="hub-option" data-hub-action="manage">
-            <div class="hub-option-icon">⚙️</div>
-            <div class="hub-option-text">
-                <h3>Manage My Plans</h3>
-                <p>View, delete, or change your active workout plan.</p>
-            </div>
-        </button>
-    `;
-}
-
-export function renderWorkoutSummary() {
-    const { workoutSummary, settings } = state;
-    const { totalVolume, totalSets, suggestions, newPRs, mesocycleStats } = workoutSummary;
-    const totalSeconds = state.workoutTimer.elapsed;
-    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-
-    elements.summaryTime.textContent = `${minutes}:${seconds}`;
-    elements.summaryVolume.textContent = `${Math.round(totalVolume)} ${settings.units}`;
-    elements.summarySets.textContent = totalSets;
-    elements.summaryPRs.textContent = newPRs || '0';
-
-    if (mesocycleStats) {
-        elements.summaryMesoCompleted.textContent = mesocycleStats.completed;
-        elements.summaryMesoIncomplete.textContent = mesocycleStats.incomplete;
-    }
-
-    if (suggestions && suggestions.length > 0) {
-        elements.summaryProgressionList.innerHTML = suggestions.map(s => `
-            <div class="summary-item">
-                <h4>${s.exerciseName}</h4>
-                <p>${s.suggestion}</p>
-            </div>
-        `).join('');
-    } else {
-        elements.summaryProgressionList.innerHTML = '<p class="placeholder-text">Great work! You have completed your mesocycle.</p>';
-    }
-}
-
-// --- MODAL & TIMERS ---
-
-export function showModal(title, content, actions = [{ text: 'OK', class: 'cta-button' }]) {
-    // **SECURITY FIX: Separate title and content handling**
-    const titleElement = elements.modalContent.querySelector('h2');
-    const contentElement = elements.modalContent.querySelector('.modal-content-body');
-
-    if (!contentElement) { // Create content body if it doesn't exist
-        const newContentElement = document.createElement('div');
-        newContentElement.className = 'modal-content-body';
-        titleElement.after(newContentElement);
-    }
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
     
-    // Safely set the title using textContent
-    titleElement.textContent = title;
+    let html = '<div class="calendar-header">Last 30 Days</div>';
+    
+    // Day headers
+    const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    dayNames.forEach(day => {
+        html += `<div class="calendar-day-name">${day}</div>`;
+    });
 
-    // Clear previous content
-    const bodyElement = elements.modalContent.querySelector('.modal-content-body');
-    bodyElement.innerHTML = ''; 
-
-    // Handle content safely
-    if (typeof content === 'string') {
-        // This is still potentially unsafe if the string contains HTML.
-        // Functions calling showModal with HTML strings need to be refactored.
-        bodyElement.innerHTML = content;
-    } else if (content instanceof HTMLElement) {
-        // If content is a DOM element, it's safe to append
-        bodyElement.appendChild(content);
+    // Calendar days
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today.getTime() - (i * 24 * 60 * 60 * 1000));
+        const dateString = date.toISOString().split('T')[0];
+        const hasWorkout = state.workoutHistory.some(w => w.completedDate.startsWith(dateString));
+        
+        html += `<div class="calendar-day ${hasWorkout ? 'completed' : ''}">${date.getDate()}</div>`;
     }
 
-    // Handle actions
-    elements.modalActions.innerHTML = actions.map(action =>
-        `<button class="${action.class}" data-action="closeModal">${action.text}</button>`
-    ).join('');
+    container.innerHTML = html;
+}
 
-    elements.modalActions.querySelectorAll('button').forEach((button, index) => {
-        if (actions[index].action) {
-            button.addEventListener('click', actions[index].action, { once: true });
+/**
+ * Renders the volume chart
+ */
+function renderVolumeChart() {
+    // This would integrate with Chart.js - simplified for now
+    const container = document.getElementById('volume-chart-container');
+    if (!container) return;
+
+    if (state.workoutHistory.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">Charts will be available in a future update.</p>
+            </div>
+        `;
+    } else {
+         container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <p class="empty-state-text">Charts will be available in a future update.</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Renders the exercise tracker dropdown and charts
+ */
+export function renderExerciseTracker() {
+    if (!elements.exerciseTrackerSelect) return;
+
+    // Get unique exercises from workout history
+    const exercises = new Set();
+    state.workoutHistory.forEach(workout => {
+        workout.exercises.forEach(ex => {
+            if (ex.sets && ex.sets.length > 0) {
+                exercises.add(ex.name);
+            }
+        });
+    });
+
+    const exerciseArray = Array.from(exercises).sort();
+    
+    elements.exerciseTrackerSelect.innerHTML = `
+        <option value="">Select an exercise...</option>
+        ${exerciseArray.map(name => `<option value="${name}">${name}</option>`).join('')}
+    `;
+    
+    if (exerciseArray.length === 0) {
+        if (elements.weightChartContainer) elements.weightChartContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📈</div>
+                <p class="empty-state-text">Track your progress here after you complete a workout!</p>
+            </div>
+        `;
+        if (elements.e1rmChartContainer) elements.e1rmChartContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📈</div>
+                <p class="empty-state-text">Track your E1RM here after you complete a workout!</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Renders progress chart for a specific exercise
+ */
+export function renderProgressChart(exerciseName) {
+    // Chart.js integration would happen here
+    console.log(`Rendering progress chart for ${exerciseName}`);
+}
+
+/**
+ * Renders E1RM chart for a specific exercise
+ */
+export function renderE1RMChart(exerciseName) {
+    // Chart.js integration would happen here
+    console.log(`Rendering E1RM chart for ${exerciseName}`);
+}
+
+/**
+ * Renders the workout history list
+ */
+function renderWorkoutHistory() {
+    const container = document.getElementById('workout-history-list');
+    if (!container) return;
+
+    if (state.workoutHistory.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📖</div>
+                <h4 class="empty-state-title">No Workout History yet.</h4>
+                <p class="empty-state-text">Complete a workout to see your history here!</p>
+            </div>
+        `;
+        return;
+    }
+
+    const recentWorkouts = state.workoutHistory.slice(0, 10);
+    
+    container.innerHTML = recentWorkouts.map(workout => `
+        <div class="summary-item">
+            <div>
+                <h4>${workout.workoutName}</h4>
+                <p>${new Date(workout.completedDate).toLocaleDateString()} • ${Math.floor(workout.duration / 60)}min</p>
+            </div>
+            <div style="text-align: right;">
+                <h4>${workout.volume.toLocaleString()} ${state.settings.units}</h4>
+                <p>${workout.sets} sets</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Renders the settings view
+ */
+export function renderSettings() {
+    renderPlanManagement();
+    updateSettingsSelections();
+}
+
+/**
+ * Renders the plan management section
+ */
+function renderPlanManagement() {
+    const container = document.getElementById('plan-management-list');
+    if (!container) return;
+
+    if (state.allPlans.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <h4 class="empty-state-title">No Plans yet.</h4>
+                <p class="empty-state-text">Create your first plan to get started.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = state.allPlans.map(plan => `
+        <div class="plan-item ${plan.id === state.activePlanId ? 'active' : ''}">
+            <div class="plan-name-text" data-action="setActivePlan" data-plan-id="${plan.id}">
+                ${plan.name}
+            </div>
+            <div class="plan-actions">
+                <button class="plan-btn secondary-button" data-action="startPlanWorkout" data-plan-id="${plan.id}">Start</button>
+                <button class="plan-btn secondary-button" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
+                <button class="plan-btn secondary-button" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Updates settings UI selections
+ */
+function updateSettingsSelections() {
+    // Update goal cards
+    updateCardSelection('settings-goal-cards', 'goal', state.userSelections.goal);
+    updateCardSelection('settings-experience-cards', 'trainingAge', state.userSelections.trainingAge);
+    
+    // Update toggle switches
+    updateToggleSwitch('progression-model-switch', state.settings.progressionModel);
+    updateToggleSwitch('weight-increment-switch', state.settings.weightIncrement);
+    updateToggleSwitch('rest-duration-switch', state.settings.restDuration);
+    updateToggleSwitch('units-switch', state.settings.units);
+    updateToggleSwitch('theme-switch', state.settings.theme);
+}
+
+/**
+ * Updates card selection UI
+ */
+function updateCardSelection(containerId, field, value) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.goal-card');
+    cards.forEach(card => {
+        card.classList.remove('active');
+        if (card.dataset.value == value) {
+            card.classList.add('active');
         }
     });
+}
 
+/**
+ * Updates toggle switch UI
+ */
+function updateToggleSwitch(switchId, activeValue) {
+    const switchContainer = document.getElementById(switchId);
+    if (!switchContainer) return;
+
+    const buttons = switchContainer.querySelectorAll('.toggle-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        const btnValue = btn.dataset.progression || btn.dataset.increment || btn.dataset.duration || btn.dataset.unit || btn.dataset.theme;
+        if (btnValue == activeValue) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+/**
+ * Renders the workout summary view
+ */
+export function renderWorkoutSummary() {
+    const summary = state.workoutSummary;
+    
+    // Update stats
+    updateElement('summary-time', formatTime(state.workoutTimer.elapsed));
+    updateElement('summary-volume', `${summary.totalVolume.toLocaleString()} ${state.settings.units}`);
+    updateElement('summary-sets', summary.totalSets);
+    updateElement('summary-prs', summary.newPRs);
+    
+    // Update mesocycle stats
+    updateElement('summary-meso-completed', summary.mesocycleStats.completed || 0);
+    updateElement('summary-meso-incomplete', summary.mesocycleStats.incomplete || 0);
+    
+    // Update suggestions
+    const suggestionsContainer = document.getElementById('summary-progression-list');
+    if (suggestionsContainer) {
+        if (summary.suggestions.length === 0) {
+            suggestionsContainer.innerHTML = '<p class="placeholder-text">No suggestions right now. Great work!</p>';
+        } else {
+            suggestionsContainer.innerHTML = summary.suggestions.map(suggestion => `
+                <div class="summary-item">
+                    <h4>${suggestion.exerciseName}</h4>
+                    <p>${suggestion.suggestion}</p>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+/**
+ * Helper function to update element text content
+ */
+function updateElement(id, content) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = content;
+}
+
+/**
+ * Formats time in seconds to MM:SS format
+ */
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Updates the stopwatch display and document title
+ */
+export function updateStopwatchDisplay() {
+    if (!elements.workoutStopwatchDisplay) return;
+    
+    if (state.workoutTimer.isRunning) {
+        const elapsed = Math.floor((Date.now() - state.workoutTimer.startTime) / 1000);
+        state.workoutTimer.elapsed = elapsed;
+        elements.workoutStopwatchDisplay.textContent = formatTime(elapsed);
+        document.title = `Workout - ${formatTime(elapsed)}`;
+    } else {
+        elements.workoutStopwatchDisplay.textContent = formatTime(state.workoutTimer.elapsed);
+    }
+}
+
+/**
+ * Updates the rest timer display
+ */
+export function updateRestTimerDisplay() {
+    if (!elements.restTimerDisplay) return;
+    
+    const remaining = Math.max(0, state.restTimer.remaining);
+    elements.restTimerDisplay.textContent = formatTime(remaining);
+    
+    if (remaining === 0 && state.restTimer.isRunning) {
+        elements.restTimerDisplay.style.color = 'var(--color-state-success)';
+    } else {
+        elements.restTimerDisplay.style.color = 'var(--color-accent-primary)';
+    }
+}
+
+/**
+ * Displays intra-workout recommendations
+ */
+export function displayIntraWorkoutRecommendation(exerciseIndex, setIndex, recommendation) {
+    const recommendationElement = document.querySelector(`[data-exercise-index="${exerciseIndex}"][data-set-index="${setIndex}"].recommendation-text`);
+    if (recommendationElement && recommendation) {
+        recommendationElement.textContent = recommendation;
+        recommendationElement.style.color = 'var(--color-accent-secondary)';
+        recommendationElement.style.fontSize = '0.85rem';
+        recommendationElement.style.marginTop = '0.5rem';
+    }
+}
+
+/**
+ * Shows a modal dialog
+ */
+export function showModal(title, content, actions = []) {
+    if (!elements.modal) return;
+
+    const modalBody = document.getElementById('modal-body');
+    const modalActions = document.getElementById('modal-actions');
+    
+    if (modalBody) {
+        modalBody.innerHTML = typeof content === 'string' ? 
+            `<h2>${title}</h2><div>${content}</div>` : 
+            `<h2>${title}</h2>`;
+        
+        if (typeof content !== 'string') {
+            modalBody.appendChild(content);
+        }
+    }
+    
+    if (modalActions) {
+        modalActions.innerHTML = actions.map(action => 
+            `<button class="${action.class}" ${action.action ? `onclick="(${action.action.toString()})()"` : 'data-action="closeModal"'}>${action.text}</button>`
+        ).join('');
+    }
+    
     elements.modal.classList.add('active');
 }
 
+/**
+ * Closes the modal dialog
+ */
 export function closeModal() {
-    elements.modal.classList.remove('active');
+    if (elements.modal) {
+        elements.modal.classList.remove('active');
+    }
 }
 
-export function showFeedbackModal(title, question, options, callback) {
-    elements.feedbackModalTitle.textContent = title;
-    elements.feedbackModalQuestion.textContent = question;
-    elements.feedbackModalOptions.innerHTML = options.map(opt => 
-        `<button class="cta-button secondary-button" data-value="${opt.value}">${opt.text}</button>`
-    ).join('');
+/**
+ * Shows the feedback modal
+ */
+export function showFeedbackModal(title, question, options) {
+    if (!elements.feedbackModal) return;
 
-    elements.feedbackModalOptions.querySelectorAll('button').forEach((button) => {
-        button.addEventListener('click', () => {
-            if (callback) {
-                callback(button.dataset.value);
-            }
-            closeFeedbackModal();
-        }, { once: true });
-    });
+    const titleElement = document.getElementById('feedback-modal-title');
+    const questionElement = document.getElementById('feedback-modal-question');
+    const optionsContainer = document.getElementById('feedback-modal-options');
+
+    if (titleElement) titleElement.textContent = title;
+    if (questionElement) questionElement.textContent = question;
+    if (optionsContainer) {
+        optionsContainer.innerHTML = options.map(option => 
+            `<button class="cta-button" data-action="${option.action}" data-value="${option.value}">${option.text}</button>`
+        ).join('');
+    }
 
     elements.feedbackModal.classList.add('active');
 }
 
+/**
+ * Closes the feedback modal
+ */
 export function closeFeedbackModal() {
-    elements.feedbackModal.classList.remove('active');
+    if (elements.feedbackModal) {
+        elements.feedbackModal.classList.remove('active');
+    }
 }
 
+/**
+ * Shows the daily check-in modal
+ */
 export function showDailyCheckinModal() {
+    if (!elements.dailyCheckinModal) return;
     elements.dailyCheckinModal.classList.add('active');
 }
 
+/**
+ * Closes the daily check-in modal
+ */
 export function closeDailyCheckinModal() {
-    elements.dailyCheckinModal.classList.remove('active');
-}
-
-export function displayIntraWorkoutRecommendation(exerciseIndex, setIndex, recommendationText) {
-    const nextSetIndex = setIndex + 1;
-    const recommendationEl = document.querySelector(`.recommendation-text[data-exercise-index="${exerciseIndex}"][data-set-index="${nextSetIndex}"]`);
-    
-    if (recommendationEl) {
-        recommendationEl.textContent = recommendationText;
-        recommendationEl.style.display = 'block';
+    if (elements.dailyCheckinModal) {
+        elements.dailyCheckinModal.classList.remove('active');
     }
 }
 
-
-export function updateStopwatchDisplay() {
-    const totalSeconds = state.workoutTimer.elapsed + (state.workoutTimer.isRunning ? Math.floor((Date.now() - state.workoutTimer.startTime) / 1000) : 0);
-    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-    elements.workoutStopwatch.textContent = `${minutes}:${seconds}`;
-}
-
-export function updateRestTimerDisplay() {
-    const minutes = Math.floor(state.restTimer.remaining / 60).toString().padStart(2, '0');
-    const seconds = (state.restTimer.remaining % 60).toString().padStart(2, '0');
-    elements.restTimer.textContent = `${minutes}:${seconds}`;
-}
-
-// --- THEME ---
-export function applyTheme() {
-    document.body.dataset.theme = state.settings.theme;
-}
-
-// --- TOOLTIPS ---
-export function showTooltip(target) {
-    const tooltipText = target.dataset.tooltip;
+/**
+ * Shows a tooltip
+ */
+export function showTooltip(element) {
+    const tooltipText = element.getAttribute('data-tooltip');
     if (!tooltipText) return;
 
-    elements.tooltip.textContent = tooltipText;
-    elements.tooltip.classList.add('active');
+    // Remove existing tooltip
+    hideTooltip();
 
-    const targetRect = target.getBoundingClientRect();
-    const tooltipRect = elements.tooltip.getBoundingClientRect();
+    // Create new tooltip
+    currentTooltip = document.createElement('div');
+    currentTooltip.className = 'tooltip active';
+    currentTooltip.textContent = tooltipText;
+    document.body.appendChild(currentTooltip);
 
-    let top = targetRect.top - tooltipRect.height - 10;
-    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-
-    if (top < 0) {
-        top = targetRect.bottom + 10;
-    }
-    if (left < 0) {
-        left = 5;
-    }
-    if (left + tooltipRect.width > window.innerWidth) {
-        left = window.innerWidth - tooltipRect.width - 5;
-    }
-
-    elements.tooltip.style.top = `${top}px`;
-    elements.tooltip.style.left = `${left}px`;
+    // Position tooltip
+    const rect = element.getBoundingClientRect();
+    currentTooltip.style.left = rect.left + (rect.width / 2) - (currentTooltip.offsetWidth / 2) + 'px';
+    currentTooltip.style.top = rect.top - currentTooltip.offsetHeight - 10 + 'px';
 }
 
+/**
+ * Hides the current tooltip
+ */
 export function hideTooltip() {
-    elements.tooltip.classList.remove('active');
+    if (currentTooltip) {
+        currentTooltip.remove();
+        currentTooltip = null;
+    }
+}
+
+export function showToast(message, icon) {
+    elements.toastMessage.textContent = message;
+    elements.toastIcon.innerHTML = icon;
+    elements.toast.classList.remove('hidden');
+    elements.toast.classList.add('show');
+    setTimeout(() => {
+        elements.toast.classList.remove('show');
+        elements.toast.classList.add('hidden');
+    }, 3000);
+}
+
+export function renderWorkoutCelebration(newPRs) {
+    const title = newPRs > 0 ? "🎉 PRs Achieved!" : "Workout Complete!";
+    const content = newPRs > 0 ?
+        `Congratulations! You hit <strong>${newPRs} new Personal Record${newPRs > 1 ? 's' : ''}</strong> today! Keep up the great work.` :
+        "You crushed your workout! You can check out your progress in the Performance Summary.";
+    
+    // New celebratory modal
+    showModal(title, content, [{ text: 'View Summary', class: 'cta-button', action: () => showView('workoutSummary') }]);
+}
+
+export function toggleOfflineToast(isOffline) {
+    if (isOffline) {
+        elements.offlineToast.classList.add('visible');
+    } else {
+        elements.offlineToast.classList.remove('visible');
+    }
+}
+
+export function showSaveIndicator() {
+    if (elements.saveIndicator) {
+        elements.saveIndicator.classList.add('active');
+        elements.saveIndicator.textContent = 'Saving...';
+    }
+}
+
+export function hideSaveIndicator(success) {
+    if (elements.saveIndicator) {
+        elements.saveIndicator.textContent = success ? 'Saved!' : 'Save Error';
+        elements.saveIndicator.classList.remove('active');
+        elements.saveIndicator.classList.add(success ? 'success' : 'error');
+
+        setTimeout(() => {
+            elements.saveIndicator.classList.remove('success', 'error');
+            elements.saveIndicator.textContent = '';
+        }, 3000);
+    }
 }

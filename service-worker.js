@@ -17,8 +17,8 @@ const URLS_TO_CACHE = [
   '/exercises.json',
   '/manifest.json',
   '/images/icons/icon-192x192.png',
-  '/images/icons/icon-512x512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  '/images/icons/icon-512x512.png'
+  // Chart.js removed to avoid CORS issues
 ];
 
 // Install the service worker and cache all the app assets

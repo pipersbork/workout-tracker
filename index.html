@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progression - Workout Tracker</title>
+    <meta name="description" content="A modern, offline-first workout tracker to help you build muscle and strength.">
 
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    
+    <!-- DOMPurify for robust input sanitization -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js removed to avoid CORS issues - can be added back later when needed -->
 </head>
 <body>
 
@@ -105,8 +109,8 @@
             <div class="divider"></div>
             <nav class="home-nav-buttons">
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="workout">
-                    <div class="hub-option-icon">▶️</div>
-                    <div class="hub-option-text"><h3>Start Next Workout</h3></div>
+                    <div class="hub-option-icon" id="home-workout-icon">▶️</div>
+                    <div class="hub-option-text"><h3 id="home-workout-title">Start Next Workout</h3></div>
                 </button>
                 <button class="hub-option home-nav-btn" data-action="showView" data-view-name="templatePortal">
                     <div class="hub-option-icon">📖</div>
@@ -120,6 +124,7 @@
             <button class="home-icon-btn" data-action="showView" data-view-name="settings" aria-label="Settings">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
+            <div id="save-indicator" class="save-indicator"></div>
         </div>
 
         <div id="template-portal-view" class="container view hidden">
@@ -135,6 +140,7 @@
         <div id="daily-workout-view" class="view hidden">
             <div class="workout-header">
                 <button class="back-btn" data-action="showView" data-view-name="home" aria-label="Back to Home" data-tooltip="Back to Home Screen">
+                    <!-- New SVG Icon for Home -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h2 id="workout-day-title">Workout Title</h2>
@@ -156,6 +162,28 @@
                 </div>
             </div>
 
+            <!-- NEW: Skeleton Loader -->
+            <div id="exercise-list-loader" class="hidden">
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-title"></div>
+                        <div class="skeleton skeleton-icon"></div>
+                    </div>
+                    <div class="skeleton skeleton-text skeleton-text-long"></div>
+                    <div class="skeleton skeleton-text skeleton-text-short"></div>
+                    <div class="skeleton skeleton-text skeleton-text-long"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-title"></div>
+                        <div class="skeleton skeleton-icon"></div>
+                    </div>
+                    <div class="skeleton skeleton-text skeleton-text-long"></div>
+                    <div class="skeleton skeleton-text skeleton-text-short"></div>
+                    <div class="skeleton skeleton-text skeleton-text-long"></div>
+                </div>
+            </div>
+
             <div id="exercise-list-container"></div>
             <div class="workout-actions">
                 <button id="complete-workout-btn" class="cta-button" data-action="confirmCompleteWorkout">Complete Workout</button>
@@ -167,21 +195,22 @@
                 <h2>Workout Complete!</h2>
             </div>
             <div id="summary-content">
+                 <!-- Fix #15: Added icons and flair to summary stats -->
                 <div class="summary-stats-grid">
                     <div class="stat-card">
-                        <h4>Time</h4>
+                        <h4><span class="stat-icon">⏱️</span> Time</h4>
                         <p id="summary-time">--:--</p>
                     </div>
                     <div class="stat-card">
-                        <h4>Volume</h4>
+                        <h4><span class="stat-icon">🏋️</span> Volume</h4>
                         <p id="summary-volume">0 lbs</p>
                     </div>
                     <div class="stat-card">
-                        <h4>Sets</h4>
+                        <h4><span class="stat-icon">💪</span> Sets</h4>
                         <p id="summary-sets">0</p>
                     </div>
                     <div class="stat-card">
-                        <h4>PRs</h4>
+                        <h4><span class="stat-icon">🏆</span> PRs</h4>
                         <p id="summary-prs">0</p>
                     </div>
                 </div>
@@ -221,7 +250,13 @@
                 <section class="summary-section">
                     <h3>🏆 Trophy Case: Personal Records</h3>
                     <div id="trophy-case-list">
+                        <!-- Fix #13: Empty state message here -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏆</div>
+                            <h4 class="empty-state-title">No Personal Records yet!</h4>
+                            <p class="empty-state-text">Complete workouts to start building your trophy case.</p>
                         </div>
+                    </div>
                 </section>
                 <section class="summary-section">
                     <h3>Workout Consistency</h3>
@@ -230,7 +265,11 @@
                 <section class="summary-section">
                     <h3>Volume by Muscle Group</h3>
                     <div class="chart-container">
-                        <canvas id="volume-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <p class="empty-state-text">Charts will be available in a future update.</p>
+                        </div>
                     </div>
                 </section>
                 <section class="summary-section">
@@ -241,15 +280,30 @@
                         <button class="toggle-btn" data-action="setChartType" data-chart-type="e1rm">Est. 1-Rep Max</button>
                     </div>
                     <div id="weight-chart-container" class="chart-container">
-                        <canvas id="progress-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                         <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <p class="empty-state-text">Progress charts will be available in a future update.</p>
+                        </div>
                     </div>
                     <div id="e1rm-chart-container" class="chart-container hidden">
-                        <canvas id="e1rm-chart"></canvas>
+                        <!-- Chart placeholder - Chart.js removed for now -->
+                         <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <p class="empty-state-text">E1RM charts will be available in a future update.</p>
+                        </div>
                     </div>
                 </section>
                 <section class="summary-section">
                     <h3>Workout History</h3>
-                    <div id="workout-history-list"></div>
+                    <div id="workout-history-list">
+                        <!-- Fix #13: Empty state message here -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📖</div>
+                            <h4 class="empty-state-title">No Workout History yet.</h4>
+                            <p class="empty-state-text">Complete a workout to see your history here!</p>
+                        </div>
+                    </div>
                 </section>
             </div>
         </section>
@@ -263,10 +317,22 @@
             </div>
             <div id="settings-content">
                 <section class="settings-section">
-                    <h3>My Plans</h3>
-                    <div id="plan-management-list"></div>
-                    <button class="cta-button secondary-button" data-action="showView" data-view-name="templatePortal">+ Create New Plan</button>
-                </section>
+    <h3>My Plans</h3>
+    <div id="plan-management-list">
+        <!-- Fix #13: Empty state for plans -->
+        <div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <h4 class="empty-state-title">No Plans yet.</h4>
+            <p class="empty-state-text">Create your first plan to get started.</p>
+        </div>
+    </div>
+    <button class="cta-button secondary-button" data-action="showView" data-view-name="templatePortal">+ Create New Plan</button>
+</section>
+<section class="settings-section">
+    <h3>Data Management</h3>
+    <button id="export-data-btn" class="cta-button secondary-button">Download Data Backup</button>
+    <button id="reset-app-btn" class="cta-button secondary-button">Reset App</button>
+</section>
                 <section class="settings-section">
                     <h3>Training Goal</h3>
                     <div class="card-group settings-card-group" data-field="goal" id="settings-goal-cards">
@@ -327,10 +393,7 @@
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" data-action="closeModal">&times;</span>
-            <div id="modal-body">
-                <h2></h2>
-                <div class="modal-content-body"></div>
-            </div>
+            <div id="modal-body"></div>
             <div id="modal-actions" class="modal-actions"></div>
         </div>
     </div>
@@ -361,7 +424,16 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js"></script>
+    <div id="toast" class="toast hidden">
+      <div id="toast-message"></div>
+      <div id="toast-icon"></div>
+    </div>
+
+    <div id="offline-toast" class="offline-toast hidden">
+        <p>You are currently offline. Changes will be saved once you reconnect.</p>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
 
 </body>
 </html>
