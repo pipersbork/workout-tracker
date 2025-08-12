@@ -34,6 +34,9 @@ export const elements = {
     homeWorkoutIcon: document.getElementById('home-workout-icon'),
     saveIndicator: document.getElementById('save-indicator'),
     offlineToast: document.getElementById('offline-toast'),
+    toast: document.getElementById('toast'),
+    toastMessage: document.getElementById('toast-message'),
+    toastIcon: document.getElementById('toast-icon'),
 };
 
 let currentTooltip = null;
@@ -256,26 +259,14 @@ function renderExerciseList(workout, week) {
                         ${exercise.stallCount >= 2 ? '<span class="stall-indicator" title="This exercise has stalled">⚠️</span>' : ''}
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exerciseIndex}" title="Swap Exercise">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-                                <path d="M8 21v-5a2 2 0 012-2h4a2 2 0 012 2v5"/>
-                            </svg>
+                        <button class="swap-exercise-btn" data-action="swapExercise" data-exercise-index="${exerciseIndex}" aria-label="Swap Exercise" data-tooltip="Swap Exercise">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                         </button>
-                        <button class="history-btn" data-action="showHistory" data-exercise-id="${exercise.exerciseId}" title="View History">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12,6 12,12 16,14"/>
-                            </svg>
+                        <button class="history-btn" data-action="showHistory" data-exercise-id="${exercise.exerciseId}" aria-label="View History" data-tooltip="View History">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </button>
-                        <button class="note-btn ${exercise.note ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exerciseIndex}" title="Exercise Notes">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                <polyline points="14,2 14,8 20,8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10,9 9,9 8,9"/>
-                            </svg>
+                        <button class="note-btn ${exercise.note ? 'has-note' : ''}" data-action="openExerciseNotes" data-exercise-index="${exerciseIndex}" aria-label="Exercise Notes" data-tooltip="Exercise Notes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </button>
                     </div>
                 </div>
@@ -300,7 +291,7 @@ function renderExerciseList(workout, week) {
         }
 
         html += `
-                    <button class="add-set-btn" data-action="addSet" data-exercise-index="${exerciseIndex}">+ Add Set</button>
+                    <button class="add-set-btn" data-action="addSet" data-exercise-index="${exerciseIndex}" aria-label="Add Set">+ Add Set</button>
                 </div>
             </div>
         `;
@@ -525,13 +516,13 @@ function renderPlanManagement() {
 
     container.innerHTML = state.allPlans.map(plan => `
         <div class="plan-item ${plan.id === state.activePlanId ? 'active' : ''}">
-            <div class="plan-name-text" data-action="setActivePlan" data-plan-id="${plan.id}">
+            <div class="plan-name-text" data-action="setActivePlan" data-plan-id="${plan.id}" role="button" tabindex="0" aria-label="Set ${plan.name} as active plan">
                 ${plan.name}
             </div>
             <div class="plan-actions">
-                <button class="plan-btn secondary-button" data-action="startPlanWorkout" data-plan-id="${plan.id}">Start</button>
-                <button class="plan-btn secondary-button" data-action="editPlan" data-plan-id="${plan.id}">Edit</button>
-                <button class="plan-btn secondary-button" data-action="confirmDeletePlan" data-plan-id="${plan.id}">Delete</button>
+                <button class="plan-btn secondary-button" data-action="startPlanWorkout" data-plan-id="${plan.id}" aria-label="Start ${plan.name}">Start</button>
+                <button class="plan-btn secondary-button" data-action="editPlan" data-plan-id="${plan.id}" aria-label="Edit ${plan.name}">Edit</button>
+                <button class="plan-btn secondary-button" data-action="confirmDeletePlan" data-plan-id="${plan.id}" aria-label="Delete ${plan.name}">Delete</button>
             </div>
         </div>
     `).join('');
