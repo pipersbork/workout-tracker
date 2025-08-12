@@ -10,6 +10,8 @@ import { createSetRowHTML, findLastPerformance } from './utils.js';
 export let elements = {};
 
 let currentTooltip = null;
+let confettiAnimationId;
+
 
 /**
  * Initializes the elements object by querying the DOM.
@@ -40,6 +42,7 @@ export function initUI() {
         stressLabel: document.getElementById('stress-label'),
         homeWorkoutTitle: document.getElementById('home-workout-title'),
         homeWorkoutIcon: document.getElementById('home-workout-icon'),
+        confettiCanvas: document.getElementById('confetti-canvas'),
     };
 }
 
@@ -66,6 +69,11 @@ export function showView(viewName, skipAnimation = false) {
         settings: elements.settingsView,
         workoutSummary: elements.workoutSummaryView,
     };
+
+    // Stop confetti if navigating away from the summary view
+    if (state.currentViewName === 'workoutSummary' && viewName !== 'workoutSummary') {
+        stopConfetti();
+    }
 
     // Hide all views
     Object.values(views).forEach(view => {
@@ -569,7 +577,20 @@ export function renderWorkoutSummary() {
             `).join('');
         }
     }
+
+    // NEW: Trigger confetti and show PR badge if new PRs were achieved
+    if (summary.newPRs > 0) {
+        const prCard = document.querySelector('#summary-prs').closest('.stat-card');
+        if (prCard && !prCard.querySelector('.pr-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'pr-badge';
+            badge.textContent = 'PR!';
+            prCard.appendChild(badge);
+        }
+        startConfetti();
+    }
 }
+
 
 /**
  * Helper function to update element text content
@@ -745,5 +766,76 @@ export function hideTooltip() {
     if (currentTooltip) {
         currentTooltip.remove();
         currentTooltip = null;
+    }
+}
+
+// --- NEW CONFETTI LOGIC ---
+
+function startConfetti() {
+    const canvas = elements.confettiCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const confettiPieces = [];
+    const numberOfPieces = 100;
+    const colors = ['#FF7A00', '#00bfff', '#48bb78', '#e2e8f0'];
+
+    for (let i = 0; i < numberOfPieces; i++) {
+        confettiPieces.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            size: Math.random() * 10 + 5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speed: Math.random() * 3 + 2,
+            angle: Math.random() * 2 * Math.PI,
+            tilt: Math.random() * 10,
+            tiltAngle: 0,
+            tiltAngleSpeed: Math.random() * 0.1 + 0.05
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettiPieces.forEach(piece => {
+            ctx.beginPath();
+            ctx.lineWidth = piece.size;
+            ctx.strokeStyle = piece.color;
+            ctx.moveTo(piece.x + piece.tilt, piece.y);
+            ctx.lineTo(piece.x, piece.y + piece.tilt + piece.size);
+            ctx.stroke();
+        });
+        update();
+    }
+
+    function update() {
+        confettiPieces.forEach(piece => {
+            piece.y += piece.speed;
+            piece.tiltAngle += piece.tiltAngleSpeed;
+            piece.tilt = Math.sin(piece.tiltAngle) * 15;
+            if (piece.y > canvas.height) {
+                piece.x = Math.random() * canvas.width;
+                piece.y = -20;
+            }
+        });
+    }
+
+    function animate() {
+        draw();
+        confettiAnimationId = requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+
+function stopConfetti() {
+    if (confettiAnimationId) {
+        cancelAnimationFrame(confettiAnimationId);
+    }
+    const canvas = elements.confettiCanvas;
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
