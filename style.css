@@ -326,7 +326,87 @@ input:focus, select:focus { outline: none; border-color: var(--color-accent-prim
 =========================== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
-@media (max-width: 768px) { .container, #daily-workout-view, #performance-summary-view, #settings-view { margin: 1rem auto; padding: 1rem; } .exercise-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; } .back-btn { top: 1rem; left: 1rem; } }
+@media (max-width: 768px) {
+  .container, #daily-workout-view, #performance-summary-view, #settings-view, #workout-summary-view {
+    padding: 1rem;
+  }
+
+  .main-title {
+    font-size: 2rem;
+  }
+
+  .workout-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .exercise-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .timer-container {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .rest-timer-section {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--color-border-primary);
+    padding-top: 1rem;
+  }
+
+  .timer-controls {
+    position: static;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+
+  .back-btn {
+    top: 1rem;
+    left: 1rem;
+    width: 40px;
+    height: 40px;
+  }
+
+  .home-icon-btn {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .modal-content {
+    padding: 1.5rem;
+  }
+
+  .summary-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-item h4 {
+    font-size: 1rem;
+  }
+
+  .summary-item p {
+    font-size: 0.85rem;
+  }
+
+  .settings-section .card-group {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .settings-section h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .settings-label {
+    margin-top: 1rem;
+  }
+}
 
 /* ===========================
   TIMER BAR STYLES
