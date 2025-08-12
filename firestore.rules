@@ -1,303 +1,49 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // The main rule that governs all read and write access to a user's data.
-    // It ensures that only the authenticated user can access their own data and that the data
-    // conforms to the required structure defined in the function below.
     match /users/{userId} {
+      // Allow the user to read their own data
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId
-                       && isUserDataValid(request.resource.data);
+
+      // Allow write only if the data conforms to the expected structure.
+      allow write: if request.auth != null && request.auth.uid == userId && request.resource.data.keys().hasAll([
+        'userSelections', 'settings', 'allPlans', 'activePlanId',
+        'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates',
+        'dailyCheckinHistory', 'isWorkoutInProgress'
+      ])
+
+      // User Selections Validation
+      && request.resource.data.userSelections.keys().hasAll([
+        'goal', 'trainingAge', 'daysPerWeek', 'dietaryStatus', 'style', 'onboardingCompleted'
+      ])
+      && request.resource.data.userSelections.goal in ['hypertrophy', 'strength', 'fatLoss']
+      && request.resource.data.userSelections.trainingAge in ['novice', 'beginner', 'intermediate', 'advanced']
+      && request.resource.data.userSelections.daysPerWeek in [3, 4, 5, 6]
+      && request.resource.data.userSelections.dietaryStatus in ['surplus', 'maintenance', 'deficit']
+      && request.resource.data.userSelections.style in ['gym', 'home']
+      && request.resource.data.userSelections.onboardingCompleted is bool
+
+      // Settings Validation
+      && request.resource.data.settings.keys().hasAll([
+        'units', 'theme', 'progressionModel', 'weightIncrement', 'restDuration', 'haptics'
+      ])
+      && request.resource.data.settings.units in ['lbs', 'kg']
+      && request.resource.data.settings.theme in ['dark', 'light']
+      && request.resource.data.settings.progressionModel in ['linear', 'double']
+      && request.resource.data.settings.weightIncrement in [2.5, 5, 10]
+      && request.resource.data.settings.restDuration in [60, 90, 120, 180]
+      && request.resource.data.settings.haptics is bool
+
+      // Root-level fields validation
+      && (request.resource.data.activePlanId is string || request.resource.data.activePlanId == null)
+      && request.resource.data.isWorkoutInProgress is bool
+      && request.resource.data.currentView.keys().hasAll(['week', 'day'])
+      && request.resource.data.currentView.week is number
+      && request.resource.data.currentView.day is number;
+      
+      // Note: Full nested validation for lists and maps is not fully supported
+      // by the GUI editor. The above rules provide top-level validation
+      // and will prevent entirely malformed documents, which is the key goal.
     }
   }
-}
-
-/**
- * Validates the entire user data document. This function is called on every write operation
- * to ensure data integrity and prevent malicious or malformed data from being saved.
- * @param {map} data - The entire data object being written to the user document.
- * @returns {boolean} True if the data is valid, false otherwise.
- */
-function isUserDataValid(data) {
-  return data.keys().hasAll([
-    'userSelections', 'settings', 'allPlans', 'activePlanId',
-    'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates',
-    'dailyCheckinHistory', 'isWorkoutInProgress'
-  ])
-  // --- Check Data Types of top-level fields ---
-  && isUserSelectionsValid(data.userSelections)
-  && isSettingsValid(data.settings)
-  && (data.activePlanId is string || data.activePlanId == null)
-  && (data.editingPlanId is string || data.editingPlanId == null) // Add validation for editingPlanId
-  && isAllPlansValid(data.allPlans)
-  && isWorkoutHistoryValid(data.workoutHistory)
-  && isPersonalRecordsValid(data.personalRecords)
-  && isSavedTemplatesValid(data.savedTemplates)
-  && isDailyCheckinHistoryValid(data.dailyCheckinHistory)
-  && isCurrentViewValid(data.currentView)
-  && data.isWorkoutInProgress is bool;
-}
-
-/**
- * Validates the 'userSelections' map.
- */
-function isUserSelectionsValid(userSelections) {
-  return userSelections.keys().hasAll([
-    'goal', 'trainingAge', 'daysPerWeek', 'dietaryStatus', 'style', 'onboardingCompleted'
-  ])
-  && userSelections.goal in ['hypertrophy', 'strength', 'fatLoss']
-  && userSelections.trainingAge in ['novice', 'beginner', 'intermediate', 'advanced']
-  && userSelections.daysPerWeek in [3, 4, 5, 6]
-  && userSelections.dietaryStatus in ['surplus', 'maintenance', 'deficit']
-  && userSelections.style in ['gym', 'home']
-  && userSelections.onboardingCompleted is bool;
-}
-
-/**
- * Validates the 'settings' map.
- */
-function isSettingsValid(settings) {
-  return settings.keys().hasAll([
-    'units', 'theme', 'progressionModel', 'weightIncrement', 'restDuration', 'haptics'
-  ])
-  && settings.units in ['lbs', 'kg']
-  && settings.theme in ['dark', 'light']
-  && settings.progressionModel in ['linear', 'double']
-  && settings.weightIncrement in [2.5, 5, 10]
-  && settings.restDuration in [60, 90, 120, 180]
-  && settings.haptics is bool;
-}
-
-/**
- * Validates the 'currentView' map.
- */
-function isCurrentViewValid(currentView) {
-  return currentView.keys().hasAll(['week', 'day'])
-  && currentView.week is number
-  && currentView.day is number;
-}
-
-/**
- * Validates the 'allPlans' list.
- */
-function isAllPlansValid(allPlans) {
-  return allPlans is list
-  && (allPlans.size() == 0 || allPlans.all(plan => isPlanValid(plan)));
-}
-
-/**
- * Validates a single plan object.
- */
-function isPlanValid(plan) {
-  return plan.keys().hasAll(['id', 'name', 'startDate', 'durationWeeks', 'weeks'])
-  && plan.id is string
-  && plan.name is string
-  && plan.startDate is string
-  && plan.durationWeeks is number
-  && isPlanWeeksValid(plan.weeks);
-}
-
-/**
- * Validates the 'weeks' map within a plan.
- */
-function isPlanWeeksValid(weeks) {
-  return weeks is map
-  && weeks.keys().all(key => key is string && weeks[key] is map)
-  && weeks.values().all(week => isWorkoutDaysValid(week));
-}
-
-/**
- * Validates the workout days within a week.
- */
-function isWorkoutDaysValid(workoutDays) {
-  return workoutDays is map
-  && workoutDays.keys().all(key => key is string && workoutDays[key] is map)
-  && workoutDays.values().all(day => isWorkoutDayValid(day));
-}
-
-/**
- * Validates a single workout day.
- */
-function isWorkoutDayValid(workoutDay) {
-  return workoutDay.keys().hasAll(['name', 'exercises', 'completed'])
-  && workoutDay.name is string
-  && isExercisesValid(workoutDay.exercises)
-  && workoutDay.completed is bool;
-}
-
-/**
- * Validates the list of exercises in a workout.
- */
-function isExercisesValid(exercises) {
-  return exercises is list
-  && exercises.all(exercise => isExerciseValid(exercise));
-}
-
-/**
- * Validates a single exercise object.
- */
-function isExerciseValid(exercise) {
-  return exercise.keys().hasAll([
-    'exerciseId', 'name', 'muscle', 'type', 'targetSets',
-    'targetReps', 'targetRIR', 'targetLoad', 'sets', 'stallCount', 'note'
-  ])
-  && exercise.exerciseId is string
-  && exercise.name is string
-  && exercise.muscle is string
-  && exercise.type is string
-  && exercise.targetSets is number
-  && exercise.targetReps is number
-  && exercise.targetRIR is number
-  && (exercise.targetLoad is number || exercise.targetLoad == null)
-  && isSetsValid(exercise.sets)
-  && exercise.stallCount is number
-  && exercise.note is string;
-}
-
-/**
- * Validates the list of sets in an exercise.
- */
-function isSetsValid(sets) {
-  return sets is list
-  && sets.all(set => isSetValid(set));
-}
-
-/**
- * Validates a single set object.
- */
-function isSetValid(set) {
-  return set.keys().hasAll(['weight', 'reps', 'rir', 'rawInput'])
-  && (set.weight is number || set.weight is string) // Allow string for empty state
-  && (set.reps is number || set.reps is string)
-  && (set.rir is number || set.rir is string || set.rir == null)
-  && (set.rawInput is string || set.rawInput == null);
-}
-
-/**
- * Validates the 'workoutHistory' list.
- */
-function isWorkoutHistoryValid(workoutHistory) {
-  return workoutHistory is list
-  && (workoutHistory.size() == 0 || workoutHistory.all(entry => isHistoryEntryValid(entry)));
-}
-
-/**
- * Validates a single workout history entry.
- */
-function isHistoryEntryValid(entry) {
-  return entry.keys().hasAll([
-    'id', 'planId', 'planName', 'workoutName', 'completedDate', 'duration',
-    'volume', 'sets', 'exercises'
-  ])
-  && entry.id is string
-  && entry.planId is string
-  && entry.planName is string
-  && entry.workoutName is string
-  && entry.completedDate is string
-  && entry.duration is number
-  && entry.volume is number
-  && entry.sets is number
-  && isHistoryExercisesValid(entry.exercises);
-}
-
-/**
- * Validates the exercises list within a history entry.
- */
-function isHistoryExercisesValid(exercises) {
-  return exercises is list
-  && exercises.all(exercise => isHistoryExerciseValid(exercise));
-}
-
-/**
- * Validates a single exercise object within a history entry.
- */
-function isHistoryExerciseValid(exercise) {
-  return exercise.keys().hasAll([
-    'exerciseId', 'name', 'muscle', 'type', 'sets', 'note'
-  ])
-  && exercise.exerciseId is string
-  && exercise.name is string
-  && exercise.muscle is string
-  && exercise.type is string
-  && isHistorySetsValid(exercise.sets)
-  && exercise.note is string;
-}
-
-/**
- * Validates the list of sets in a history exercise.
- */
-function isHistorySetsValid(sets) {
-  return sets is list
-  && sets.all(set => isHistorySetValid(set));
-}
-
-/**
- * Validates a single set object in a history exercise.
- */
-function isHistorySetValid(set) {
-  return set.keys().hasAll(['weight', 'reps', 'rir', 'rawInput'])
-  && (set.weight is number || set.weight is string)
-  && (set.reps is number || set.reps is string)
-  && (set.rir is number || set.rir is string || set.rir == null)
-  && (set.rawInput is string || set.rawInput == null);
-}
-
-/**
- * Validates the 'personalRecords' list.
- */
-function isPersonalRecordsValid(personalRecords) {
-  return personalRecords is list
-  && (personalRecords.size() == 0 || personalRecords.all(pr => isPersonalRecordValid(pr)));
-}
-
-/**
- * Validates a single personal record object.
- */
-function isPersonalRecordValid(pr) {
-  return pr.keys().hasAll(['id', 'exerciseId', 'exerciseName', 'date', 'weight', 'reps', 'e1rm', 'units'])
-  && pr.id is string
-  && pr.exerciseId is string
-  && pr.exerciseName is string
-  && pr.date is string
-  && pr.weight is number
-  && pr.reps is number
-  && pr.e1rm is number
-  && pr.units in ['lbs', 'kg'];
-}
-
-/**
- * Validates the 'savedTemplates' list.
- */
-function isSavedTemplatesValid(savedTemplates) {
-  return savedTemplates is list
-  && (savedTemplates.size() == 0 || savedTemplates.all(template => isTemplateValid(template)));
-}
-
-/**
- * Validates a single template object.
- */
-function isTemplateValid(template) {
-  return template.keys().hasAll(['id', 'name', 'creationDate', 'weeks'])
-  && template.id is string
-  && template.name is string
-  && template.creationDate is string
-  && isPlanWeeksValid(template.weeks);
-}
-
-/**
- * Validates the 'dailyCheckinHistory' list.
- */
-function isDailyCheckinHistoryValid(dailyCheckinHistory) {
-  return dailyCheckinHistory is list
-  && (dailyCheckinHistory.size() == 0 || dailyCheckinHistory.all(checkin => isDailyCheckinValid(checkin)));
-}
-
-/**
- * Validates a single daily check-in object.
- */
-function isDailyCheckinValid(checkin) {
-  return checkin.keys().hasAll(['date', 'sleep', 'stress'])
-  && checkin.date is string
-  && checkin.sleep is number
-  && checkin.stress is number;
 }
