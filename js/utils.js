@@ -5,6 +5,18 @@ import { state } from './state.js';
  */
 
 /**
+ * NEW: Sanitizes a string by removing HTML tags to prevent XSS attacks.
+ * @param {string} str - The input string from a user.
+ * @returns {string} The sanitized string.
+ */
+export function sanitizeInput(str) {
+    if (typeof str !== 'string') return '';
+    // This regex finds anything that looks like an HTML tag and removes it.
+    return str.replace(/<[^>]*>?/gm, '');
+}
+
+
+/**
  * Capitalizes the first letter of a string.
  * @param {string} str - The string to capitalize.
  * @returns {string} The capitalized string.
