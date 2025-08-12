@@ -2,7 +2,7 @@ import { state } from './state.js';
 import * as ui from './ui.js';
 import * as firebase from './firebaseService.js';
 import { workoutEngine } from './planGenerator.js';
-import { sanitizeInput } from './utils.js';
+import { sanitizeInput, findLastPerformance } from './utils.js';
 
 /**
  * @file eventHandlers.js centralizes all application event listeners and their corresponding actions.
@@ -486,21 +486,6 @@ async function resetAppData() {
     }
     ui.showView('onboarding');
 }
-
-
-export function findLastPerformance(exerciseId) {
-    for (const historyItem of state.workoutHistory) {
-        const exerciseInstance = historyItem.exercises?.find(ex => ex.exerciseId === exerciseId);
-        if (exerciseInstance && exerciseInstance.sets && exerciseInstance.sets.length > 0) {
-            const topSet = exerciseInstance.sets.reduce((max, set) => ((set.weight || 0) > (max.weight || 0) ? set : max), { weight: 0 });
-            if (topSet.weight > 0) {
-                return topSet;
-            }
-        }
-    }
-    return null;
-}
-
 
 // --- ONBOARDING FUNCTIONS ---
 
