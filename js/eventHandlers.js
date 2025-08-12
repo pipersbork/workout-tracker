@@ -532,7 +532,6 @@ function editPlan(planId) {
     ui.showModal('Coming Soon!', 'The plan editor is under development and will be available in a future update.');
 }
 
-// --- THIS IS THE UPDATED, SECURE FUNCTION ---
 function swapExercise(exerciseIndex) {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
@@ -544,12 +543,10 @@ function swapExercise(exerciseIndex) {
         return;
     }
 
-    // Create a container for the cards safely
     const cardContainer = document.createElement('div');
     cardContainer.className = 'card-group vertical';
 
     exerciseData.alternatives.forEach(altName => {
-        // Create each card element by element
         const card = document.createElement('div');
         card.className = 'goal-card alternative-card';
         card.dataset.action = 'selectAlternative';
@@ -559,7 +556,7 @@ function swapExercise(exerciseIndex) {
         card.setAttribute('tabindex', '0');
 
         const title = document.createElement('h3');
-        title.textContent = altName; // Safely set text content
+        title.textContent = altName;
 
         const performanceText = document.createElement('p');
         const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
@@ -574,7 +571,6 @@ function swapExercise(exerciseIndex) {
         cardContainer.appendChild(card);
     });
 
-    // Pass the container element to the modal instead of an HTML string
     ui.showModal(`Swap ${currentExercise.name}`, cardContainer, []);
 }
 
@@ -617,6 +613,13 @@ export function initEventListeners() {
             previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
+                // --- TIMER MEMORY LEAK FIX ---
+                // If we are leaving the workout view, make sure all timers are stopped.
+                if (state.currentViewName === 'workout' && dataset.viewName !== 'workout') {
+                    stopStopwatch();
+                    stopRestTimer();
+                }
+
                 if (dataset.viewName === 'workout') {
                     const workoutFound = findAndSetNextWorkout();
                     if (workoutFound) ui.showDailyCheckinModal();
