@@ -10,7 +10,7 @@ service cloud.firestore {
 
 function isDataStructureValid(data) {
   return data.keys().hasAll([
-    'userSelections', 'settings', 'allPlans', 'activePlanId', 
+    'userSelections', 'settings', 'allPlans', 'activePlanId',
     'workoutHistory', 'personalRecords', 'currentView', 'savedTemplates'
   ])
   && data.userSelections.keys().hasAll([
@@ -28,6 +28,10 @@ function isDataStructureValid(data) {
   && (data.activePlanId is string || data.activePlanId == null)
   && data.allPlans is list
   && data.workoutHistory is list
-  && data.personalRecords is list;
+  && data.personalRecords is list
+  // Deep validation for nested objects
+  && (data.allPlans.size() == 0 || data.allPlans[0].keys().hasAll(['id', 'name', 'startDate', 'durationWeeks', 'weeks']))
+  && (data.workoutHistory.size() == 0 || data.workoutHistory[0].keys().hasAll(['id', 'planId', 'planName', 'workoutName', 'completedDate', 'duration', 'volume', 'sets', 'exercises']))
+  && (data.personalRecords.size() == 0 || data.personalRecords[0].keys().hasAll(['id', 'exerciseId', 'exerciseName', 'date', 'weight', 'reps', 'e1rm', 'units']));
 }
 
