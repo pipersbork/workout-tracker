@@ -800,6 +800,18 @@ export function initEventListeners() {
         if (hubAction === 'premade' || hubAction === 'custom') ui.showModal('Coming Soon!', 'This feature is currently under development.');
     });
 
+    // Debounced input event listener for real-time saving
+    let saveTimeout;
+    const saveDelay = 1000; // 1 second debounce
+    document.body.addEventListener('input', e => {
+        if (e.target.matches('.weight-input, .rep-rir-input')) {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                firebase.saveFullState();
+            }, saveDelay);
+        }
+    });
+
     ui.elements.modal.addEventListener('click', (e) => {
         if (e.target.id === 'modal' || e.target.id === 'feedback-modal' || e.target.id === 'daily-checkin-modal') {
             ui.closeModal();
