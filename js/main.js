@@ -1,12 +1,26 @@
 import { handleAuthentication, loadExercises } from './firebaseService.js';
 import { initEventListeners } from './eventHandlers.js';
-import { applyTheme, showView } from './ui.js';
+import { applyTheme, showView, showModal } from './ui.js';
 import { state } from './state.js';
 
 /**
  * @file main.js is the entry point for the application.
  * It initializes event listeners, handles the authentication flow, and registers the service worker.
  */
+
+// --- GLOBAL ERROR HANDLER (Error Boundary) ---
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error("A global error was caught:", { message, source, lineno, colno, error });
+    // Display a user-friendly modal instead of crashing
+    showModal(
+        'An Unexpected Error Occurred',
+        'Sorry, something went wrong. Please refresh the page. If the problem persists, please contact support.',
+        [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]
+    );
+    // Return true to prevent the default browser error handling (e.g., logging to console)
+    return true;
+};
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Register the service worker for offline functionality
@@ -40,3 +54,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         showView(initialView, true);
     });
 });
+
