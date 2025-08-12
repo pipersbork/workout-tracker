@@ -6,13 +6,11 @@ import { showModal } from './ui.js';
 
 /**
  * @file firebaseService.js handles all interactions with Firebase,
- * including authentication and Firestore database operations, with an offline-first approach.
+ * including authentication and Firestore database operations, with a robust "cloud-first" approach.
  */
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
-  // NOTE: This API key is intentionally hardcoded to make the app work in the local environment without a build tool.
-  // The Firebase security rules still protect the data from unauthorized access.
   apiKey: "AIzaSyDSInOWrqR-AF2V8tv3vXIelnMCWROXKww",
   authDomain: "progression-700a3.firebaseapp.com",
   projectId: "progression-700a3",
@@ -30,14 +28,63 @@ const db = getFirestore(firebaseApp);
 const LOCAL_STORAGE_KEY = 'progressionAppState';
 
 /**
- * Saves the entire application state. This is now primarily used for creating
- * a new user's document or for major sync events like completing a workout.
+ * Creates the complete, default state object for a new user.
+ * This ensures any new user document is valid according to Firestore rules.
+ * @returns {object} A complete user data object.
+ */
+function createDefaultUserData() {
+    return {
+        userSelections: {
+            goal: 'hypertrophy',
+            trainingAge: 'beginner',
+            daysPerWeek: 4,
+            dietaryStatus: 'maintenance',
+            style: 'gym',
+            onboardingCompleted: false,
+        },
+        settings: {
+            units: 'lbs',
+            theme: 'dark',
+            progressionModel: 'double',
+            weightIncrement: 5,
+            restDuration: 90,
+            haptics: true,
+        },
+        allPlans: [],
+        activePlanId: null,
+        workoutHistory: [],
+        personalRecords: [],
+        savedTemplates: [],
+        currentView: { week: 1, day: 1 },
+        isWorkoutInProgress: false,
+    };
+}
+
+/**
+ * Applies loaded data (from Firestore or local storage) to the global state.
+ * @param {object} data - The user data to apply.
+ */
+function applyDataToState(data) {
+    if (!data) return;
+    
+    state.userSelections = { ...state.userSelections, ...data.userSelections };
+    state.settings = { ...state.settings, ...data.settings };
+    state.allPlans = data.allPlans || [];
+    state.savedTemplates = data.savedTemplates || [];
+    state.activePlanId = data.activePlanId || (state.allPlans.length > 0 ? state.allPlans[0].id : null);
+    state.currentView = data.currentView || state.currentView;
+    state.workoutHistory = data.workoutHistory || [];
+    state.personalRecords = data.personalRecords || [];
+    state.workoutTimer.isWorkoutInProgress = data.isWorkoutInProgress || false;
+}
+
+/**
+ * Saves the entire application state to both Firestore and local storage.
+ * This function ensures data consistency across the cloud and the local device.
  */
 export async function saveFullState() {
     if (!state.userId) return;
 
-    // This object represents the complete, valid data structure for a user.
-    // It matches the firestore.rules validation.
     const dataToSave = {
         userSelections: state.userSelections,
         settings: state.settings,
@@ -50,7 +97,16 @@ export async function saveFullState() {
         isWorkoutInProgress: state.workoutTimer.isWorkoutInProgress,
     };
 
-    // Save to localStorage for immediate offline access
+    // Save to Firestore first as the source of truth.
+    try {
+        const userDocRef = doc(db, "users", state.userId);
+        await setDoc(userDocRef, dataToSave, { merge: true }); // Merge ensures we don't overwrite with partial data
+    } catch (error) {
+        console.error("Error saving full state to Firestore:", error);
+        showModal('Sync Error', 'Could not save your data to the cloud. You may be offline.', [{ text: 'OK', class: 'cta-button' }]);
+    }
+
+    // Then, update local storage for offline access.
     try {
         const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
         localData[state.userId] = dataToSave;
@@ -58,127 +114,93 @@ export async function saveFullState() {
     } catch (error) {
         console.error("Error saving full state to localStorage:", error);
     }
-
-    // Save to Firestore for cloud backup. Using setDoc with { merge: true }
-    // is safer as it creates the doc if it doesn't exist, or merges/updates if it does.
-    try {
-        const userDocRef = doc(db, "users", state.userId);
-        await setDoc(userDocRef, dataToSave, { merge: true });
-    } catch (error) {
-        console.error("Error saving full state to Firestore:", error);
-        showModal('Sync Error', 'Could not save your data to the cloud. You may be offline or have a permissions issue.', [{ text: 'OK', class: 'cta-button' }]);
-    }
 }
 
 /**
- * Updates a specific top-level field in the Firestore document and localStorage.
- * This is the preferred method for saving small changes (e.g., updating a setting).
- * @param {string} key - The top-level key in the state object to update (e.g., 'settings').
+ * Updates a specific top-level field in the state, Firestore, and local storage.
+ * @param {string} key - The top-level key in the state object to update.
  * @param {*} value - The new value for the key.
  */
 export async function updateState(key, value) {
     if (!state.userId) return;
 
-    // 1. Update localStorage immediately for a snappy UI response.
+    // 1. Update global state
+    state[key] = value;
+
+    // 2. Update local storage immediately for UI responsiveness
     try {
-        const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
-        if (localData[state.userId]) {
-            localData[state.userId][key] = value;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
-        } else {
-            // If for some reason there's no local data, we should create it.
-            await saveFullState();
+        const localDataString = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localDataString) {
+            const allLocalData = JSON.parse(localDataString);
+            if (allLocalData[state.userId]) {
+                allLocalData[state.userId][key] = value;
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allLocalData));
+            }
         }
     } catch (error) {
         console.error(`Error updating '${key}' in localStorage:`, error);
     }
 
-    // 2. Update Firestore in the background.
+    // 3. Update Firestore in the background
     try {
         const userDocRef = doc(db, "users", state.userId);
         await updateDoc(userDocRef, { [key]: value });
-    } catch (error)
-    {
+    } catch (error) {
         console.error(`Error updating '${key}' in Firestore:`, error);
-        // This could happen if the user is offline. The local state is saved,
-        // and the app will sync next time it loads with a connection.
-        // We can choose to notify the user or handle it silently.
-        showModal('Offline Notice', `Your changes have been saved locally and will sync with the cloud when you're back online.`, [{ text: 'OK', class: 'cta-button' }]);
+        showModal('Offline Notice', 'Your changes are saved locally and will sync when you are back online.', [{ text: 'OK', class: 'cta-button' }]);
     }
 }
 
-
 /**
- * Loads the application state, prioritizing local data for offline-first speed.
- * It then fetches from Firestore to ensure data is up-to-date.
+ * The core data loading function with a "cloud-first" strategy.
+ * It ensures a valid user document exists before the app UI loads.
  */
 async function loadInitialState() {
     if (!state.userId) return;
 
-    let localDataFound = false;
-
-    // 1. Try to load from localStorage first for instant startup.
-    try {
-        const localDataString = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (localDataString) {
-            const allLocalData = JSON.parse(localDataString);
-            const userData = allLocalData[state.userId];
-            if (userData) {
-                // Apply the local data to the state
-                Object.assign(state, {
-                    userSelections: { ...state.userSelections, ...userData.userSelections },
-                    settings: { ...state.settings, ...userData.settings },
-                    allPlans: userData.allPlans || [],
-                    savedTemplates: userData.savedTemplates || [],
-                    activePlanId: userData.activePlanId || null,
-                    currentView: userData.currentView || state.currentView,
-                    workoutHistory: userData.workoutHistory || [],
-                    personalRecords: userData.personalRecords || [],
-                });
-                state.workoutTimer.isWorkoutInProgress = userData.isWorkoutInProgress || false;
-                localDataFound = true;
-            }
-        }
-    } catch (error) {
-        console.error("Error loading state from localStorage:", error);
-        localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted data
-    }
-
-    // 2. Fetch from Firestore to get the most up-to-date version.
     try {
         const userDocRef = doc(db, "users", state.userId);
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
+            // User exists, load their data from Firestore.
             const firestoreData = docSnap.data();
-            // Here, you could implement a merge strategy if needed, but for now,
-            // we'll assume Firestore is the source of truth and update the state.
-            Object.assign(state, {
-                userSelections: { ...state.userSelections, ...firestoreData.userSelections },
-                settings: { ...state.settings, ...firestoreData.settings },
-                allPlans: firestoreData.allPlans || [],
-                savedTemplates: firestoreData.savedTemplates || [],
-                activePlanId: firestoreData.activePlanId || null,
-                currentView: firestoreData.currentView || state.currentView,
-                workoutHistory: firestoreData.workoutHistory || [],
-                personalRecords: firestoreData.personalRecords || [],
-            });
-            state.workoutTimer.isWorkoutInProgress = firestoreData.isWorkoutInProgress || false;
-            
-            // IMPORTANT: After getting the latest from Firestore, update local storage
-            // to ensure it's in sync for the next offline startup.
-            await saveFullState();
-
-        } else if (!localDataFound) {
-            // This is a brand new user with no local or remote data.
-            // Save the initial default state to both Firestore and local storage.
-            await saveFullState();
+            applyDataToState(firestoreData);
+            // Sync this latest data to local storage.
+            const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+            localData[state.userId] = firestoreData;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
+        } else {
+            // This is a new user. Create their document in Firestore.
+            const defaultData = createDefaultUserData();
+            await setDoc(userDocRef, defaultData);
+            applyDataToState(defaultData);
+             // Save the new user's default data to local storage.
+            const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+            localData[state.userId] = defaultData;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
         }
     } catch (error) {
-        console.error("Error loading state from Firestore:", error);
-        // If Firestore fails, the app can still run on local data if it was found.
-        if (!localDataFound) {
-            showModal('Data Load Error', 'Could not load your saved data. Please check your connection and refresh the page.', [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]);
+        console.error("Critical error loading or creating user data in Firestore:", error);
+        // If Firestore fails, try to fall back to local storage.
+        try {
+            const localDataString = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (localDataString) {
+                const allLocalData = JSON.parse(localDataString);
+                const userData = allLocalData[state.userId];
+                if (userData) {
+                    applyDataToState(userData);
+                    showModal('Offline Mode', 'Could not connect to the cloud. Running in offline mode.', [{ text: 'OK', class: 'cta-button' }]);
+                } else {
+                     throw new Error("No local data found for this user.");
+                }
+            } else {
+                throw new Error("No local storage data found.");
+            }
+        } catch (localError) {
+             console.error("Fallback to local storage failed:", localError);
+             showModal('Fatal Error', 'Could not load any data, local or remote. Please check your connection and refresh.', [{ text: 'Refresh', class: 'cta-button', action: () => window.location.reload() }]);
+             return; // Stop execution if no data can be loaded.
         }
     }
 
@@ -194,7 +216,7 @@ export function handleAuthentication(onAuthenticated) {
         if (user) {
             state.userId = user.uid;
             await loadInitialState();
-            if (onAuthenticated) {
+            if (onAuthenticated && state.isDataLoaded) {
                 onAuthenticated();
             }
         } else {
