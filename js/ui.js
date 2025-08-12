@@ -11,6 +11,7 @@ export let elements = {};
 
 let currentTooltip = null;
 let confettiAnimationId;
+let toastTimeout;
 
 
 /**
@@ -43,6 +44,9 @@ export function initUI() {
         homeWorkoutTitle: document.getElementById('home-workout-title'),
         homeWorkoutIcon: document.getElementById('home-workout-icon'),
         confettiCanvas: document.getElementById('confetti-canvas'),
+        toast: document.getElementById('toast'),
+        toastMessage: document.getElementById('toast-message'),
+        toastIcon: document.getElementById('toast-icon'),
     };
 }
 
@@ -838,4 +842,31 @@ function stopConfetti() {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+}
+
+/**
+ * NEW: Shows a toast notification at the bottom of the screen.
+ * @param {string} message - The message to display.
+ * @param {string} type - The type of toast ('info', 'success', 'warning', 'error').
+ */
+export function showToast(message, type = 'info') {
+    if (!elements.toast) return;
+
+    clearTimeout(toastTimeout);
+
+    elements.toastMessage.textContent = message;
+    
+    const icons = {
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        info: 'ℹ️'
+    };
+    elements.toastIcon.textContent = icons[type] || icons.info;
+
+    elements.toast.className = `toast show ${type}`;
+
+    toastTimeout = setTimeout(() => {
+        elements.toast.className = elements.toast.className.replace('show', '');
+    }, 4000);
 }
