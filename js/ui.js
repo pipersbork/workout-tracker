@@ -32,6 +32,7 @@ export const elements = {
     workoutDayTitle: document.getElementById('workout-day-title'),
     workoutDate: document.getElementById('workout-date'),
     exerciseListContainer: document.getElementById('exercise-list-container'),
+    exerciseListLoader: document.getElementById('exercise-list-loader'), // <-- ADDED
     workoutStopwatch: document.getElementById('workout-stopwatch-display'),
     restTimer: document.getElementById('rest-timer-display'),
 
@@ -191,9 +192,15 @@ function applyStaggeredAnimation(containerSelector, itemSelector) {
 }
 
 export function renderDailyWorkout() {
+    // --- SKELETON LOADER LOGIC ---
+    elements.exerciseListLoader.classList.remove('hidden');
+    elements.exerciseListContainer.classList.add('hidden');
+
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) {
         elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No active plan selected.</p>';
+        elements.exerciseListLoader.classList.add('hidden');
+        elements.exerciseListContainer.classList.remove('hidden');
         return;
     }
 
@@ -205,6 +212,8 @@ export function renderDailyWorkout() {
         elements.workoutDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         elements.exerciseListContainer.innerHTML = '<p class="placeholder-text">No exercises scheduled for today. Enjoy your rest!</p>';
         document.querySelector('.workout-actions').style.display = 'none';
+        elements.exerciseListLoader.classList.add('hidden');
+        elements.exerciseListContainer.classList.remove('hidden');
         return;
     }
 
@@ -263,8 +272,15 @@ export function renderDailyWorkout() {
             </div>
         `;
     });
-    elements.exerciseListContainer.innerHTML = html;
-    applyStaggeredAnimation('#exercise-list-container', '.exercise-card');
+    
+    // --- SKELETON LOADER LOGIC ---
+    // Use a small timeout to ensure the DOM has a moment to process the loader
+    setTimeout(() => {
+        elements.exerciseListContainer.innerHTML = html;
+        elements.exerciseListLoader.classList.add('hidden');
+        elements.exerciseListContainer.classList.remove('hidden');
+        applyStaggeredAnimation('#exercise-list-container', '.exercise-card');
+    }, 300); // A short delay to simulate loading and let the animation be seen
 }
 
 export function renderSettings() {
@@ -778,3 +794,4 @@ export function showTooltip(target) {
 export function hideTooltip() {
     elements.tooltip.classList.remove('active');
 }
+
