@@ -463,14 +463,21 @@ async function nextOnboardingStep() {
             state.allPlans.push(newPlan);
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
-            await firebase.saveFullState(); // Use full save for initial user setup
+            await firebase.saveFullState();
             
             setTimeout(() => {
                 triggerHapticFeedback('success');
                 ui.showModal(
                     'Plan Generated!',
                     'Your first intelligent workout plan is ready. You can view it in settings or start your first workout from the home screen.',
-                    [{ text: 'Let\'s Go!', class: 'cta-button', action: () => ui.showView('home') }]
+                    [{ 
+                        text: 'Let\'s Go!', 
+                        class: 'cta-button', 
+                        action: () => {
+                            ui.closeModal(); // <-- THE FIX IS HERE
+                            ui.showView('home');
+                        } 
+                    }]
                 );
             }, 1200);
         }
