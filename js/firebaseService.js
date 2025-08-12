@@ -34,11 +34,12 @@ const LOCAL_STORAGE_KEY = 'progressionAppState';
 export async function saveFullState() {
     if (!state.userId) return;
 
+    // THE FIX IS HERE: Added 'savedTemplates' to match the security rules.
     const dataToSave = {
         userSelections: state.userSelections,
         settings: state.settings,
         allPlans: state.allPlans,
-        savedTemplates: state.savedTemplates,
+        savedTemplates: state.savedTemplates, // This line was missing
         activePlanId: state.activePlanId,
         currentView: state.currentView,
         workoutHistory: state.workoutHistory,
