@@ -7,34 +7,43 @@ import { createSetRowHTML } from './utils.js';
  * This file contains functions for rendering different views, updating displays, and managing UI state.
  */
 
-// DOM element references for performance
-export const elements = {
-    onboardingContainer: document.getElementById('onboarding-container'),
-    homeScreen: document.getElementById('home-screen'),
-    templatePortalView: document.getElementById('template-portal-view'),
-    workoutView: document.getElementById('daily-workout-view'),
-    performanceSummaryView: document.getElementById('performance-summary-view'),
-    settingsView: document.getElementById('settings-view'),
-    workoutSummaryView: document.getElementById('workout-summary-view'),
-    modal: document.getElementById('modal'),
-    feedbackModal: document.getElementById('feedback-modal'),
-    dailyCheckinModal: document.getElementById('daily-checkin-modal'),
-    exerciseListContainer: document.getElementById('exercise-list-container'),
-    exerciseListLoader: document.getElementById('exercise-list-loader'),
-    workoutStopwatchDisplay: document.getElementById('workout-stopwatch-display'),
-    restTimerDisplay: document.getElementById('rest-timer-display'),
-    exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
-    weightChartContainer: document.getElementById('weight-chart-container'),
-    e1rmChartContainer: document.getElementById('e1rm-chart-container'),
-    sleepSlider: document.getElementById('sleep-slider'),
-    stressSlider: document.getElementById('stress-slider'),
-    sleepLabel: document.getElementById('sleep-label'),
-    stressLabel: document.getElementById('stress-label'),
-    homeWorkoutTitle: document.getElementById('home-workout-title'),
-    homeWorkoutIcon: document.getElementById('home-workout-icon'),
-};
+// DOM element references are now initialized in initUI() to prevent race conditions.
+export let elements = {};
 
 let currentTooltip = null;
+
+/**
+ * Initializes the elements object by querying the DOM.
+ * This MUST be called after the DOM is fully loaded.
+ */
+export function initUI() {
+    elements = {
+        onboardingContainer: document.getElementById('onboarding-container'),
+        homeScreen: document.getElementById('home-screen'),
+        templatePortalView: document.getElementById('template-portal-view'),
+        workoutView: document.getElementById('daily-workout-view'),
+        performanceSummaryView: document.getElementById('performance-summary-view'),
+        settingsView: document.getElementById('settings-view'),
+        workoutSummaryView: document.getElementById('workout-summary-view'),
+        modal: document.getElementById('modal'),
+        feedbackModal: document.getElementById('feedback-modal'),
+        dailyCheckinModal: document.getElementById('daily-checkin-modal'),
+        exerciseListContainer: document.getElementById('exercise-list-container'),
+        exerciseListLoader: document.getElementById('exercise-list-loader'),
+        workoutStopwatchDisplay: document.getElementById('workout-stopwatch-display'),
+        restTimerDisplay: document.getElementById('rest-timer-display'),
+        exerciseTrackerSelect: document.getElementById('exercise-tracker-select'),
+        weightChartContainer: document.getElementById('weight-chart-container'),
+        e1rmChartContainer: document.getElementById('e1rm-chart-container'),
+        sleepSlider: document.getElementById('sleep-slider'),
+        stressSlider: document.getElementById('stress-slider'),
+        sleepLabel: document.getElementById('sleep-label'),
+        stressLabel: document.getElementById('stress-label'),
+        homeWorkoutTitle: document.getElementById('home-workout-title'),
+        homeWorkoutIcon: document.getElementById('home-workout-icon'),
+    };
+}
+
 
 /**
  * Applies the current theme to the document body
@@ -202,7 +211,7 @@ export function renderTemplatePortal() {
  * Renders the daily workout view
  */
 export function renderDailyWorkout() {
-    if (!state.activePlanId || !state.currentView) return;
+    if (!state.activePlanId || !state.currentView || !elements.exerciseListContainer) return;
 
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     if (!activePlan) return;
@@ -219,7 +228,7 @@ export function renderDailyWorkout() {
 
     // Show loader
     if (elements.exerciseListLoader) elements.exerciseListLoader.classList.remove('hidden');
-    if (elements.exerciseListContainer) elements.exerciseListContainer.style.display = 'none';
+    elements.exerciseListContainer.style.display = 'none';
 
     // Simulate loading delay for better UX
     setTimeout(() => {
@@ -227,7 +236,7 @@ export function renderDailyWorkout() {
         
         // Hide loader and show content
         if (elements.exerciseListLoader) elements.exerciseListLoader.classList.add('hidden');
-        if (elements.exerciseListContainer) elements.exerciseListContainer.style.display = 'block';
+        elements.exerciseListContainer.style.display = 'block';
     }, 500);
 }
 
