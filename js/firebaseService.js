@@ -44,7 +44,8 @@ export async function saveFullState() {
         activePlanId: state.activePlanId,
         currentView: state.currentView,
         workoutHistory: state.workoutHistory,
-        personalRecords: state.personalRecords
+        personalRecords: state.personalRecords,
+        isWorkoutInProgress: state.workoutTimer.isWorkoutInProgress,
     };
 
     // Save to localStorage for offline access
@@ -121,6 +122,7 @@ async function loadInitialState() {
                 state.currentView = userData.currentView || state.currentView;
                 state.workoutHistory = userData.workoutHistory || [];
                 state.personalRecords = userData.personalRecords || [];
+                state.workoutTimer.isWorkoutInProgress = userData.isWorkoutInProgress || false;
                 dataLoaded = true;
             }
         }
@@ -144,6 +146,7 @@ async function loadInitialState() {
                 state.currentView = data.currentView || state.currentView;
                 state.workoutHistory = data.workoutHistory || [];
                 state.personalRecords = data.personalRecords || [];
+                state.workoutTimer.isWorkoutInProgress = data.isWorkoutInProgress || false;
                 await saveFullState();
             } else {
                 await saveFullState();
