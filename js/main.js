@@ -54,4 +54,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         showView(initialView, true);
     });
 });
-
