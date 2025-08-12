@@ -452,7 +452,6 @@ async function nextOnboardingStep() {
         }
         
         if (state.onboarding.currentStep === state.onboarding.totalSteps) {
-            // This is the final "Building your plan..." step
             const newMeso = workoutEngine.generateNewMesocycle(state.userSelections, state.exercises, 4);
             const newPlan = {
                 id: `meso_${Date.now()}`,
@@ -462,13 +461,10 @@ async function nextOnboardingStep() {
                 ...newMeso
             };
             
-            // --- PERMANENT FIX ---
-            // Update all the necessary state fields before the final save.
             state.allPlans.push(newPlan);
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
             
-            // Now, save the entire, fully valid state object.
             await firebase.saveFullState();
             
             setTimeout(() => {
@@ -536,6 +532,7 @@ function editPlan(planId) {
     ui.showModal('Coming Soon!', 'The plan editor is under development and will be available in a future update.');
 }
 
+// --- THIS IS THE UPDATED, SECURE FUNCTION ---
 function swapExercise(exerciseIndex) {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
     const workout = activePlan.weeks[state.currentView.week][state.currentView.day];
@@ -546,21 +543,39 @@ function swapExercise(exerciseIndex) {
         ui.showModal("No Alternatives", "Sorry, no alternatives are listed for this exercise.");
         return;
     }
-    
-    const alternativesHTML = exerciseData.alternatives.map(altName => {
-        const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
-        let performanceText = 'No recent history.';
-        if (lastPerformance) {
-            performanceText = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
-        }
-        return `
-            <div class="goal-card alternative-card" data-action="selectAlternative" data-new-exercise-name="${altName}" data-exercise-index="${exerciseIndex}" role="button" tabindex="0">
-                <h3>${altName}</h3>
-                <p>${performanceText}</p>
-            </div>`;
-    }).join('');
 
-    ui.showModal(`Swap ${currentExercise.name}`, alternativesHTML, []);
+    // Create a container for the cards safely
+    const cardContainer = document.createElement('div');
+    cardContainer.className = 'card-group vertical';
+
+    exerciseData.alternatives.forEach(altName => {
+        // Create each card element by element
+        const card = document.createElement('div');
+        card.className = 'goal-card alternative-card';
+        card.dataset.action = 'selectAlternative';
+        card.dataset.newExerciseName = altName;
+        card.dataset.exerciseIndex = exerciseIndex;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+
+        const title = document.createElement('h3');
+        title.textContent = altName; // Safely set text content
+
+        const performanceText = document.createElement('p');
+        const lastPerformance = findLastPerformance(`ex_${altName.replace(/\s+/g, '_')}`);
+        if (lastPerformance) {
+            performanceText.textContent = `Last time: ${lastPerformance.weight} ${state.settings.units} x ${lastPerformance.reps}`;
+        } else {
+            performanceText.textContent = 'No recent history.';
+        }
+
+        card.appendChild(title);
+        card.appendChild(performanceText);
+        cardContainer.appendChild(card);
+    });
+
+    // Pass the container element to the modal instead of an HTML string
+    ui.showModal(`Swap ${currentExercise.name}`, cardContainer, []);
 }
 
 function selectAlternative(newExerciseName, exerciseIndex) {
