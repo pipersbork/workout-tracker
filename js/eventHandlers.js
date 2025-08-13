@@ -602,6 +602,7 @@ async function submitCheckin() {
     });
 
     await googleSheets.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
+
     const wasAdjusted = workoutEngine.adjustWorkoutForRecovery(state.dailyCheckin.sleep, state.dailyCheckin.stress);
     if (wasAdjusted) {
         ui.showToast("Recovery is low. Workout volume adjusted.", "warning");
