@@ -9,8 +9,11 @@ import { showModal } from './ui.js';
 
 // --- GOOGLE SHEETS API CONFIGURATION ---
 const GOOGLE_SHEETS_CONFIG = {
-  apiKey: 'YOUR_GOOGLE_API_KEY', // You'll need to get this from Google Cloud Console
-  clientId: 'YOUR_GOOGLE_CLIENT_ID', // OAuth 2.0 client ID
+  // Your API Key from Google Cloud Console
+  apiKey: 'AIzaSyDuiKQji6jpo8Upe_G7__uLiew8tGSUQ88', 
+  // Your OAuth 2.0 Client ID from Google Cloud Console
+  clientId: '993517201890-5p0tvh2eotpgshl8pv1sbs78bg8vg8o1.apps.googleusercontent.com', 
+  // Note: The Client Secret (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) is a server-side credential and should not be included in client-side code. It is not needed for this application's functionality.
   discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
   scopes: 'https://www.googleapis.com/auth/spreadsheets'
 };
