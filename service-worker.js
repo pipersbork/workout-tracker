@@ -15,9 +15,7 @@ const URLS_TO_CACHE = [
   '/js/ui.js',
   '/js/utils.js',
   '/exercises.json',
-  '/manifest.json',
-  '/images/icons/icon-192x192.png',
-  '/images/icons/icon-512x512.png'
+  '/manifest.json'
   // Chart.js removed to avoid CORS issues
 ];
 
