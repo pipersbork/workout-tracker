@@ -1,4 +1,5 @@
-import { handleAuthentication, loadExercises } from './firebaseService.js';
+// js/main.js - Updated for Google Sheets
+import { handleAuthentication, loadExercises } from './googleSheetsService.js';
 import { initEventListeners } from './eventHandlers.js';
 import { applyTheme, showView, showModal, initUI } from './ui.js';
 import { state } from './state.js';
@@ -6,6 +7,7 @@ import { state } from './state.js';
 /**
  * @file main.js is the entry point for the application.
  * It initializes event listeners, handles the authentication flow, and registers the service worker.
+ * Updated to use Google Sheets instead of Firebase.
  */
 
 // --- GLOBAL ERROR HANDLER (Error Boundary) ---
@@ -21,7 +23,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     return true;
 };
 
-
 document.addEventListener('DOMContentLoaded', async () => {
     // CRITICAL FIX: Initialize UI elements only after the DOM is fully loaded.
     initUI();
@@ -29,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Register the service worker for offline functionality
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // FIX: Changed path from '/service-worker.js' to 'service-worker.js'
             navigator.serviceWorker.register('service-worker.js')
                 .then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
@@ -46,8 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load static exercise data from JSON file
     await loadExercises();
 
-    // Start the authentication process. The callback function will be executed
-    // once the user is authenticated and their data has been loaded.
+    // Start the Google Sheets authentication and data loading process
     handleAuthentication(() => {
         // Apply the user's saved theme (or default)
         applyTheme();
