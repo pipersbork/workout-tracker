@@ -1,6 +1,6 @@
 // js/googleSheetsService.js - Updated for Google Apps Script
 import { state } from './state.js';
-import { showModal } from './ui.js';
+import { showModal, closeModal } from './ui.js';
 
 /**
  * @file This client-side service now communicates with a Google Apps Script web app
@@ -338,6 +338,7 @@ function askUserToConnectGoogleSheets() {
                     text: 'Skip for Now', 
                     class: 'secondary-button',
                     action: () => {
+                        closeModal();
                         showModal('Offline Mode', 'Running in offline mode. Data will be saved locally in your browser.');
                         resolve(false);
                     }
@@ -346,8 +347,8 @@ function askUserToConnectGoogleSheets() {
                     text: 'Connect to Google Sheets', 
                     class: 'cta-button',
                     action: () => {
+                        closeModal();
                         resolve(true);
-                        // The rest of the authentication flow is handled in initializeDataService
                     }
                 }
             ]
