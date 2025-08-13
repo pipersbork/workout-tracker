@@ -707,25 +707,42 @@ export function showModal(title, content, actions = []) {
 
     const modalBody = document.getElementById('modal-body');
     const modalActions = document.getElementById('modal-actions');
-    
+
     if (modalBody) {
-        modalBody.innerHTML = typeof content === 'string' ? 
-            `<h2>${title}</h2><div>${content}</div>` : 
-            `<h2>${title}</h2>`;
+        modalBody.innerHTML = typeof content === 'string' 
+            ? `<h2>${title}</h2><div>${content}</div>` 
+            : `<h2>${title}</h2>`;
         
         if (typeof content !== 'string') {
             modalBody.appendChild(content);
         }
     }
-    
+
     if (modalActions) {
-        modalActions.innerHTML = actions.map(action => 
-            `<button class="${action.class}" ${action.action ? `onclick="(${action.action.toString()})()"` : 'data-action="closeModal"'}>${action.text}</button>`
-        ).join('');
+        // Clear previous actions
+        modalActions.innerHTML = '';
+        
+        // Create buttons and attach event listeners
+        actions.forEach((action, index) => {
+            const button = document.createElement('button');
+            button.className = action.class;
+            button.textContent = action.text;
+            
+            if (action.action) {
+                // Attach the event listener directly
+                button.addEventListener('click', action.action);
+            } else {
+                // Default action is to close the modal
+                button.dataset.action = 'closeModal';
+            }
+            
+            modalActions.appendChild(button);
+        });
     }
-    
+
     elements.modal.classList.add('active');
 }
+
 
 /**
  * Closes the modal dialog
