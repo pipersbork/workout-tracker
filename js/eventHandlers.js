@@ -1,12 +1,13 @@
 import { state } from './state.js';
 import * as ui from './ui.js';
-import * as firebase from './firebaseService.js';
+import * as googleSheets from './googleSheetsService.js';
 import { workoutEngine } from './planGenerator.js';
 import { sanitizeInput, findLastPerformance } from './utils.js';
 
 /**
  * @file eventHandlers.js centralizes all application event listeners and their corresponding actions.
  * It acts as the "controller" of the application, responding to user input and interfacing with the workoutEngine.
+ * Updated to use Google Sheets instead of Firebase.
  */
 
 // --- UTILITY FUNCTIONS ---
@@ -28,7 +29,6 @@ function triggerHapticFeedback(type = 'light') {
 
     navigator.vibrate(patterns[type] || patterns.light);
 }
-
 
 // --- ACTION FUNCTIONS ---
 
@@ -58,7 +58,6 @@ function findAndSetNextWorkout(planId = state.activePlanId) {
     return false;
 }
 
-
 async function selectCard(element, field, value, shouldSave = false) {
     triggerHapticFeedback('medium');
     const processedValue = /^\d+$/.test(value) ? parseInt(value) : value;
@@ -68,7 +67,7 @@ async function selectCard(element, field, value, shouldSave = false) {
     element.classList.add('active');
 
     if (shouldSave) {
-        await firebase.updateState('userSelections', state.userSelections);
+        await googleSheets.updateState('userSelections', state.userSelections);
     }
 }
 
@@ -77,7 +76,7 @@ async function setTheme(theme) {
     triggerHapticFeedback('light');
     state.settings.theme = theme;
     ui.applyTheme();
-    await firebase.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
@@ -85,7 +84,7 @@ async function setUnits(unit) {
     if (unit !== 'lbs' && unit !== 'kg') return;
     triggerHapticFeedback('light');
     state.settings.units = unit;
-    await firebase.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings);
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.renderDailyWorkout();
@@ -96,7 +95,7 @@ async function setProgressionModel(progression) {
     if (progression !== 'linear' && progression !== 'double') return;
     triggerHapticFeedback('light');
     state.settings.progressionModel = progression;
-    await firebase.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
@@ -104,7 +103,7 @@ async function setWeightIncrement(increment) {
     if (![2.5, 5, 10].includes(increment)) return;
     triggerHapticFeedback('light');
     state.settings.weightIncrement = increment;
-    await firebase.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings);
     ui.renderSettings();
 }
 
@@ -113,7 +112,7 @@ async function setRestDuration(duration) {
     triggerHapticFeedback('light');
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
-    await firebase.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings);
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.updateRestTimerDisplay();
@@ -134,7 +133,7 @@ async function deletePlan(planId) {
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
     }
-    await firebase.saveFullState(); // Use full save because multiple fields are changing
+    await googleSheets.saveFullState(); // Use full save because multiple fields are changing
     ui.closeModal();
     ui.renderSettings();
 }
@@ -142,7 +141,7 @@ async function deletePlan(planId) {
 async function setActivePlan(planId) {
     triggerHapticFeedback('success');
     state.activePlanId = planId;
-    await firebase.updateState('activePlanId', state.activePlanId);
+    await googleSheets.updateState('activePlanId', state.activePlanId);
     ui.renderSettings();
 }
 
@@ -157,7 +156,6 @@ function confirmCompleteWorkout() {
 function calculateE1RM(weight, reps) {
     if (!weight || !reps || reps < 1) return 0;
     if (reps === 1) return Math.round(weight);
-    // Using the more accurate Epley formula
     return Math.round(weight * (1 + reps / 30));
 }
 
@@ -188,7 +186,6 @@ function checkForPRs(completedWorkout) {
                 e1rm: topSetOfTheSession.e1rm,
                 units: state.settings.units
             };
-            // Remove old PR for this exercise and add the new one
             state.personalRecords = state.personalRecords.filter(pr => pr.exerciseId !== ex.exerciseId);
             state.personalRecords.push(newPR);
         }
@@ -197,16 +194,14 @@ function checkForPRs(completedWorkout) {
 }
 
 /**
- * NEW: Finds the most recent previous instance of the same workout.
+ * Finds the most recent previous instance of the same workout.
  * @param {string} planId - The ID of the current plan.
  * @param {string} workoutName - The name of the workout to find.
  * @returns {object|null} The previous workout history entry, or null if not found.
  */
 function findPreviousWorkout(planId, workoutName) {
-    // Find the most recent entry in history that matches the plan and workout name.
     return state.workoutHistory.find(entry => entry.planId === planId && entry.workoutName === workoutName) || null;
 }
-
 
 async function completeWorkout() {
     triggerHapticFeedback('success');
@@ -232,14 +227,13 @@ async function completeWorkout() {
     const totalVolume = workout.exercises.reduce((sum, ex) => sum + (ex.sets || []).reduce((total, set) => total + (set.weight || 0) * (set.reps || 0), 0), 0);
     const totalSets = workout.exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
 
-    // NEW: Compare with previous workout
+    // Compare with previous workout
     const previousWorkout = findPreviousWorkout(activePlan.id, workout.name);
     if (previousWorkout) {
         state.workoutSummary.volumeChange = totalVolume - previousWorkout.volume;
         state.workoutSummary.setsChange = totalSets - previousWorkout.sets;
         state.workoutSummary.durationChange = totalSeconds - previousWorkout.duration;
     } else {
-        // Reset changes if no previous workout is found
         state.workoutSummary.volumeChange = null;
         state.workoutSummary.setsChange = null;
         state.workoutSummary.durationChange = null;
@@ -272,10 +266,8 @@ async function completeWorkout() {
     
     ui.showView('workoutSummary');
     findAndSetNextWorkout();
-    await firebase.saveFullState(); // Use full save after a workout as many things change
+    await googleSheets.saveFullState(); // Use full save after a workout as many things change
 }
-
-// ... (rest of the file is unchanged) ...
 
 function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     if (!nextWeekWorkout) return [];
@@ -309,7 +301,6 @@ function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
     });
     return suggestions;
 }
-
 
 function calculateMesocycleStats() {
     const activePlan = state.allPlans.find(p => p.id === state.activePlanId);
@@ -366,7 +357,7 @@ function stopStopwatch() {
 function startRestTimer() {
     triggerHapticFeedback('light');
     if (state.restTimer.isRunning) return;
-    stopRestTimer(); // Clear any existing timer before starting a new one
+    stopRestTimer();
     state.restTimer.isRunning = true;
     state.restTimer.remaining = state.settings.restDuration;
     ui.updateRestTimerDisplay();
@@ -447,7 +438,6 @@ function showHistory(exerciseId) {
  * Creates and downloads a JSON file containing the user's data.
  */
 function exportData() {
-    // Create a data object with only the essential user data
     const userData = {
         userSelections: state.userSelections,
         settings: state.settings,
@@ -502,9 +492,8 @@ async function resetAppData() {
     state.currentView = { week: 1, day: 1 };
     state.workoutTimer.isWorkoutInProgress = false;
 
-    await firebase.saveFullState();
+    await googleSheets.saveFullState();
     ui.closeModal();
-    // Wait for data to be loaded before showing onboarding
     let maxAttempts = 20;
     while (!state.isDataLoaded && maxAttempts > 0) {
         await new Promise(resolve => setTimeout(resolve, 250));
@@ -554,9 +543,8 @@ async function nextOnboardingStep() {
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
             
-            await firebase.saveFullState();
+            await googleSheets.saveFullState();
             
-            // Wait for data to load before showing the home screen
             let maxAttempts = 20;
             while (!state.isDataLoaded && maxAttempts > 0) {
                 await new Promise(resolve => setTimeout(resolve, 250));
@@ -596,7 +584,6 @@ function previousOnboardingStep() {
     });
 }
 
-
 // --- FEEDBACK TRIGGER LOGIC ---
 
 function triggerFeedbackModals(exercise, exerciseIndex, workout) {
@@ -613,9 +600,8 @@ async function submitCheckin() {
         ...state.dailyCheckin
     });
 
-    await firebase.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
+    await googleSheets.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
 
-    // NEW: Call the workout adjustment logic
     const wasAdjusted = workoutEngine.adjustWorkoutForRecovery(state.dailyCheckin.sleep, state.dailyCheckin.stress);
     if (wasAdjusted) {
         ui.showToast("Recovery is low. Workout volume adjusted.", "warning");
@@ -631,14 +617,12 @@ async function submitCheckin() {
 async function startPlanWorkout(planId) {
     triggerHapticFeedback('medium');
     state.activePlanId = planId;
-    await firebase.updateState('activePlanId', state.activePlanId);
+    await googleSheets.updateState('activePlanId', state.activePlanId);
     const workoutFound = findAndSetNextWorkout(planId);
     if (workoutFound) {
         if (state.workoutTimer.isWorkoutInProgress) {
-            // If a workout is already in progress, go straight to it.
             ui.showView('workout');
         } else {
-            // Otherwise, show the daily check-in modal.
             ui.showDailyCheckinModal();
         }
     }
@@ -729,14 +713,11 @@ export function initEventListeners() {
             previousOnboardingStep,
             selectOnboardingCard: () => selectOnboardingCard(target, dataset.field, dataset.value),
             showView: () => {
-                // --- TIMER MEMORY LEAK FIX ---
-                // If we are leaving the workout view, make sure all timers are stopped.
                 if (state.currentViewName === 'workout' && dataset.viewName !== 'workout') {
                     stopStopwatch();
                     stopRestTimer();
                 }
 
-                // If a workout is in progress, clicking the "workout" button should go straight to the workout.
                 if (dataset.viewName === 'workout' && state.workoutTimer.isWorkoutInProgress) {
                     ui.showView('workout');
                 } else if (dataset.viewName === 'workout') {
@@ -808,7 +789,7 @@ export function initEventListeners() {
                     };
                     state.allPlans.push(newPlan);
                     state.activePlanId = newPlan.id;
-                    await firebase.saveFullState(); // Use full save for new plan creation
+                    await googleSheets.saveFullState();
                     ui.closeModal();
                     ui.showView('settings');
                 }}
@@ -825,7 +806,7 @@ export function initEventListeners() {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                firebase.updateState('allPlans', state.allPlans);
+                googleSheets.updateState('allPlans', state.allPlans);
             }, saveDelay);
         }
     });
@@ -893,7 +874,6 @@ export function initEventListeners() {
         }
     });
 
-    // NEW: Event listener for the exercise tracker dropdown
     ui.elements.exerciseTrackerSelect?.addEventListener('change', (e) => {
         const exerciseName = e.target.value;
         if (exerciseName) {
