@@ -1,4 +1,4 @@
-// js/googleSheetsService.js - Updated for Google Apps Script
+// js/googleSheetService.js - Updated for Google Apps Script
 import { state } from './state.js';
 import { showModal } from './ui.js';
 
