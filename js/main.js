@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadExercises();
 
     // Start the Google Sheets authentication and data loading process
-    // This is the new entry point, replacing the Firebase authentication handler.
     handleAuthentication(() => {
         // Apply the user's saved theme (or default)
         applyTheme();
