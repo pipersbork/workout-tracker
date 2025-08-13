@@ -1,6 +1,7 @@
+// js/eventHandlers.js - Updated for Google Sheets
 import { state } from './state.js';
 import * as ui from './ui.js';
-import * as googleSheets from './googleSheetsService.js';
+import * as googleSheets from './googleSheetsService.js'; // <-- Updated import
 import { workoutEngine } from './planGenerator.js';
 import { sanitizeInput, findLastPerformance } from './utils.js';
 
@@ -67,7 +68,7 @@ async function selectCard(element, field, value, shouldSave = false) {
     element.classList.add('active');
 
     if (shouldSave) {
-        await googleSheets.updateState('userSelections', state.userSelections);
+        await googleSheets.updateState('userSelections', state.userSelections); // <-- Updated API call
     }
 }
 
@@ -76,7 +77,7 @@ async function setTheme(theme) {
     triggerHapticFeedback('light');
     state.settings.theme = theme;
     ui.applyTheme();
-    await googleSheets.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings); // <-- Updated API call
     ui.renderSettings();
 }
 
@@ -84,7 +85,7 @@ async function setUnits(unit) {
     if (unit !== 'lbs' && unit !== 'kg') return;
     triggerHapticFeedback('light');
     state.settings.units = unit;
-    await googleSheets.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings); // <-- Updated API call
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.renderDailyWorkout();
@@ -95,7 +96,7 @@ async function setProgressionModel(progression) {
     if (progression !== 'linear' && progression !== 'double') return;
     triggerHapticFeedback('light');
     state.settings.progressionModel = progression;
-    await googleSheets.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings); // <-- Updated API call
     ui.renderSettings();
 }
 
@@ -103,7 +104,7 @@ async function setWeightIncrement(increment) {
     if (![2.5, 5, 10].includes(increment)) return;
     triggerHapticFeedback('light');
     state.settings.weightIncrement = increment;
-    await googleSheets.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings); // <-- Updated API call
     ui.renderSettings();
 }
 
@@ -112,7 +113,7 @@ async function setRestDuration(duration) {
     triggerHapticFeedback('light');
     state.settings.restDuration = duration;
     state.restTimer.remaining = duration;
-    await googleSheets.updateState('settings', state.settings);
+    await googleSheets.updateState('settings', state.settings); // <-- Updated API call
     ui.renderSettings();
     if (state.currentViewName === 'workout') {
         ui.updateRestTimerDisplay();
@@ -133,7 +134,7 @@ async function deletePlan(planId) {
     if (state.activePlanId === planId) {
         state.activePlanId = state.allPlans.length > 0 ? state.allPlans[0].id : null;
     }
-    await googleSheets.saveFullState(); // Use full save because multiple fields are changing
+    await googleSheets.saveFullState(); // <-- Updated API call
     ui.closeModal();
     ui.renderSettings();
 }
@@ -141,7 +142,7 @@ async function deletePlan(planId) {
 async function setActivePlan(planId) {
     triggerHapticFeedback('success');
     state.activePlanId = planId;
-    await googleSheets.updateState('activePlanId', state.activePlanId);
+    await googleSheets.updateState('activePlanId', state.activePlanId); // <-- Updated API call
     ui.renderSettings();
 }
 
@@ -266,7 +267,7 @@ async function completeWorkout() {
     
     ui.showView('workoutSummary');
     findAndSetNextWorkout();
-    await googleSheets.saveFullState(); // Use full save after a workout as many things change
+    await googleSheets.saveFullState(); // <-- Updated API call
 }
 
 function generateProgressionSuggestions(completedWorkout, nextWeekWorkout) {
@@ -492,7 +493,7 @@ async function resetAppData() {
     state.currentView = { week: 1, day: 1 };
     state.workoutTimer.isWorkoutInProgress = false;
 
-    await googleSheets.saveFullState();
+    await googleSheets.saveFullState(); // <-- Updated API call
     ui.closeModal();
     let maxAttempts = 20;
     while (!state.isDataLoaded && maxAttempts > 0) {
@@ -543,7 +544,7 @@ async function nextOnboardingStep() {
             state.activePlanId = newPlan.id;
             state.userSelections.onboardingCompleted = true;
             
-            await googleSheets.saveFullState();
+            await googleSheets.saveFullState(); // <-- Updated API call
             
             let maxAttempts = 20;
             while (!state.isDataLoaded && maxAttempts > 0) {
@@ -600,7 +601,7 @@ async function submitCheckin() {
         ...state.dailyCheckin
     });
 
-    await googleSheets.updateState('dailyCheckinHistory', state.dailyCheckinHistory);
+    await googleSheets.updateState('dailyCheckinHistory', state.dailyCheckinHistory); // <-- Updated API call
 
     const wasAdjusted = workoutEngine.adjustWorkoutForRecovery(state.dailyCheckin.sleep, state.dailyCheckin.stress);
     if (wasAdjusted) {
@@ -617,7 +618,7 @@ async function submitCheckin() {
 async function startPlanWorkout(planId) {
     triggerHapticFeedback('medium');
     state.activePlanId = planId;
-    await googleSheets.updateState('activePlanId', state.activePlanId);
+    await googleSheets.updateState('activePlanId', state.activePlanId); // <-- Updated API call
     const workoutFound = findAndSetNextWorkout(planId);
     if (workoutFound) {
         if (state.workoutTimer.isWorkoutInProgress) {
@@ -789,7 +790,7 @@ export function initEventListeners() {
                     };
                     state.allPlans.push(newPlan);
                     state.activePlanId = newPlan.id;
-                    await googleSheets.saveFullState();
+                    await googleSheets.saveFullState(); // <-- Updated API call
                     ui.closeModal();
                     ui.showView('settings');
                 }}
@@ -806,7 +807,7 @@ export function initEventListeners() {
         if (e.target.matches('.weight-input, .rep-rir-input')) {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                googleSheets.updateState('allPlans', state.allPlans);
+                googleSheets.updateState('allPlans', state.allPlans); // <-- Updated API call
             }, saveDelay);
         }
     });
