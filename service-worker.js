@@ -9,7 +9,7 @@ const URLS_TO_CACHE = [
   '/style.css',
   '/js/main.js',
   '/js/eventHandlers.js',
-  '/js/googleSheetsService.js', // <-- New file added to cache
+  '/js/googleSheetsService.js',
   '/js/planGenerator.js',
   '/js/state.js',
   '/js/ui.js',
