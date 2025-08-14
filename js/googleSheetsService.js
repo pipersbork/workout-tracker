@@ -8,7 +8,7 @@ import { showModal, closeModal } from './ui.js';
  */
 
 // --- GOOGLE APPS SCRIPT CONFIGURATION ---
-// IMPORTANT: Replace this with the Web App URL you got from the Apps Script deployment.
+// IMPORTANT: This URL has been updated with your deployment.
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_DqPYO6RbpuxWjQxiBi-2ZKDCmmtXeEXaGLD7MP-yyqHZjff9hjNxgzrXBv0fmoRWuQ/exec';
 
 // --- LOCAL STORAGE KEY ---
