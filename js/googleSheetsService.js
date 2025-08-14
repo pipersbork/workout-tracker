@@ -8,8 +8,8 @@ import { showModal, closeModal } from './ui.js';
  */
 
 // --- GOOGLE APPS SCRIPT CONFIGURATION ---
-// IMPORTANT: This URL has been updated with your deployment.
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_DqPYO6RbpuxWjQxiBi-2ZKDCmmtXeEXaGLD7MP-yyqHZjff9hjNxgzrXBv0fmoRWuQ/exec';
+// IMPORTANT: This URL has been updated with your latest deployment.
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzYGgBHiH8TjhhZM_k77O3xJyG2uEoLYk_4t3mR40M70xmvDW68VlKzjHX6IYpGm3kDg/exec';
 
 // --- LOCAL STORAGE KEY ---
 const LOCAL_STORAGE_KEY = 'progressionAppState';
